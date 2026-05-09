@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { User, ApiResponse } from '@my-app/shared';
+import { useEffect, useState } from 'react';
+import type { User, ApiResponse } from '@my-app/shared';
 
 function App() {
   const [users, setUsers] = useState<User[]>([]);
@@ -8,10 +8,11 @@ function App() {
 
   useEffect(() => {
     const fetchData = async () => {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       try {
         const [healthRes, usersRes] = await Promise.all([
-          fetch('http://localhost:3000/api/health'),
-          fetch('http://localhost:3000/api/users')
+          fetch(`${apiUrl}/api/health`),
+          fetch(`${apiUrl}/api/users`)
         ]);
 
         const healthData: ApiResponse<string> = await healthRes.json();
