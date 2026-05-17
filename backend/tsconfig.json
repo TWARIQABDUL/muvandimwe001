@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "composite": true,
+    "declaration": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*"],
+  "references": [
+    { "path": "../packages/shared" }
+  ]
+}
