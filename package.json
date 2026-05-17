@@ -1,0 +1,22 @@
+{
+  "name": "gym-management-saas",
+  "version": "0.1.0",
+  "description": "Lightweight gym management SaaS for fitness facilities in East Africa",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "backend:dev": "npm run dev -w backend",
+    "frontend:dev": "npm run dev -w frontend",
+    "backend:build": "npm run build -w backend",
+    "frontend:build": "npm run build -w frontend",
+    "backend:test": "npm run test -w backend",
+    "setup": "npm install && npm install -w backend && npm install -w frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
