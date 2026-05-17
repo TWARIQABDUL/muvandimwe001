@@ -30,4 +30,18 @@ Thumbs.db
 
 # Docker
 .docker/
+.envnode_modules/
 .env
+dist/
+coverage/
+logs/
+*.log
+*.env
+.DS_Store
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?           
