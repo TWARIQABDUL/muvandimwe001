@@ -154,7 +154,7 @@ router.get(
       // Calculate summary
       const summary = {
         total_checkins: checkins.length,
-        total_revenue: checkins.reduce((sum, c) => sum + (c.amount || 0), 0)
+        total_revenue: checkins.reduce((sum, c) => sum + (Number(c.amount) || 0), 0)
       };
 
       res.json({

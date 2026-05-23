@@ -36,7 +36,7 @@ router.get(
         if (!dailyRevenue[dateStr]) {
           dailyRevenue[dateStr] = 0;
         }
-        dailyRevenue[dateStr] += p.amount || 0;
+        dailyRevenue[dateStr] += Number(p.amount) || 0;
       });
 
       // Create array for last 7 days
@@ -180,15 +180,15 @@ router.get(
       );
 
       // Calculate totals
-      const totalActive = tierData.reduce((sum, t) => sum + t.count, 0);
-      const estimatedMRR = tierData.reduce((sum, t) => sum + t.monthly_fee * t.count, 0);
+      const totalActive = tierData.reduce((sum, t) => sum + Number(t.count), 0);
+      const estimatedMRR = tierData.reduce((sum, t) => sum + Number(t.monthly_fee) * Number(t.count), 0);
 
       res.json({
         total_active: totalActive,
         by_tier: tierData.map(t => ({
           subscription_name: t.name,
-          count: t.count,
-          monthly_revenue_per_member: t.monthly_fee
+          count: Number(t.count),
+          monthly_revenue_per_member: Number(t.monthly_fee)
         })),
         members_list: membersList,
         estimated_mrr: estimatedMRR

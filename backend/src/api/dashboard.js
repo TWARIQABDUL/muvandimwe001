@@ -145,11 +145,11 @@ router.get(
 
       const walkInRevenue = payments
         .filter(p => p.type === 'walk_in' || p.type === 'daily')
-        .reduce((sum, p) => sum + p.amount, 0);
+        .reduce((sum, p) => sum + Number(p.amount), 0);
 
       const subscriptionRevenue = payments
         .filter(p => p.type === 'subscription_signup' || p.type === 'subscription_renewal')
-        .reduce((sum, p) => sum + p.amount, 0);
+        .reduce((sum, p) => sum + Number(p.amount), 0);
 
       // Get active subscriptions count
       const activeSubs = await db.get(
@@ -166,7 +166,7 @@ router.get(
         [gym_id]
       );
 
-      const estimatedMRR = subsData.reduce((sum, s) => sum + s.monthly_fee, 0);
+      const estimatedMRR = subsData.reduce((sum, s) => sum + Number(s.monthly_fee), 0);
 
       // Fetch reports
       const reports = await getSubscriberReports(gym_id, today, today);
@@ -209,14 +209,14 @@ async function getManagerTodayDashboard(req, res) {
     // Get pending renewals
     const pendingRenewals = await getPendingRenewals(gym_id);
 
-    const totalRevenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const totalRevenue = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
     const walkInRevenue = payments
       .filter(p => p.type === 'walk_in' || p.type === 'daily')
-      .reduce((sum, p) => sum + p.amount, 0);
+      .reduce((sum, p) => sum + Number(p.amount), 0);
 
     const subscriptionRevenue = payments
       .filter(p => p.type === 'subscription_signup' || p.type === 'subscription_renewal')
-      .reduce((sum, p) => sum + p.amount, 0);
+      .reduce((sum, p) => sum + Number(p.amount), 0);
 
     const totalCheckins = checkins.length;
 
@@ -291,11 +291,11 @@ router.get(
 
       const walkInRevenue = payments
         .filter(p => p.type === 'walk_in' || p.type === 'daily')
-        .reduce((sum, p) => sum + p.amount, 0);
+        .reduce((sum, p) => sum + Number(p.amount), 0);
 
       const subscriptionRevenue = payments
         .filter(p => p.type === 'subscription_signup' || p.type === 'subscription_renewal')
-        .reduce((sum, p) => sum + p.amount, 0);
+        .reduce((sum, p) => sum + Number(p.amount), 0);
 
       const activeSubs = await db.get(
         `SELECT COUNT(*) as count FROM member_subscriptions 
@@ -310,7 +310,7 @@ router.get(
         [gym_id]
       );
 
-      const estimatedMRR = subsData.reduce((sum, s) => sum + s.monthly_fee, 0);
+      const estimatedMRR = subsData.reduce((sum, s) => sum + Number(s.monthly_fee), 0);
 
       const reports = await getSubscriberReports(gym_id, dateRange.start, dateRange.end);
 
@@ -372,11 +372,11 @@ router.get(
 
       const walkInRevenue = payments
         .filter(p => p.type === 'walk_in' || p.type === 'daily')
-        .reduce((sum, p) => sum + p.amount, 0);
+        .reduce((sum, p) => sum + Number(p.amount), 0);
 
       const subscriptionRevenue = payments
         .filter(p => p.type === 'subscription_signup' || p.type === 'subscription_renewal')
-        .reduce((sum, p) => sum + p.amount, 0);
+        .reduce((sum, p) => sum + Number(p.amount), 0);
 
       const activeSubs = await db.get(
         `SELECT COUNT(*) as count FROM member_subscriptions 
@@ -391,7 +391,7 @@ router.get(
         [gym_id]
       );
 
-      const estimatedMRR = subsData.reduce((sum, s) => sum + s.monthly_fee, 0);
+      const estimatedMRR = subsData.reduce((sum, s) => sum + Number(s.monthly_fee), 0);
 
       const reports = await getSubscriberReports(gym_id, dateRange.start, dateRange.end);
 
@@ -453,11 +453,11 @@ router.get(
 
       const walkInRevenue = payments
         .filter(p => p.type === 'walk_in' || p.type === 'daily')
-        .reduce((sum, p) => sum + p.amount, 0);
+        .reduce((sum, p) => sum + Number(p.amount), 0);
 
       const subscriptionRevenue = payments
         .filter(p => p.type === 'subscription_signup' || p.type === 'subscription_renewal')
-        .reduce((sum, p) => sum + p.amount, 0);
+        .reduce((sum, p) => sum + Number(p.amount), 0);
 
       const activeSubs = await db.get(
         `SELECT COUNT(*) as count FROM member_subscriptions 
@@ -472,7 +472,7 @@ router.get(
         [gym_id]
       );
 
-      const estimatedMRR = subsData.reduce((sum, s) => sum + s.monthly_fee, 0);
+      const estimatedMRR = subsData.reduce((sum, s) => sum + Number(s.monthly_fee), 0);
 
       const reports = await getSubscriberReports(gym_id, dateRange.start, dateRange.end);
 
