@@ -32,7 +32,7 @@ router.get(
       const dailyRevenue = {};
 
       payments.forEach(p => {
-        const dateStr = p.timestamp.split('T')[0];
+        const dateStr = new Date(p.timestamp).toISOString().split('T')[0];
         if (!dailyRevenue[dateStr]) {
           dailyRevenue[dateStr] = 0;
         }
