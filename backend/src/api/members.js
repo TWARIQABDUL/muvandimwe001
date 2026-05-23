@@ -224,7 +224,7 @@ router.post(
       }
 
       const member = await db.get(
-        `SELECT m.*, ms.status, ms.is_card, ms.remaining_taps, s.included_services
+        `SELECT m.*, ms.status, ms.is_card, ms.remaining_taps, ms.next_renewal_date, s.included_services
          FROM members m
          LEFT JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
          LEFT JOIN subscriptions s ON ms.subscription_id = s.id
@@ -249,7 +249,8 @@ router.post(
           subscription_status: member.status,
           allowed_services: allowedServices,
           is_card: member.is_card || 0,
-          remaining_taps: member.remaining_taps
+          remaining_taps: member.remaining_taps,
+          next_renewal_date: member.next_renewal_date
         }
       });
     } catch (err) {

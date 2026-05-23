@@ -154,15 +154,42 @@ export default function ManagerCheckinFlow({
                   </div>
 
                   <div style={{ marginBottom: '20px' }}>
-                    {memberLookup.is_card === 1 ? (
-                      <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '12px', borderRadius: '6px', color: '#991b1b', fontWeight: '600' }}>
-                        Session Card: {memberLookup.remaining_taps} Taps Remaining
-                      </div>
-                    ) : (
-                      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '12px', borderRadius: '6px', color: '#166534', fontWeight: '500' }}>
-                        Standard Monthly Subscription
-                      </div>
-                    )}
+                    {(() => {
+                      let remainingDays = null;
+                      if (memberLookup.next_renewal_date) {
+                        const today = new Date();
+                        today.setHours(0,0,0,0);
+                        const renewal = new Date(memberLookup.next_renewal_date);
+                        remainingDays = Math.ceil((renewal - today) / (1000 * 60 * 60 * 24));
+                      }
+                      
+                      return memberLookup.is_card === 1 ? (
+                        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '12px', borderRadius: '6px', color: '#991b1b', fontWeight: '600' }}>
+                          Session Card: {memberLookup.remaining_taps} Taps Remaining
+                        </div>
+                      ) : (
+                        <div style={{ 
+                          background: remainingDays !== null && remainingDays <= 3 ? '#fffbeb' : '#f0fdf4', 
+                          border: remainingDays !== null && remainingDays <= 3 ? '1px solid #fde68a' : '1px solid #bbf7d0', 
+                          padding: '12px', borderRadius: '6px', 
+                          color: remainingDays !== null && remainingDays <= 3 ? '#b45309' : '#166534', 
+                          fontWeight: '500' 
+                        }}>
+                          Standard Monthly Subscription
+                          {remainingDays !== null && (
+                            <div style={{ fontSize: '13px', marginTop: '4px', fontWeight: '600' }}>
+                              Expires on: {memberLookup.next_renewal_date} 
+                              {' '}
+                              ({remainingDays < 0 
+                                ? `Expired ${Math.abs(remainingDays)} ${Math.abs(remainingDays) === 1 ? 'day' : 'days'} ago` 
+                                : remainingDays === 0 
+                                  ? 'Expires today' 
+                                  : `${remainingDays} ${remainingDays === 1 ? 'day' : 'days'} remaining`})
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="form-group">
