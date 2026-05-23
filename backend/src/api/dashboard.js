@@ -129,6 +129,19 @@ router.get(
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
       const totalCheckins = checkins.length;
+      const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
+      const subscriberCheckins = checkins.filter(c => c.type === 'subscription' || c.type === 'b2b').length;
+      
+      const recentCheckins = checkins.map(c => ({
+        member_name: c.member_name,
+        service: c.service,
+        timestamp: new Date(c.timestamp).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        }),
+        type: c.type
+      }));
 
       const walkInRevenue = payments
         .filter(p => p.type === 'walk_in' || p.type === 'daily')
@@ -163,12 +176,15 @@ router.get(
         date: today,
         snapshot: {
           total_checkins: totalCheckins,
+          walk_in_checkins: walkInCheckins,
+          subscriber_checkins: subscriberCheckins,
           total_revenue: totalRevenue,
           walk_in_revenue: walkInRevenue,
           subscription_revenue: subscriptionRevenue,
           active_subscriptions: activeSubs.count,
           estimated_mrr: estimatedMRR
         },
+        recent_checkins: recentCheckins,
         revenue_breakdown: breakdown,
         revenue_by_service: pieChart,
         reports
@@ -259,6 +275,19 @@ router.get(
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
       const totalCheckins = checkins.length;
+      const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
+      const subscriberCheckins = checkins.filter(c => c.type === 'subscription' || c.type === 'b2b').length;
+
+      const recentCheckins = checkins.slice(0, 50).map(c => ({
+        member_name: c.member_name,
+        service: c.service,
+        timestamp: new Date(c.timestamp).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        }),
+        type: c.type
+      }));
 
       const walkInRevenue = payments
         .filter(p => p.type === 'walk_in' || p.type === 'daily')
@@ -289,12 +318,15 @@ router.get(
         timeframe: 'week',
         snapshot: {
           total_checkins: totalCheckins,
+          walk_in_checkins: walkInCheckins,
+          subscriber_checkins: subscriberCheckins,
           total_revenue: totalRevenue,
           walk_in_revenue: walkInRevenue,
           subscription_revenue: subscriptionRevenue,
           active_subscriptions: activeSubs.count,
           estimated_mrr: estimatedMRR
         },
+        recent_checkins: recentCheckins,
         revenue_breakdown: breakdown,
         revenue_by_service: pieChart,
         reports
@@ -324,6 +356,19 @@ router.get(
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
       const totalCheckins = checkins.length;
+      const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
+      const subscriberCheckins = checkins.filter(c => c.type === 'subscription' || c.type === 'b2b').length;
+
+      const recentCheckins = checkins.slice(0, 50).map(c => ({
+        member_name: c.member_name,
+        service: c.service,
+        timestamp: new Date(c.timestamp).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        }),
+        type: c.type
+      }));
 
       const walkInRevenue = payments
         .filter(p => p.type === 'walk_in' || p.type === 'daily')
@@ -354,12 +399,15 @@ router.get(
         timeframe: 'month',
         snapshot: {
           total_checkins: totalCheckins,
+          walk_in_checkins: walkInCheckins,
+          subscriber_checkins: subscriberCheckins,
           total_revenue: totalRevenue,
           walk_in_revenue: walkInRevenue,
           subscription_revenue: subscriptionRevenue,
           active_subscriptions: activeSubs.count,
           estimated_mrr: estimatedMRR
         },
+        recent_checkins: recentCheckins,
         revenue_breakdown: breakdown,
         revenue_by_service: pieChart,
         reports
@@ -389,6 +437,19 @@ router.get(
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
       const totalCheckins = checkins.length;
+      const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
+      const subscriberCheckins = checkins.filter(c => c.type === 'subscription' || c.type === 'b2b').length;
+
+      const recentCheckins = checkins.slice(0, 50).map(c => ({
+        member_name: c.member_name,
+        service: c.service,
+        timestamp: new Date(c.timestamp).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        }),
+        type: c.type
+      }));
 
       const walkInRevenue = payments
         .filter(p => p.type === 'walk_in' || p.type === 'daily')
@@ -419,12 +480,15 @@ router.get(
         timeframe: 'year',
         snapshot: {
           total_checkins: totalCheckins,
+          walk_in_checkins: walkInCheckins,
+          subscriber_checkins: subscriberCheckins,
           total_revenue: totalRevenue,
           walk_in_revenue: walkInRevenue,
           subscription_revenue: subscriptionRevenue,
           active_subscriptions: activeSubs.count,
           estimated_mrr: estimatedMRR
         },
+        recent_checkins: recentCheckins,
         revenue_breakdown: breakdown,
         revenue_by_service: pieChart,
         reports

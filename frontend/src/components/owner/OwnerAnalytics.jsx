@@ -42,6 +42,17 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
           <div style={{ color: 'var(--text-secondary)' }}>Total Check-ins</div>
         </div>
         <div className="card">
+          <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.walk_in_checkins}</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Walk-ins</div>
+        </div>
+        <div className="card">
+          <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.subscriber_checkins}</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Subscribers Checked-in</div>
+        </div>
+      </div>
+
+      <div className="grid grid-2" style={{ marginBottom: '20px' }}>
+        <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.active_subscriptions}</div>
           <div style={{ color: 'var(--text-secondary)' }}>Active Members</div>
         </div>
@@ -126,6 +137,40 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
               </tbody>
             </table>
           </div>
+        </div>
+        
+        <div className="card">
+          <h2 className="card-title">Recent Check-ins</h2>
+          {dashboardData.recent_checkins && dashboardData.recent_checkins.length ? (
+            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Service</th>
+                    <th>Type</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dashboardData.recent_checkins.map((c, i) => (
+                    <tr key={i}>
+                      <td>{c.member_name}</td>
+                      <td style={{ textTransform: 'capitalize' }}>{c.service}</td>
+                      <td>
+                        <span className={`badge badge-${c.type === 'walk_in' ? 'warning' : 'primary'}`}>
+                          {c.type === 'walk_in' ? 'Walk-in' : 'Subscriber'}
+                        </span>
+                      </td>
+                      <td style={{ color: 'var(--text-secondary)' }}>{c.timestamp}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p style={{ color: 'var(--text-secondary)' }}>No check-ins for this period yet.</p>
+          )}
         </div>
         
         <div className="card">
