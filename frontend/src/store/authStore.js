@@ -14,6 +14,23 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
+// Interceptor to handle 401 Unauthorized responses
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      const currentPath = window.location.pathname + window.location.search;
+      
+      // Prevent infinite redirect loops if already on login
+      if (!currentPath.startsWith('/login')) {
+        useAuthStore.getState().logout();
+        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const useAuthStore = create((set) => ({
   user: null,
   token: null,

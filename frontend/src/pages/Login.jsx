@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import '../styles/login.css';
 
@@ -10,13 +10,19 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login, isAuthenticated, user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const redirectPath = searchParams.get('redirect');
 
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated && user) {
-      navigate(user.role === 'manager' ? '/manager' : '/owner');
+      if (redirectPath) {
+        navigate(redirectPath, { replace: true });
+      } else {
+        navigate(user.role === 'manager' ? '/manager' : '/owner', { replace: true });
+      }
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user, navigate, redirectPath]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
