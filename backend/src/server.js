@@ -65,24 +65,29 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// 3. Start the server listening process
-app.listen(PORT, () => {
-  console.log(`✓ Server running on http://localhost:${PORT}`);
-  console.log('');
-  console.log('📝 Demo Credentials:');
-  console.log('   Manager: manager@demo.com / demo123');
-  console.log('   Owner: owner@demo.com / demo123');
-  console.log('');
-  console.log('📚 API Documentation:');
-  console.log('   POST /api/auth/login');
-  console.log('   POST /api/members (manager only)');
-  console.log('   GET /api/members/search (manager only)');
-  console.log('   POST /api/scan-qr (manager only)');
-  console.log('   POST /api/checkins (manager only)');
-  console.log('   GET /api/checkins/today (manager only)');
-  console.log('   POST /api/members/:id/subscriptions/renew (manager only)');
-  console.log('   GET /api/dashboard/today|week|month|year (owner only)');
-  console.log('   GET /api/trends/7day (owner only)');
-  console.log('   GET /api/revenue/breakdown (owner only)');
-  console.log('   GET /api/members/active (owner only)');
-});
+// 3. Start the server listening process if not running in a serverless environment
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`✓ Server running on http://localhost:${PORT}`);
+    console.log('');
+    console.log('📝 Demo Credentials:');
+    console.log('   Manager: manager@demo.com / demo123');
+    console.log('   Owner: owner@demo.com / demo123');
+    console.log('');
+    console.log('📚 API Documentation:');
+    console.log('   POST /api/auth/login');
+    console.log('   POST /api/members (manager only)');
+    console.log('   GET /api/members/search (manager only)');
+    console.log('   POST /api/scan-qr (manager only)');
+    console.log('   POST /api/checkins (manager only)');
+    console.log('   GET /api/checkins/today (manager only)');
+    console.log('   POST /api/members/:id/subscriptions/renew (manager only)');
+    console.log('   GET /api/dashboard/today|week|month|year (owner only)');
+    console.log('   GET /api/trends/7day (owner only)');
+    console.log('   GET /api/revenue/breakdown (owner only)');
+    console.log('   GET /api/members/active (owner only)');
+  });
+}
+
+// Export for serverless
+export default app;

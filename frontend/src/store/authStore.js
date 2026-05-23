@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:3000/api'
+  baseURL: import.meta.env.MODE === 'production' ? '/api' : 'http://localhost:3000/api'
 });
 
 // Interceptor to attach token

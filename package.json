@@ -1,6 +1,7 @@
 {
   "name": "gym-management-saas",
   "version": "0.1.0",
+  "type": "module",
   "description": "Lightweight gym management SaaS for fitness facilities in East Africa",
   "private": true,
   "workspaces": [

@@ -6,11 +6,13 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load env from root, overriding any host system exports
-dotenv.config({ 
-  path: path.resolve(__dirname, '../../../.env'),
-  override: true 
-});
+// Load env from root, overriding any host system exports (LOCAL ONLY)
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  dotenv.config({ 
+    path: path.resolve(__dirname, '../../../.env'),
+    override: true 
+  });
+}
 
 const { Pool } = pg;
 let pool = null;
