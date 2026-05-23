@@ -26,8 +26,11 @@ function convertSql(sql) {
 export async function initializeDatabase() {
   try {
     console.log('Connecting to:', process.env.DATABASE_URL);
+    const isProd = process.env.NODE_ENV === 'production' || process.env.VERCEL;
+    
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
+      ssl: isProd ? { rejectUnauthorized: false } : false
     });
 
     // Test connection
