@@ -168,13 +168,14 @@ export default function ManagerCheckinFlow({
                       onChange={(e) => setMemberService(e.target.value)}
                       style={{ padding: '12px', fontSize: '15px' }}
                     >
-                      {services
-                        .filter(s => memberLookup.allowed_services?.length ? memberLookup.allowed_services.includes(s.name) : true)
-                        .map((s) => (
-                        <option key={s.id} value={s.name}>
-                          {s.name.charAt(0).toUpperCase() + s.name.slice(1)}
-                        </option>
-                      ))}
+                      {services.map((s) => {
+                        const isIncluded = memberLookup.allowed_services?.length ? memberLookup.allowed_services.includes(s.name) : false;
+                        return (
+                          <option key={s.id} value={s.name}>
+                            {s.name.charAt(0).toUpperCase() + s.name.slice(1)} {isIncluded ? '(Included)' : `(Extra: ${Number(s.price_daily).toLocaleString()} RWF)`}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
 

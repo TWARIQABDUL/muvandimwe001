@@ -155,16 +155,27 @@ export default function ManagerDashboard() {
     e.preventDefault();
     if (!memberLookup) return;
 
+    const isIncluded = memberLookup.allowed_services?.includes(memberService);
+    let type = 'subscription';
+    let amount = 0;
+
+    if (!isIncluded) {
+      type = 'daily';
+      const serviceData = services.find(s => s.name === memberService);
+      amount = Number(serviceData?.price_daily) || 0;
+    }
+
     try {
       setLoading(true);
       setError(null);
       setMessage(null);
       await api.post('/checkins', {
         member_id: memberLookup.id,
-        type: 'subscription',
-        service: memberService
+        type,
+        service: memberService,
+        amount
       });
-      setMessage(`${memberLookup.name} checked in to ${memberService}`);
+      setMessage(`${memberLookup.name} checked in to ${memberService}${!isIncluded ? ` (Paid ${amount.toLocaleString()} RWF)` : ''}`);
       setMemberLookup(null);
       setQrCode('');
       fetchDashboard();
