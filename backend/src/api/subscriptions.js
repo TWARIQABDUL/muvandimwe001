@@ -18,7 +18,7 @@ router.get(
       const subscriptions = await db.all(
         `SELECT id, name, monthly_fee, included_services
          FROM subscriptions
-         WHERE gym_id = ?
+         WHERE gym_id = ? AND active = 1
          ORDER BY monthly_fee ASC`,
         [gym_id]
       );

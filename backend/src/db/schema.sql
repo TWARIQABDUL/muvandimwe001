@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   name TEXT NOT NULL,
   monthly_fee DECIMAL(10, 2) NOT NULL,
   included_services TEXT,
+  active INTEGER DEFAULT 1,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (gym_id) REFERENCES gyms(id),
   UNIQUE (gym_id, name)
