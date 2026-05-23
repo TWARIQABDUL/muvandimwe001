@@ -7,7 +7,7 @@ export default function OwnerCheckins({ data }) {
     <div className="checkins-tab">
       <div className="card">
         <h2 className="card-title">Recent Check-in Activity</h2>
-        <div className="grid-1">
+        <div className="grid grid-2">
           <div style={{ marginBottom: '30px' }}>
             <h3 style={{ fontSize: '15px', color: 'var(--text-primary)', marginBottom: '10px' }}>New Subscriber Sign-ups</h3>
             {reports?.new_subscribers?.length ? (

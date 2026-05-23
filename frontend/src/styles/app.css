@@ -182,14 +182,14 @@ thead {
 }
 
 th {
-  padding: 12px;
+  padding: 20px;
   text-align: left;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 td {
-  padding: 12px;
+  padding: 20px;
   border-bottom: 1px solid var(--border-color);
 }
 

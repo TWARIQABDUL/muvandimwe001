@@ -289,7 +289,7 @@ export default function ManagerCheckinFlow({
               </tr>
             </thead>
             <tbody>
-              {dashboardData.recent_checkins.slice(0, 5).map((item, index) => (
+              {dashboardData.recent_checkins.slice(0, 20).map((item, index) => (
                 <tr key={`${item.member_name}-${index}`}>
                   <td><strong>{item.member_name || 'Walk-in'}</strong></td>
                   <td style={{ textTransform: 'capitalize' }}>{item.service}</td>

@@ -85,7 +85,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
         </div>
       </div>
 
-      <div className="grid grid-2">
+      <div style={{ marginBottom: '20px' }}>
         <div className="card">
           <h2 className="card-title">Revenue Breakdown by Service</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -138,7 +138,9 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
             </table>
           </div>
         </div>
+      </div>
         
+      <div className="grid grid-2">
         <div className="card">
           <h2 className="card-title">Recent Check-ins</h2>
           {dashboardData.recent_checkins && dashboardData.recent_checkins.length ? (
