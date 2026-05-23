@@ -10,6 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
+    "db:seed:prod": "tsx scripts/seed-prod.ts",
     "db:setup": "npm run db:migrate && npm run db:seed"
   },
   "dependencies": {
