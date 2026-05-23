@@ -127,67 +127,70 @@ export default function OwnerPlans({ services }) {
         {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">{error}</div>}
         {success && <div className="bg-emerald-50 text-emerald-600 p-3 rounded-lg mb-4 text-sm">{success}</div>}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid-2">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Package Name</label>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="grid grid-2">
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Package Name</label>
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="input-field"
                 placeholder="e.g. Gold Tier"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Fee (RWF)</label>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Monthly Fee (RWF)</label>
               <input
                 type="number"
                 required
                 min="0"
                 value={monthlyFee}
                 onChange={(e) => setMonthlyFee(e.target.value)}
-                className="input-field"
                 placeholder="e.g. 40000"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Included Services</label>
+          <div className="form-group">
+            <label>Included Services</label>
             {services.length === 0 ? (
-              <p className="text-sm text-amber-600">You need to create Services first before creating packages.</p>
+              <p style={{ color: 'var(--warning-color)', fontSize: '14px' }}>You need to create Services first before creating packages.</p>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
                 {services.map(service => (
                   <label 
                     key={service.id} 
-                    className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                      selectedServices.includes(service.name) 
-                        ? 'bg-blue-50 border-blue-200' 
-                        : 'hover:bg-gray-50'
-                    }`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '10px',
+                      border: `1px solid ${selectedServices.includes(service.name) ? 'var(--primary-color)' : 'var(--border-color)'}`,
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      backgroundColor: selectedServices.includes(service.name) ? 'rgba(59, 130, 246, 0.05)' : 'var(--bg-white)',
+                      transition: 'all 0.2s'
+                    }}
                   >
                     <input
                       type="checkbox"
-                      className="mr-3 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                      style={{ marginRight: '10px', width: 'auto' }}
                       checked={selectedServices.includes(service.name)}
                       onChange={() => handleServiceToggle(service.name)}
                     />
-                    <span className="text-sm font-medium capitalize text-gray-800">{service.name}</span>
+                    <span style={{ fontSize: '14px', fontWeight: '500', textTransform: 'capitalize' }}>{service.name}</span>
                   </label>
                 ))}
               </div>
             )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '15px', borderTop: '1px solid var(--border-color)' }}>
             {isEditing && (
               <button
                 type="button"
                 onClick={resetForm}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium"
+                className="btn-secondary"
               >
                 Cancel
               </button>
@@ -195,7 +198,8 @@ export default function OwnerPlans({ services }) {
             <button
               type="submit"
               disabled={services.length === 0}
-              className="btn-primary flex items-center gap-2 disabled:opacity-50"
+              className="btn-primary flex gap-10"
+              style={{ opacity: services.length === 0 ? 0.5 : 1 }}
             >
               {isEditing ? <Check size={18} /> : <Plus size={18} />}
               {isEditing ? 'Save Changes' : 'Create Package'}
@@ -230,43 +234,40 @@ export default function OwnerPlans({ services }) {
                   <tr key={plan.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                     <td className="p-4 font-medium text-gray-900">{plan.name}</td>
                     <td className="p-4 font-mono text-gray-700">RWF {plan.monthly_fee.toLocaleString()}</td>
-                    <td className="p-4">
-                      <div className="flex flex-wrap gap-1">
+                    <td style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                         {plan.included_services?.split(',').map(s => (
-                          <span key={s} className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs capitalize">
+                          <span key={s} className="badge" style={{ backgroundColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
                             {s}
                           </span>
                         ))}
-                      </div>
                     </td>
-                    <td className="p-4">
+                    <td>
                       <button
                         onClick={() => toggleActiveStatus(plan.id, plan.active)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                          plan.active === 1 
-                            ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' 
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
+                        className={`badge ${plan.active === 1 ? 'badge-success' : 'badge-warning'}`}
+                        style={{ border: 'none', cursor: 'pointer', padding: '6px 12px' }}
                         title="Click to toggle status"
                       >
                         {plan.active === 1 ? 'Active' : 'Deactivated'}
                       </button>
                     </td>
-                    <td className="p-4">
-                      <div className="flex items-center justify-end gap-2">
+                    <td>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                         <button
                           onClick={() => handleEdit(plan)}
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="btn-secondary btn-small"
+                          style={{ padding: '6px' }}
                           title="Edit"
                         >
-                          <Edit2 size={16} />
+                          <Edit2 size={16} color="var(--primary-color)" />
                         </button>
                         <button
                           onClick={() => handleDelete(plan.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="btn-secondary btn-small"
+                          style={{ padding: '6px', borderColor: 'var(--danger-color)' }}
                           title="Delete Permanently"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={16} color="var(--danger-color)" />
                         </button>
                       </div>
                     </td>
