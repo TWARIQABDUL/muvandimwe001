@@ -9,6 +9,7 @@ import OwnerAnalytics from '../components/owner/OwnerAnalytics.jsx';
 import OwnerCheckins from '../components/owner/OwnerCheckins.jsx';
 import OwnerMembers from '../components/owner/OwnerMembers.jsx';
 import OwnerServices from '../components/owner/OwnerServices.jsx';
+import OwnerCoupons from '../components/owner/OwnerCoupons.jsx';
 
 export default function OwnerDashboard() {
   const { user } = useAuth();
@@ -115,7 +116,8 @@ export default function OwnerDashboard() {
     { id: 'analytics', label: 'Analytics Overview' },
     { id: 'checkins', label: 'Recent Check-ins' },
     { id: 'members', label: 'Members Directory' },
-    { id: 'services', label: 'Manage Services' }
+    { id: 'services', label: 'Manage Services' },
+    { id: 'coupons', label: 'Manage Coupons' }
   ];
 
   return (
@@ -127,7 +129,7 @@ export default function OwnerDashboard() {
         {message && <div className="alert alert-success" style={{ marginBottom: '20px' }}>{message}</div>}
         {error && <div className="alert alert-error" style={{ marginBottom: '20px' }}>{error}</div>}
 
-        {loading && activeTab !== 'services' ? (
+        {loading && activeTab !== 'services' && activeTab !== 'coupons' ? (
           <div className="card text-center" style={{ padding: '60px 20px' }}>
             <div className="spinner"></div>
             <p style={{ marginTop: '10px' }}>Analyzing business metrics...</p>
@@ -161,6 +163,10 @@ export default function OwnerDashboard() {
                 handleDeleteService={handleDeleteService}
                 actionLoading={actionLoading}
               />
+            )}
+
+            {activeTab === 'coupons' && (
+              <OwnerCoupons setError={setError} setMessage={setMessage} />
             )}
           </>
         )}

@@ -1,11 +1,22 @@
 import express from 'express';
 import { getDatabase } from '../db/init.js';
-import { authMiddleware, roleMiddleware } from '../middleware/auth.js';
+import { authMiddleware, roleMiddleware, gymIsolationMiddleware } from '../middleware/auth.js';
 import { getCheckinsForPeriod } from './checkins.js';
 import { getPendingRenewals } from './subscriptions.js';
 
 const router = express.Router();
 const db = getDatabase();
+
+// Helper to retrieve payments for a period
+async function getPaymentsForPeriod(gymId, startDate, endDate) {
+  const query = startDate === endDate
+    ? `SELECT * FROM payments WHERE gym_id = ? AND DATE(timestamp) = ?`
+    : `SELECT * FROM payments WHERE gym_id = ? AND DATE(timestamp) BETWEEN ? AND ?`;
+  const params = startDate === endDate
+    ? [gymId, startDate]
+    : [gymId, startDate, endDate];
+  return await db.all(query, params);
+}
 
 // Helper function to get date ranges
 function getDateRange(timeframe) {
@@ -35,26 +46,33 @@ function getDateRange(timeframe) {
   };
 }
 
-// Helper function to calculate revenue breakdown
-function calculateRevenueBreakdown(checkins) {
+// Helper function to calculate revenue breakdown based on true payments
+function calculateRevenueBreakdown(payments) {
   const breakdown = {
     gym: { walk_in: 0, daily: 0, subscription: 0, b2b: 0, total: 0 },
     sauna: { walk_in: 0, daily: 0, subscription: 0, b2b: 0, total: 0 },
     pool: { walk_in: 0, daily: 0, subscription: 0, b2b: 0, total: 0 }
   };
 
-  checkins.forEach(c => {
-    if (breakdown[c.service]) {
-      if (c.type === 'walk_in' && c.amount) {
-        breakdown[c.service].walk_in += c.amount;
-      } else if (c.type === 'daily' && c.amount) {
-        breakdown[c.service].daily += c.amount;
-      } else if (c.type === 'subscription') {
-        breakdown[c.service].subscription += 0; // Subscriptions don't add per check-in
-      } else if (c.type === 'b2b' && c.amount) {
-        breakdown[c.service].b2b += c.amount;
+  payments.forEach(p => {
+    const services = p.service.split(',');
+    const amount = Number(p.amount) || 0;
+    const share = amount / services.length;
+
+    services.forEach(s => {
+      const cleanService = s.trim().toLowerCase();
+      if (breakdown[cleanService]) {
+        if (p.type === 'walk_in') {
+          breakdown[cleanService].walk_in += share;
+        } else if (p.type === 'daily') {
+          breakdown[cleanService].daily += share;
+        } else if (p.type === 'subscription_signup' || p.type === 'subscription_renewal') {
+          breakdown[cleanService].subscription += share;
+        } else if (p.type === 'b2b') {
+          breakdown[cleanService].b2b += share;
+        }
       }
-    }
+    });
   });
 
   // Calculate totals
@@ -97,20 +115,28 @@ router.get(
       const isOwner = req.user.role === 'owner';
 
       if (!isOwner) {
-        // Manager gets simplified today view
         return getManagerTodayDashboard(req, res);
       }
 
       const today = new Date().toISOString().split('T')[0];
 
-      // Get check-ins for today
+      // Get check-ins and payments for today
       const checkins = await getCheckinsForPeriod(gym_id, today, today);
+      const payments = await getPaymentsForPeriod(gym_id, today, today);
 
-      const breakdown = calculateRevenueBreakdown(checkins);
+      const breakdown = calculateRevenueBreakdown(payments);
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
       const totalCheckins = checkins.length;
+
+      const walkInRevenue = payments
+        .filter(p => p.type === 'walk_in' || p.type === 'daily')
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const subscriptionRevenue = payments
+        .filter(p => p.type === 'subscription_signup' || p.type === 'subscription_renewal')
+        .reduce((sum, p) => sum + p.amount, 0);
 
       // Get active subscriptions count
       const activeSubs = await db.get(
@@ -119,7 +145,7 @@ router.get(
         [gym_id]
       );
 
-      // Calculate MRR (simplified: active subscriptions * average fee)
+      // Calculate MRR
       const subsData = await db.all(
         `SELECT s.monthly_fee FROM member_subscriptions ms
          JOIN subscriptions s ON ms.subscription_id = s.id
@@ -138,6 +164,8 @@ router.get(
         snapshot: {
           total_checkins: totalCheckins,
           total_revenue: totalRevenue,
+          walk_in_revenue: walkInRevenue,
+          subscription_revenue: subscriptionRevenue,
           active_subscriptions: activeSubs.count,
           estimated_mrr: estimatedMRR
         },
@@ -158,13 +186,22 @@ async function getManagerTodayDashboard(req, res) {
     const { gym_id } = req.user;
     const today = new Date().toISOString().split('T')[0];
 
-    // Get check-ins for today
+    // Get check-ins and payments for today
     const checkins = await getCheckinsForPeriod(gym_id, today, today);
+    const payments = await getPaymentsForPeriod(gym_id, today, today);
 
     // Get pending renewals
     const pendingRenewals = await getPendingRenewals(gym_id);
 
-    const totalRevenue = checkins.reduce((sum, c) => sum + (c.amount || 0), 0);
+    const totalRevenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const walkInRevenue = payments
+      .filter(p => p.type === 'walk_in' || p.type === 'daily')
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    const subscriptionRevenue = payments
+      .filter(p => p.type === 'subscription_signup' || p.type === 'subscription_renewal')
+      .reduce((sum, p) => sum + p.amount, 0);
+
     const totalCheckins = checkins.length;
 
     // Get recent check-ins for display
@@ -189,7 +226,9 @@ async function getManagerTodayDashboard(req, res) {
       summary: {
         checkins_today: totalCheckins,
         revenue_today: totalRevenue,
-        renewals_done: 0, // Would need separate tracking
+        walk_in_revenue_today: walkInRevenue,
+        subscription_revenue_today: subscriptionRevenue,
+        renewals_done: payments.filter(p => p.type === 'subscription_renewal').length,
         renewals_pending: pendingRenewals.length
       },
       pending_renewals: pendingRenewals,
@@ -213,12 +252,21 @@ router.get(
       const dateRange = getDateRange('week');
 
       const checkins = await getCheckinsForPeriod(gym_id, dateRange.start, dateRange.end);
+      const payments = await getPaymentsForPeriod(gym_id, dateRange.start, dateRange.end);
 
-      const breakdown = calculateRevenueBreakdown(checkins);
+      const breakdown = calculateRevenueBreakdown(payments);
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
       const totalCheckins = checkins.length;
+
+      const walkInRevenue = payments
+        .filter(p => p.type === 'walk_in' || p.type === 'daily')
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const subscriptionRevenue = payments
+        .filter(p => p.type === 'subscription_signup' || p.type === 'subscription_renewal')
+        .reduce((sum, p) => sum + p.amount, 0);
 
       const activeSubs = await db.get(
         `SELECT COUNT(*) as count FROM member_subscriptions 
@@ -242,6 +290,8 @@ router.get(
         snapshot: {
           total_checkins: totalCheckins,
           total_revenue: totalRevenue,
+          walk_in_revenue: walkInRevenue,
+          subscription_revenue: subscriptionRevenue,
           active_subscriptions: activeSubs.count,
           estimated_mrr: estimatedMRR
         },
@@ -267,12 +317,21 @@ router.get(
       const dateRange = getDateRange('month');
 
       const checkins = await getCheckinsForPeriod(gym_id, dateRange.start, dateRange.end);
+      const payments = await getPaymentsForPeriod(gym_id, dateRange.start, dateRange.end);
 
-      const breakdown = calculateRevenueBreakdown(checkins);
+      const breakdown = calculateRevenueBreakdown(payments);
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
       const totalCheckins = checkins.length;
+
+      const walkInRevenue = payments
+        .filter(p => p.type === 'walk_in' || p.type === 'daily')
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const subscriptionRevenue = payments
+        .filter(p => p.type === 'subscription_signup' || p.type === 'subscription_renewal')
+        .reduce((sum, p) => sum + p.amount, 0);
 
       const activeSubs = await db.get(
         `SELECT COUNT(*) as count FROM member_subscriptions 
@@ -296,6 +355,8 @@ router.get(
         snapshot: {
           total_checkins: totalCheckins,
           total_revenue: totalRevenue,
+          walk_in_revenue: walkInRevenue,
+          subscription_revenue: subscriptionRevenue,
           active_subscriptions: activeSubs.count,
           estimated_mrr: estimatedMRR
         },
@@ -321,12 +382,21 @@ router.get(
       const dateRange = getDateRange('year');
 
       const checkins = await getCheckinsForPeriod(gym_id, dateRange.start, dateRange.end);
+      const payments = await getPaymentsForPeriod(gym_id, dateRange.start, dateRange.end);
 
-      const breakdown = calculateRevenueBreakdown(checkins);
+      const breakdown = calculateRevenueBreakdown(payments);
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
       const totalCheckins = checkins.length;
+
+      const walkInRevenue = payments
+        .filter(p => p.type === 'walk_in' || p.type === 'daily')
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const subscriptionRevenue = payments
+        .filter(p => p.type === 'subscription_signup' || p.type === 'subscription_renewal')
+        .reduce((sum, p) => sum + p.amount, 0);
 
       const activeSubs = await db.get(
         `SELECT COUNT(*) as count FROM member_subscriptions 
@@ -350,6 +420,8 @@ router.get(
         snapshot: {
           total_checkins: totalCheckins,
           total_revenue: totalRevenue,
+          walk_in_revenue: walkInRevenue,
+          subscription_revenue: subscriptionRevenue,
           active_subscriptions: activeSubs.count,
           estimated_mrr: estimatedMRR
         },
@@ -364,7 +436,7 @@ router.get(
   }
 );
 
-// Helper to fetch subscriber reports (new registrations vs old checked in subscribers)
+// Helper to fetch subscriber reports
 async function getSubscriberReports(gymId, startDate, endDate) {
   try {
     // 1. New Subscribers (registrations during this period)
@@ -378,7 +450,7 @@ async function getSubscriberReports(gymId, startDate, endDate) {
       [gymId, startDate, endDate]
     );
 
-    // 2. Old checked in subscribers (subscribers checked in during period but whose subscription start date was before startDate)
+    // 2. Old checked in subscribers
     const oldCheckedIn = await db.all(
       `SELECT DISTINCT m.id, m.name, s.name as plan, c.service, c.timestamp
        FROM checkins c

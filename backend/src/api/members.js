@@ -70,9 +70,15 @@ router.post(
       let discountPercent = 0;
       if (coupon) {
         const cleanCoupon = coupon.trim().toUpperCase();
-        if (cleanCoupon === '10OFF') discountPercent = 10;
-        else if (cleanCoupon === '15OFF') discountPercent = 15;
-        else if (cleanCoupon === '20OFF') discountPercent = 20;
+        const foundCoupon = await db.get(
+          `SELECT discount_percent FROM coupons WHERE gym_id = ? AND code = ? AND active = 1`,
+          [gym_id, cleanCoupon]
+        );
+        if (foundCoupon) {
+          discountPercent = foundCoupon.discount_percent;
+        } else {
+          return res.status(400).json({ error: 'Invalid or inactive coupon code' });
+        }
       }
       const discountAmount = Math.round(baseFee * (discountPercent / 100));
       const finalFee = baseFee - discountAmount;
@@ -133,6 +139,14 @@ router.post(
       await db.run(
         `UPDATE members SET current_subscription_id = ? WHERE id = ?`,
         [memberSubId, memberId]
+      );
+
+      // Log payment transaction
+      const paymentId = uuidv4();
+      await db.run(
+        `INSERT INTO payments (id, gym_id, member_id, amount, type, service, timestamp)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [paymentId, gym_id, memberId, finalFee, 'subscription_signup', servicesStr, new Date().toISOString()]
       );
 
       res.status(201).json({

@@ -1,7 +1,6 @@
 import express from 'express';
 import { getDatabase } from '../db/init.js';
-import { authMiddleware, roleMiddleware } from '../middleware/auth.js';
-import { getCheckinsForPeriod } from './checkins.js';
+import { authMiddleware, roleMiddleware, gymIsolationMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 const db = getDatabase();
@@ -11,6 +10,7 @@ router.get(
   '/7day',
   authMiddleware,
   roleMiddleware(['owner']),
+  gymIsolationMiddleware,
   async (req, res) => {
     try {
       const { gym_id } = req.user;
@@ -21,17 +21,22 @@ router.get(
       const startStr = start.toISOString().split('T')[0];
       const endStr = end.toISOString().split('T')[0];
 
-      const checkins = await getCheckinsForPeriod(gym_id, startStr, endStr);
+      // Query payments for 7-day trend
+      const payments = await db.all(
+        `SELECT amount, timestamp FROM payments
+         WHERE gym_id = ? AND DATE(timestamp) BETWEEN ? AND ?`,
+        [gym_id, startStr, endStr]
+      );
 
       // Group by date and sum revenue
       const dailyRevenue = {};
 
-      checkins.forEach(c => {
-        const dateStr = c.timestamp.split('T')[0];
+      payments.forEach(p => {
+        const dateStr = p.timestamp.split('T')[0];
         if (!dailyRevenue[dateStr]) {
           dailyRevenue[dateStr] = 0;
         }
-        dailyRevenue[dateStr] += c.amount || 0;
+        dailyRevenue[dateStr] += p.amount || 0;
       });
 
       // Create array for last 7 days
@@ -59,6 +64,7 @@ router.get(
   '/breakdown',
   authMiddleware,
   roleMiddleware(['owner']),
+  gymIsolationMiddleware,
   async (req, res) => {
     try {
       const { gym_id } = req.user;
@@ -88,27 +94,39 @@ router.get(
       startDate = start.toISOString().split('T')[0];
       endDate = end.toISOString().split('T')[0];
 
-      const checkins = await getCheckinsForPeriod(gym_id, startDate, endDate);
+      // Query payments in timeframe
+      const payments = await db.all(
+        `SELECT * FROM payments
+         WHERE gym_id = ? AND DATE(timestamp) BETWEEN ? AND ?`,
+        [gym_id, startDate, endDate]
+      );
 
-      // Calculate breakdown
+      // Calculate breakdown compatible with Recharts tables
       const breakdown = {
         gym: { walk_in: 0, daily: 0, subscription: 0, b2b: 0, total: 0 },
         sauna: { walk_in: 0, daily: 0, subscription: 0, b2b: 0, total: 0 },
         pool: { walk_in: 0, daily: 0, subscription: 0, b2b: 0, total: 0 }
       };
 
-      checkins.forEach(c => {
-        if (breakdown[c.service]) {
-          if (c.type === 'walk_in' && c.amount) {
-            breakdown[c.service].walk_in += c.amount;
-          } else if (c.type === 'daily' && c.amount) {
-            breakdown[c.service].daily += c.amount;
-          } else if (c.type === 'subscription') {
-            breakdown[c.service].subscription += 0;
-          } else if (c.type === 'b2b' && c.amount) {
-            breakdown[c.service].b2b += c.amount;
+      payments.forEach(p => {
+        const services = p.service.split(',');
+        const amount = Number(p.amount) || 0;
+        const share = amount / services.length;
+
+        services.forEach(s => {
+          const cleanService = s.trim().toLowerCase();
+          if (breakdown[cleanService]) {
+            if (p.type === 'walk_in') {
+              breakdown[cleanService].walk_in += share;
+            } else if (p.type === 'daily') {
+              breakdown[cleanService].daily += share;
+            } else if (p.type === 'subscription_signup' || p.type === 'subscription_renewal') {
+              breakdown[cleanService].subscription += share;
+            } else if (p.type === 'b2b') {
+              breakdown[cleanService].b2b += share;
+            }
           }
-        }
+        });
       });
 
       // Calculate totals
@@ -133,6 +151,7 @@ router.get(
   '/active',
   authMiddleware,
   roleMiddleware(['owner']),
+  gymIsolationMiddleware,
   async (req, res) => {
     try {
       const { gym_id } = req.user;

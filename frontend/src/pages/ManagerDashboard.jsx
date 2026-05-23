@@ -18,6 +18,8 @@ export default function ManagerDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [coupons, setCoupons] = useState([]);
 
   // Check-in state
   const [qrCode, setQrCode] = useState('');
@@ -44,7 +46,17 @@ export default function ManagerDashboard() {
   useEffect(() => {
     fetchDashboard();
     fetchServices();
+    fetchCoupons();
   }, []);
+
+  const fetchCoupons = async () => {
+    try {
+      const response = await api.get('/coupons');
+      setCoupons(response.data.coupons || []);
+    } catch (err) {
+      console.warn('Could not load coupons directory:', err.message || err);
+    }
+  };
 
   const fetchServices = async () => {
     try {
@@ -245,6 +257,7 @@ export default function ManagerDashboard() {
       setTaps(20);
       setCoupon('');
       fetchDashboard();
+      fetchCoupons(); // Refresh active coupons pool
       setTimeout(() => setMessage(null), 5000);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to register member');
@@ -280,9 +293,10 @@ export default function ManagerDashboard() {
 
     let discountPct = 0;
     const cleanCoupon = coupon.trim().toUpperCase();
-    if (cleanCoupon === '10OFF') discountPct = 10;
-    else if (cleanCoupon === '15OFF') discountPct = 15;
-    else if (cleanCoupon === '20OFF') discountPct = 20;
+    const matchedCoupon = coupons.find(c => c.code === cleanCoupon && c.active === 1);
+    if (matchedCoupon) {
+      discountPct = matchedCoupon.discount_percent;
+    }
 
     const discountAmt = Math.round(sum * (discountPct / 100));
     const finalAmt = sum - discountAmt;

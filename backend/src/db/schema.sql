@@ -108,3 +108,36 @@ CREATE TABLE IF NOT EXISTS employers (
   FOREIGN KEY (gym_id) REFERENCES gyms(id),
   UNIQUE (gym_id, name)
 );
+
+-- Payments log (tracks all dynamic income streams)
+CREATE TABLE IF NOT EXISTS payments (
+  id TEXT PRIMARY KEY,
+  gym_id TEXT NOT NULL,
+  member_id TEXT, -- NULL for walk-ins
+  amount DECIMAL(10, 2) NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('subscription_signup', 'subscription_renewal', 'walk_in', 'daily')),
+  service TEXT NOT NULL, -- e.g. "gym", "sauna,pool"
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (gym_id) REFERENCES gyms(id),
+  FOREIGN KEY (member_id) REFERENCES members(id)
+);
+
+-- Gym Coupon Codes
+CREATE TABLE IF NOT EXISTS coupons (
+  id TEXT PRIMARY KEY,
+  gym_id TEXT NOT NULL,
+  code TEXT NOT NULL,
+  discount_percent INTEGER NOT NULL CHECK (discount_percent BETWEEN 1 AND 100),
+  active INTEGER DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (gym_id) REFERENCES gyms(id),
+  UNIQUE (gym_id, code)
+);
+
+-- Index for fast queries
+CREATE INDEX IF NOT EXISTS idx_checkins_gym_timestamp ON checkins(gym_id, timestamp);
+CREATE INDEX IF NOT EXISTS idx_members_gym ON members(gym_id);
+CREATE INDEX IF NOT EXISTS idx_users_gym ON users(gym_id);
+CREATE INDEX IF NOT EXISTS idx_payments_gym_timestamp ON payments(gym_id, timestamp);
+CREATE INDEX IF NOT EXISTS idx_coupons_gym ON coupons(gym_id);
+

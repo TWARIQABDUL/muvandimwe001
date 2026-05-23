@@ -22,6 +22,7 @@ import subscriptionsRoutes from './api/subscriptions.js';
 import dashboardRoutes from './api/dashboard.js';
 import analyticsRoutes from './api/analytics.js';
 import servicesRoutes from './api/services.js';
+import couponsRoutes from './api/coupons.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -51,6 +52,7 @@ app.use('/api/trends', analyticsRoutes);
 app.use('/api/revenue', analyticsRoutes);
 app.use('/api/members', analyticsRoutes);
 app.use('/api/services', servicesRoutes);
+app.use('/api/coupons', couponsRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -170,6 +170,18 @@ async function seedDatabase() {
         [memberSubId, gymId, memberId, subscriptionId, today, nextMonth, 'active']
       );
 
+      // Log subscription signup payment
+      const fees = [40000, 70000, 100000];
+      const includedServices = ['gym', 'gym,sauna', 'gym,sauna,pool'];
+      const fee = fees[tierIndex];
+      const service = includedServices[tierIndex];
+      const paymentId = uuidv4();
+      await db.run(
+        `INSERT INTO payments (id, gym_id, member_id, amount, type, service, timestamp)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [paymentId, gymId, memberId, fee, 'subscription_signup', service, today + ' 09:00:00']
+      );
+
       // Update member with current subscription
       await db.run(
         `UPDATE members SET current_subscription_id = ? WHERE id = ?`,
@@ -210,8 +222,34 @@ async function seedDatabase() {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [checkInId, gymId, memberId, checkIn.name, checkIn.type, checkIn.service, checkIn.amount, timestamp]
       );
+
+      // Log walk-in payment
+      if (checkIn.type === 'walk_in') {
+        const pId = uuidv4();
+        await db.run(
+          `INSERT INTO payments (id, gym_id, member_id, amount, type, service, timestamp)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [pId, gymId, null, checkIn.amount, 'walk_in', checkIn.service, timestamp]
+        );
+      }
     }
     console.log(`  Created 15 sample check-ins for today`);
+
+    // 7. Seed Demo Coupons
+    const demoCoupons = [
+      { code: '10OFF', percent: 10 },
+      { code: '15OFF', percent: 15 },
+      { code: '20OFF', percent: 20 }
+    ];
+    for (const cp of demoCoupons) {
+      await db.run(
+        `INSERT INTO coupons (id, gym_id, code, discount_percent, active)
+         VALUES (?, ?, ?, ?, ?)`,
+        [uuidv4(), gymId, cp.code, cp.percent, 1]
+      );
+    }
+    console.log(`  Created 3 demo coupons: 10OFF, 15OFF, 20OFF`);
+
 
   } catch (err) {
     console.error('❌ Seeding failed:', err.message);

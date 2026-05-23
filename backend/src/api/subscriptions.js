@@ -44,7 +44,7 @@ router.post(
 
       // Get current subscription
       const member = await db.get(
-        `SELECT m.id, m.name, ms.id as sub_id, ms.next_renewal_date, s.name as sub_name
+        `SELECT m.id, m.name, ms.id as sub_id, ms.next_renewal_date, s.name as sub_name, s.monthly_fee, s.included_services
          FROM members m
          LEFT JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
          LEFT JOIN subscriptions s ON ms.subscription_id = s.id
@@ -71,6 +71,22 @@ router.post(
          SET next_renewal_date = ?, status = 'active'
          WHERE id = ?`,
         [newRenewalDateStr, member.sub_id]
+      );
+
+      // Log subscription renewal payment
+      const paymentId = uuidv4();
+      await db.run(
+        `INSERT INTO payments (id, gym_id, member_id, amount, type, service, timestamp)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          paymentId,
+          gym_id,
+          memberId,
+          member.monthly_fee || 0,
+          'subscription_renewal',
+          member.included_services || 'gym',
+          new Date().toISOString()
+        ]
       );
 
       res.json({

@@ -36,16 +36,10 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
         </div>
       </div>
 
-      <div className="grid grid-4">
+      <div className="grid grid-3" style={{ marginBottom: '20px' }}>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.total_checkins}</div>
           <div style={{ color: 'var(--text-secondary)' }}>Total Check-ins</div>
-        </div>
-        <div className="card">
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--success-color)' }}>
-            {(dashboardData.snapshot.total_revenue || 0).toLocaleString()} RWF
-          </div>
-          <div style={{ color: 'var(--text-secondary)' }}>Payer Revenue</div>
         </div>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.active_subscriptions}</div>
@@ -56,6 +50,27 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
             {Number(dashboardData.snapshot.estimated_mrr).toLocaleString()} RWF
           </div>
           <div style={{ color: 'var(--text-secondary)' }}>Estimated MRR</div>
+        </div>
+      </div>
+
+      <div className="grid grid-3" style={{ marginBottom: '20px' }}>
+        <div className="card" style={{ borderLeft: '4px solid var(--warning-color)' }}>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--warning-color)' }}>
+            {(dashboardData.snapshot.walk_in_revenue || 0).toLocaleString()} RWF
+          </div>
+          <div style={{ color: 'var(--text-secondary)' }}>Walk-in Cash (At Door)</div>
+        </div>
+        <div className="card" style={{ borderLeft: '4px solid var(--primary-color)' }}>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary-color)' }}>
+            {(dashboardData.snapshot.subscription_revenue || 0).toLocaleString()} RWF
+          </div>
+          <div style={{ color: 'var(--text-secondary)' }}>Subscription Signup & Renewal Cash</div>
+        </div>
+        <div className="card" style={{ borderLeft: '4px solid var(--success-color)' }}>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--success-color)' }}>
+            {(dashboardData.snapshot.total_revenue || 0).toLocaleString()} RWF
+          </div>
+          <div style={{ color: 'var(--text-secondary)' }}>Total Cash Collected</div>
         </div>
       </div>
 

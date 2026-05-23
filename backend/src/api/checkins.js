@@ -89,6 +89,16 @@ router.post(
         [checkInId, gym_id, member_id || null, finalMemberName, type, service, amount || null, now]
       );
 
+      // Log payment transaction if it's cash walk-in or daily pass
+      if (type === 'walk_in' || type === 'daily') {
+        const paymentId = uuidv4();
+        await db.run(
+          `INSERT INTO payments (id, gym_id, member_id, amount, type, service, timestamp)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [paymentId, gym_id, member_id || null, amount || 0, type, service, now]
+        );
+      }
+
       // Format timestamp for response
       const checkInTime = new Date(now);
       const timeString = checkInTime.toLocaleTimeString('en-US', {
