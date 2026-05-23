@@ -36,7 +36,9 @@ export default function ManagerDashboard() {
   const [selectedServices, setSelectedServices] = useState(['gym']);
   const [isCard, setIsCard] = useState(false);
   const [taps, setTaps] = useState(20);
-  const [coupon, setCoupon] = useState('');
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponMessage, setCouponMessage] = useState(null);
   const [newMemberQr, setNewMemberQr] = useState(null);
 
   useEffect(() => {
@@ -257,7 +259,7 @@ export default function ManagerDashboard() {
         services: selectedServices,
         is_card: isCard ? 1 : 0,
         taps: isCard ? Number(taps) : null,
-        coupon: coupon || null
+        coupon: appliedCoupon ? appliedCoupon.code : null
       });
 
       setMessage(`${response.data.name} registered successfully`);
@@ -266,7 +268,9 @@ export default function ManagerDashboard() {
       setSelectedServices(['gym']);
       setIsCard(false);
       setTaps(20);
-      setCoupon('');
+      setCouponCode('');
+      setAppliedCoupon(null);
+      setCouponMessage(null);
       fetchDashboard();
       fetchCoupons(); // Refresh active coupons pool
       setTimeout(() => setMessage(null), 5000);
@@ -294,6 +298,32 @@ export default function ManagerDashboard() {
     }
   };
 
+  // Coupon Validation on Blur
+  const handleValidateCoupon = async () => {
+    setCouponMessage(null);
+    if (!couponCode.trim()) {
+      setAppliedCoupon(null);
+      return;
+    }
+    
+    try {
+      const cleanCode = couponCode.trim().toUpperCase();
+      const response = await api.get('/coupons');
+      const allCoupons = response.data.coupons || [];
+      const matched = allCoupons.find(c => c.code === cleanCode && c.active === 1);
+      
+      if (matched) {
+        setAppliedCoupon(matched);
+        setCouponMessage({ type: 'success', text: `Coupon applied: ${matched.discount_percent}% off!` });
+      } else {
+        setAppliedCoupon(null);
+        setCouponMessage({ type: 'error', text: 'Invalid or inactive coupon code.' });
+      }
+    } catch (err) {
+      setCouponMessage({ type: 'error', text: 'Failed to validate coupon.' });
+    }
+  };
+
   // Live pricing calculator for registration preview
   const calculateLivePrice = () => {
     let sum = 0;
@@ -303,10 +333,8 @@ export default function ManagerDashboard() {
     });
 
     let discountPct = 0;
-    const cleanCoupon = coupon.trim().toUpperCase();
-    const matchedCoupon = coupons.find(c => c.code === cleanCoupon && c.active === 1);
-    if (matchedCoupon) {
-      discountPct = matchedCoupon.discount_percent;
+    if (appliedCoupon) {
+      discountPct = appliedCoupon.discount_percent;
     }
 
     const discountAmt = Math.round(sum * (discountPct / 100));
@@ -379,8 +407,10 @@ export default function ManagerDashboard() {
                 setIsCard={setIsCard}
                 taps={taps}
                 setTaps={setTaps}
-                coupon={coupon}
-                setCoupon={setCoupon}
+                couponCode={couponCode}
+                setCouponCode={setCouponCode}
+                handleValidateCoupon={handleValidateCoupon}
+                couponMessage={couponMessage}
                 pricing={pricing}
                 handleCreateMember={handleCreateMember}
                 loading={loading}

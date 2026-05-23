@@ -10,8 +10,10 @@ export default function RegisterNewMember({
   setIsCard,
   taps,
   setTaps,
-  coupon,
-  setCoupon,
+  couponCode,
+  setCouponCode,
+  handleValidateCoupon,
+  couponMessage,
   pricing,
   handleCreateMember,
   loading,
@@ -112,13 +114,29 @@ export default function RegisterNewMember({
 
           <div className="form-group" style={{ marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
             <label style={{ fontSize: '16px', color: 'var(--primary-color)' }}>Step 3: Discounts</label>
-            <input
-              type="text"
-              placeholder="Enter coupon (10OFF, 15OFF, 20OFF)"
-              value={coupon}
-              onChange={(e) => setCoupon(e.target.value)}
-              style={{ textTransform: 'uppercase', marginTop: '10px' }}
-            />
+            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+              <input
+                type="text"
+                placeholder="Enter coupon code..."
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                onBlur={handleValidateCoupon}
+                style={{ textTransform: 'uppercase', flex: 1 }}
+              />
+              <button 
+                type="button" 
+                className="btn-secondary" 
+                onClick={handleValidateCoupon} 
+                style={{ padding: '0 20px', whiteSpace: 'nowrap' }}
+              >
+                Apply
+              </button>
+            </div>
+            {couponMessage && (
+              <div style={{ marginTop: '8px', fontSize: '13px', color: couponMessage.type === 'success' ? '#059669' : '#dc2626', fontWeight: '500' }}>
+                {couponMessage.text}
+              </div>
+            )}
           </div>
 
           {selectedServices.length > 0 && (
