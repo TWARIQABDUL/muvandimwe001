@@ -6,8 +6,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load env from root
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// Load env from root, overriding any host system exports
+dotenv.config({ 
+  path: path.resolve(__dirname, '../../../.env'),
+  override: true 
+});
 
 const { Pool } = pg;
 let pool = null;
@@ -20,6 +23,7 @@ function convertSql(sql) {
 
 export async function initializeDatabase() {
   try {
+    console.log('Connecting to:', process.env.DATABASE_URL);
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
     });
