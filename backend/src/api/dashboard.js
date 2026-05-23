@@ -129,6 +129,9 @@ router.get(
 
       const estimatedMRR = subsData.reduce((sum, s) => sum + s.monthly_fee, 0);
 
+      // Fetch reports
+      const reports = await getSubscriberReports(gym_id, today, today);
+
       res.json({
         timeframe: 'today',
         date: today,
@@ -139,7 +142,8 @@ router.get(
           estimated_mrr: estimatedMRR
         },
         revenue_breakdown: breakdown,
-        revenue_by_service: pieChart
+        revenue_by_service: pieChart,
+        reports
       });
     } catch (err) {
       console.error('Get today dashboard error:', err.message);
@@ -177,6 +181,9 @@ async function getManagerTodayDashboard(req, res) {
         type: c.type
       }));
 
+    // Fetch reports
+    const reports = await getSubscriberReports(gym_id, today, today);
+
     res.json({
       date: today,
       summary: {
@@ -186,7 +193,8 @@ async function getManagerTodayDashboard(req, res) {
         renewals_pending: pendingRenewals.length
       },
       pending_renewals: pendingRenewals,
-      recent_checkins: recentCheckins
+      recent_checkins: recentCheckins,
+      reports
     });
   } catch (err) {
     console.error('Get manager today error:', err.message);
@@ -227,6 +235,8 @@ router.get(
 
       const estimatedMRR = subsData.reduce((sum, s) => sum + s.monthly_fee, 0);
 
+      const reports = await getSubscriberReports(gym_id, dateRange.start, dateRange.end);
+
       res.json({
         timeframe: 'week',
         snapshot: {
@@ -236,7 +246,8 @@ router.get(
           estimated_mrr: estimatedMRR
         },
         revenue_breakdown: breakdown,
-        revenue_by_service: pieChart
+        revenue_by_service: pieChart,
+        reports
       });
     } catch (err) {
       console.error('Get week dashboard error:', err.message);
@@ -278,6 +289,8 @@ router.get(
 
       const estimatedMRR = subsData.reduce((sum, s) => sum + s.monthly_fee, 0);
 
+      const reports = await getSubscriberReports(gym_id, dateRange.start, dateRange.end);
+
       res.json({
         timeframe: 'month',
         snapshot: {
@@ -287,7 +300,8 @@ router.get(
           estimated_mrr: estimatedMRR
         },
         revenue_breakdown: breakdown,
-        revenue_by_service: pieChart
+        revenue_by_service: pieChart,
+        reports
       });
     } catch (err) {
       console.error('Get month dashboard error:', err.message);
@@ -329,6 +343,8 @@ router.get(
 
       const estimatedMRR = subsData.reduce((sum, s) => sum + s.monthly_fee, 0);
 
+      const reports = await getSubscriberReports(gym_id, dateRange.start, dateRange.end);
+
       res.json({
         timeframe: 'year',
         snapshot: {
@@ -338,7 +354,8 @@ router.get(
           estimated_mrr: estimatedMRR
         },
         revenue_breakdown: breakdown,
-        revenue_by_service: pieChart
+        revenue_by_service: pieChart,
+        reports
       });
     } catch (err) {
       console.error('Get year dashboard error:', err.message);
@@ -346,5 +363,43 @@ router.get(
     }
   }
 );
+
+// Helper to fetch subscriber reports (new registrations vs old checked in subscribers)
+async function getSubscriberReports(gymId, startDate, endDate) {
+  try {
+    // 1. New Subscribers (registrations during this period)
+    const newSubscribers = await db.all(
+      `SELECT m.id, m.name, s.name as plan, ms.start_date, s.monthly_fee, ms.is_card
+       FROM member_subscriptions ms
+       JOIN members m ON ms.member_id = m.id
+       JOIN subscriptions s ON ms.subscription_id = s.id
+       WHERE ms.gym_id = ? AND ms.start_date BETWEEN ? AND ?
+       ORDER BY ms.start_date DESC`,
+      [gymId, startDate, endDate]
+    );
+
+    // 2. Old checked in subscribers (subscribers checked in during period but whose subscription start date was before startDate)
+    const oldCheckedIn = await db.all(
+      `SELECT DISTINCT m.id, m.name, s.name as plan, c.service, c.timestamp
+       FROM checkins c
+       JOIN members m ON c.member_id = m.id
+       JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
+       JOIN subscriptions s ON ms.subscription_id = s.id
+       WHERE c.gym_id = ? AND c.type = 'subscription'
+         AND DATE(c.timestamp) BETWEEN ? AND ?
+         AND ms.start_date < ?
+       ORDER BY c.timestamp DESC`,
+      [gymId, startDate, endDate, startDate]
+    );
+
+    return {
+      new_subscribers: newSubscribers,
+      old_checked_in: oldCheckedIn
+    };
+  } catch (err) {
+    console.error('getSubscriberReports error:', err.message);
+    return { new_subscribers: [], old_checked_in: [] };
+  }
+}
 
 export default router;

@@ -21,6 +21,7 @@ import checkinsRoutes from './api/checkins.js';
 import subscriptionsRoutes from './api/subscriptions.js';
 import dashboardRoutes from './api/dashboard.js';
 import analyticsRoutes from './api/analytics.js';
+import servicesRoutes from './api/services.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -49,6 +50,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/trends', analyticsRoutes);
 app.use('/api/revenue', analyticsRoutes);
 app.use('/api/members', analyticsRoutes);
+app.use('/api/services', servicesRoutes);
 
 // 404 handler
 app.use((req, res) => {

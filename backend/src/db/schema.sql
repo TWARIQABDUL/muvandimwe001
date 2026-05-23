@@ -58,6 +58,8 @@ CREATE TABLE IF NOT EXISTS member_subscriptions (
   start_date DATE NOT NULL,
   next_renewal_date DATE NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('active', 'expired')),
+  is_card INTEGER DEFAULT 0,
+  remaining_taps INTEGER DEFAULT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (gym_id) REFERENCES gyms(id),
   FOREIGN KEY (member_id) REFERENCES members(id),
@@ -70,6 +72,7 @@ CREATE TABLE IF NOT EXISTS services (
   gym_id TEXT NOT NULL,
   name TEXT NOT NULL,
   price_daily DECIMAL(10, 2) NOT NULL,
+  price_monthly DECIMAL(10, 2) NOT NULL DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (gym_id) REFERENCES gyms(id),
   UNIQUE (gym_id, name)

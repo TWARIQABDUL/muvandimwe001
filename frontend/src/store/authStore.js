@@ -85,7 +85,7 @@ export const useAuthStore = create((set) => ({
       });
 
       // Update first_login flag in user
-      const user = { ...localStorage.getItem('user') };
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
       user.first_login = 0;
       localStorage.setItem('user', JSON.stringify(user));
 

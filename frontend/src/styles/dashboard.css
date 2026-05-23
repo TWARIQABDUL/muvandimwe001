@@ -154,6 +154,50 @@
   min-width: 80px;
 }
 
+/* Premium micro-interactions & pricing preview panel */
+.pricing-preview-panel {
+  background-color: #f9fafb;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 15px;
+  font-size: 13.5px;
+}
+
+.pricing-final-row {
+  border-top: 1.5px solid #e2e8f0;
+  padding-top: 8px;
+  margin-top: 8px;
+  font-weight: 700;
+  font-size: 14.5px;
+  color: #2563eb;
+}
+
+.card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.snapshot-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.snapshot-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(37, 99, 235, 0.08);
+}
+
+input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: #2563eb;
+  width: 16px;
+  height: 16px;
+}
+
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;

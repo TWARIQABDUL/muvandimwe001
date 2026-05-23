@@ -48,7 +48,7 @@ export default function Login() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="manager@demo.com"
+              placeholder="Enter your email"
               required
               disabled={loading}
             />
@@ -60,7 +60,7 @@ export default function Login() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="demo123"
+              placeholder="Enter your password"
               required
               disabled={loading}
             />
@@ -70,16 +70,6 @@ export default function Login() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
-        <div className="login-demo">
-          <p className="login-demo-title">Demo Credentials:</p>
-          <div className="demo-account">
-            <strong>Manager:</strong> manager@demo.com / demo123
-          </div>
-          <div className="demo-account">
-            <strong>Owner:</strong> owner@demo.com / demo123
-          </div>
-        </div>
       </div>
     </div>
   );

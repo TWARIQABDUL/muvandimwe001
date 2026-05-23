@@ -14,11 +14,11 @@ router.post(
   gymIsolationMiddleware,
   async (req, res) => {
     try {
-      const { name, email, phone, subscription_id } = req.body;
+      const { name, email, phone, subscription_id, services, is_card, taps, coupon } = req.body;
       const { gym_id } = req.user;
 
-      if (!name || !subscription_id) {
-        return res.status(400).json({ error: 'Name and subscription_id required' });
+      if (!name) {
+        return res.status(400).json({ error: 'Name is required' });
       }
 
       // Check if email already exists
@@ -32,12 +32,87 @@ router.post(
         }
       }
 
+      // Calculate dynamic price
+      let baseFee = 0;
+      let servicesList = [];
+      if (services && services.length > 0) {
+        for (const serviceName of services) {
+          const service = await db.get(
+            `SELECT * FROM services WHERE gym_id = ? AND name = ?`,
+            [gym_id, serviceName.trim().toLowerCase()]
+          );
+          if (service) {
+            baseFee += Number(service.price_monthly) || 0;
+            servicesList.push(service.name);
+          }
+        }
+      }
+
+      // If no dynamic services, check if static subscription was passed
+      if (servicesList.length === 0 && subscription_id) {
+        const sub = await db.get(
+          `SELECT * FROM subscriptions WHERE id = ? AND gym_id = ?`,
+          [subscription_id, gym_id]
+        );
+        if (sub) {
+          baseFee = Number(sub.monthly_fee) || 0;
+          servicesList = sub.included_services ? sub.included_services.split(',') : ['gym'];
+        }
+      }
+
+      // Fallback default
+      if (servicesList.length === 0) {
+        servicesList = ['gym'];
+        baseFee = 40000;
+      }
+
+      // Apply coupon
+      let discountPercent = 0;
+      if (coupon) {
+        const cleanCoupon = coupon.trim().toUpperCase();
+        if (cleanCoupon === '10OFF') discountPercent = 10;
+        else if (cleanCoupon === '15OFF') discountPercent = 15;
+        else if (cleanCoupon === '20OFF') discountPercent = 20;
+      }
+      const discountAmount = Math.round(baseFee * (discountPercent / 100));
+      const finalFee = baseFee - discountAmount;
+
+      // Find or create dynamically generated subscription in database
+      const servicesStr = servicesList.join(',');
+      const dynamicSubName = `Dynamic: ${servicesList.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' + ')} (${finalFee.toLocaleString()} RWF)${coupon ? ` - Coupon ${coupon.toUpperCase()}` : ''}`;
+
+      let subPlan = await db.get(
+        `SELECT id, name FROM subscriptions WHERE gym_id = ? AND name = ?`,
+        [gym_id, dynamicSubName]
+      );
+
+      let finalSubId;
+      if (subPlan) {
+        finalSubId = subPlan.id;
+      } else {
+        finalSubId = uuidv4();
+        await db.run(
+          `INSERT INTO subscriptions (id, gym_id, name, monthly_fee, included_services)
+           VALUES (?, ?, ?, ?, ?)`,
+          [finalSubId, gym_id, dynamicSubName, finalFee, servicesStr]
+        );
+      }
+
+      // Expiration / renewal string
+      const todayStr = new Date().toISOString().split('T')[0];
+      let nextRenewalStr;
+      if (is_card) {
+        // Bound by 1 year for card validity
+        const nextYear = new Date();
+        nextYear.setFullYear(nextYear.getFullYear() + 1);
+        nextRenewalStr = nextYear.toISOString().split('T')[0];
+      } else {
+        const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        nextRenewalStr = nextMonth.toISOString().split('T')[0];
+      }
+
       const memberId = uuidv4();
       const qrCodeId = uuidv4();
-      const today = new Date().toISOString().split('T')[0];
-      const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split('T')[0];
 
       // Insert member
       await db.run(
@@ -46,24 +121,18 @@ router.post(
         [memberId, gym_id, name, email || null, phone || null, qrCodeId, 'subscription', null]
       );
 
-      // Create initial subscription
+      // Create subscription
       const memberSubId = uuidv4();
       await db.run(
-        `INSERT INTO member_subscriptions (id, gym_id, member_id, subscription_id, start_date, next_renewal_date, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [memberSubId, gym_id, memberId, subscription_id, today, nextMonth, 'active']
+        `INSERT INTO member_subscriptions (id, gym_id, member_id, subscription_id, start_date, next_renewal_date, status, is_card, remaining_taps)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [memberSubId, gym_id, memberId, finalSubId, todayStr, nextRenewalStr, 'active', is_card ? 1 : 0, is_card ? (Number(taps) || 20) : null]
       );
 
-      // Update member with current subscription
+      // Update member current subscription link
       await db.run(
         `UPDATE members SET current_subscription_id = ? WHERE id = ?`,
         [memberSubId, memberId]
-      );
-
-      // Get subscription details
-      const subscription = await db.get(
-        `SELECT name FROM subscriptions WHERE id = ?`,
-        [subscription_id]
       );
 
       res.status(201).json({
@@ -73,8 +142,10 @@ router.post(
         phone,
         qr_code_id: qrCodeId,
         subscription: {
-          name: subscription.name,
-          next_renewal_date: nextMonth
+          name: dynamicSubName,
+          next_renewal_date: nextRenewalStr,
+          is_card: is_card ? 1 : 0,
+          remaining_taps: is_card ? (Number(taps) || 20) : null
         }
       });
     } catch (err) {
@@ -99,15 +170,22 @@ router.get(
       }
 
       const members = await db.all(
-        `SELECT m.id, m.name, m.type, ms.status, ms.next_renewal_date
+        `SELECT m.id, m.name, m.type, ms.status as subscription_status, ms.next_renewal_date, ms.is_card, ms.remaining_taps, s.included_services
          FROM members m
          LEFT JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
+         LEFT JOIN subscriptions s ON ms.subscription_id = s.id
          WHERE m.gym_id = ? AND m.name LIKE ?
          LIMIT 20`,
         [gym_id, `%${q}%`]
       );
 
-      res.json({ members });
+      // format the results similarly to scan-qr
+      const formattedMembers = members.map(m => ({
+        ...m,
+        allowed_services: m.included_services ? m.included_services.split(',') : []
+      }));
+
+      res.json({ members: formattedMembers });
     } catch (err) {
       console.error('Search members error:', err.message);
       res.status(500).json({ error: 'Search failed' });
@@ -132,7 +210,7 @@ router.post(
       }
 
       const member = await db.get(
-        `SELECT m.*, ms.status, s.included_services
+        `SELECT m.*, ms.status, ms.is_card, ms.remaining_taps, s.included_services
          FROM members m
          LEFT JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
          LEFT JOIN subscriptions s ON ms.subscription_id = s.id
@@ -155,7 +233,9 @@ router.post(
           name: member.name,
           type: member.type,
           subscription_status: member.status,
-          allowed_services: allowedServices
+          allowed_services: allowedServices,
+          is_card: member.is_card || 0,
+          remaining_taps: member.remaining_taps
         }
       });
     } catch (err) {

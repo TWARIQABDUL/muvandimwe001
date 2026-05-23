@@ -1,26 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 /* Global Styles */
 :root {
-  --primary-color: #2563eb;
-  --secondary-color: #1e40af;
+  --primary-color: #3b82f6; /* More vibrant blue */
+  --secondary-color: #2563eb;
   --success-color: #10b981;
   --danger-color: #ef4444;
   --warning-color: #f59e0b;
-  --border-color: #e5e7eb;
-  --bg-light: #f9fafb;
+  --border-color: #e2e8f0;
+  --bg-light: #f8fafc;
   --bg-white: #ffffff;
-  --text-primary: #1f2937;
-  --text-secondary: #6b7280;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --sidebar-width: 250px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
   background-color: var(--bg-light);
   color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 /* Layout */

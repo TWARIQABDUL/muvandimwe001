@@ -1,65 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { api } from '../store/authStore.js';
 import PasswordChangeModal from '../components/PasswordChangeModal.jsx';
-import '../styles/dashboard.css';
+import DashboardLayout from '../components/DashboardLayout.jsx';
 
-const SERVICE_OPTIONS = ['gym', 'sauna', 'pool'];
+import ManagerCheckinFlow from '../components/manager/ManagerCheckinFlow.jsx';
+import PendingRenewals from '../components/manager/PendingRenewals.jsx';
+import SubscriberActivity from '../components/manager/SubscriberActivity.jsx';
+import RegisterNewMember from '../components/manager/RegisterNewMember.jsx';
 
 export default function ManagerDashboard() {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('checkin');
   const [showPasswordModal, setShowPasswordModal] = useState(user?.first_login === 1);
   const [dashboardData, setDashboardData] = useState(null);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
 
+  // Check-in state
   const [qrCode, setQrCode] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
   const [memberLookup, setMemberLookup] = useState(null);
   const [memberService, setMemberService] = useState('gym');
-
   const [walkInName, setWalkInName] = useState('');
-  const [walkInService, setWalkInService] = useState('gym');
-  const [walkInAmount, setWalkInAmount] = useState('10000');
-  const [subscriptionOptions, setSubscriptionOptions] = useState([]);
-  const [newMember, setNewMember] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    subscription_id: ''
-  });
+  const [walkInServices, setWalkInServices] = useState(['gym']);
+  const [walkInAmount, setWalkInAmount] = useState('15000');
+
+  // Registration state
+  const [newMember, setNewMember] = useState({ name: '', email: '', phone: '' });
+  const [selectedServices, setSelectedServices] = useState(['gym']);
+  const [isCard, setIsCard] = useState(false);
+  const [taps, setTaps] = useState(20);
+  const [coupon, setCoupon] = useState('');
   const [newMemberQr, setNewMemberQr] = useState(null);
 
   useEffect(() => {
-    if (user?.first_login === 1) {
-      setShowPasswordModal(true);
-    }
+    if (user?.first_login === 1) setShowPasswordModal(true);
   }, [user]);
 
   useEffect(() => {
     fetchDashboard();
-    fetchSubscriptionOptions();
+    fetchServices();
   }, []);
 
-  const fetchSubscriptionOptions = async () => {
+  const fetchServices = async () => {
     try {
-      const response = await api.get('/members/subscriptions');
-      const subscriptions = response.data.subscriptions || [];
-      setSubscriptionOptions(subscriptions);
-      setNewMember((current) => ({
-        ...current,
-        subscription_id: current.subscription_id || subscriptions[0]?.id || ''
-      }));
+      const response = await api.get('/services');
+      console.log('API Response for /services:', response.data);
+      const data = response.data.services || [];
+      console.log('Extracted services data:', data);
+      setServices(data);
+      if (data.length > 0) {
+        const gymService = data.find(s => s.name === 'gym');
+        if (gymService) {
+          setWalkInServices(['gym']);
+          setWalkInAmount(gymService.price_daily.toString());
+        } else {
+          setWalkInServices([data[0].name]);
+          setWalkInAmount(data[0].price_daily.toString());
+        }
+      }
     } catch (err) {
-      console.warn('Could not load subscription options:', err.message || err);
+      console.warn('Could not load services:', err.message || err);
     }
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
   };
 
   const fetchDashboard = async () => {
@@ -75,10 +81,12 @@ export default function ManagerDashboard() {
     }
   };
 
+  // Handlers for Check-in flow
   const handleLookupQr = async (e) => {
     e.preventDefault();
     setMessage(null);
     setMemberLookup(null);
+    setSearchResults([]);
     setError(null);
 
     if (!qrCode.trim()) {
@@ -87,20 +95,53 @@ export default function ManagerDashboard() {
     }
 
     try {
+      setLoading(true);
       const response = await api.post('/members/scan-qr', { qr_code_id: qrCode.trim() });
       setMemberLookup(response.data.member);
       setMemberService(response.data.member.allowed_services?.[0] || 'gym');
     } catch (err) {
       setError(err.response?.data?.error || 'Member lookup failed');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleSearchName = async (e) => {
+    e.preventDefault();
+    setMessage(null);
+    setMemberLookup(null);
+    setSearchResults([]);
+    setError(null);
+
+    if (searchQuery.length < 2) {
+      setError('Search query must be at least 2 characters');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await api.get(`/members/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchResults(response.data.members);
+      if (response.data.members.length === 0) {
+        setError('No members found');
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Search failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectSearchResult = (member) => {
+    setMemberLookup(member);
+    setMemberService(member.allowed_services?.[0] || 'gym');
+    setSearchResults([]);
+    setSearchQuery('');
   };
 
   const handleCheckinMember = async (e) => {
     e.preventDefault();
-    if (!memberLookup) {
-      setError('Lookup a member before checking in');
-      return;
-    }
+    if (!memberLookup) return;
 
     try {
       setLoading(true);
@@ -115,8 +156,10 @@ export default function ManagerDashboard() {
       setMemberLookup(null);
       setQrCode('');
       fetchDashboard();
+      setTimeout(() => setMessage(null), 4000);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to check in member');
+      setTimeout(() => setError(null), 4000);
     } finally {
       setLoading(false);
     }
@@ -131,6 +174,11 @@ export default function ManagerDashboard() {
       setError('Please enter the walk-in name');
       return;
     }
+    
+    if (walkInServices.length === 0) {
+      setError('Please select at least one service');
+      return;
+    }
 
     const amountValue = Number(walkInAmount);
     if (!amountValue || amountValue <= 0) {
@@ -143,28 +191,37 @@ export default function ManagerDashboard() {
       await api.post('/checkins', {
         member_name: walkInName.trim(),
         type: 'walk_in',
-        service: walkInService,
+        service: walkInServices.join(', '),
         amount: amountValue
       });
-      setMessage(`${walkInName.trim()} checked in as walk-in for ${walkInService}`);
+      setMessage(`${walkInName.trim()} checked in as walk-in for ${walkInServices.join(', ')}`);
       setWalkInName('');
-      setWalkInAmount('10000');
+      setWalkInServices(['gym']);
+      const selected = services.find(s => s.name === 'gym');
+      setWalkInAmount(selected ? selected.price_daily.toString() : '15000');
       fetchDashboard();
+      setTimeout(() => setMessage(null), 4000);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to create walk-in check-in');
+      setTimeout(() => setError(null), 4000);
     } finally {
       setLoading(false);
     }
   };
 
+  // Handlers for Registration
   const handleCreateMember = async (e) => {
     e.preventDefault();
     setError(null);
     setMessage(null);
     setNewMemberQr(null);
 
-    if (!newMember.name.trim() || !newMember.subscription_id) {
-      setError('Name and subscription tier are required');
+    if (!newMember.name.trim()) {
+      setError('Name is required');
+      return;
+    }
+    if (selectedServices.length === 0) {
+      setError('Please select at least one service');
       return;
     }
 
@@ -174,18 +231,21 @@ export default function ManagerDashboard() {
         name: newMember.name.trim(),
         email: newMember.email.trim() || null,
         phone: newMember.phone.trim() || null,
-        subscription_id: newMember.subscription_id
+        services: selectedServices,
+        is_card: isCard ? 1 : 0,
+        taps: isCard ? Number(taps) : null,
+        coupon: coupon || null
       });
 
       setMessage(`${response.data.name} registered successfully`);
       setNewMemberQr(response.data.qr_code_id);
-      setNewMember({
-        name: '',
-        email: '',
-        phone: '',
-        subscription_id: subscriptionOptions[0]?.id || ''
-      });
+      setNewMember({ name: '', email: '', phone: '' });
+      setSelectedServices(['gym']);
+      setIsCard(false);
+      setTaps(20);
+      setCoupon('');
       fetchDashboard();
+      setTimeout(() => setMessage(null), 5000);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to register member');
     } finally {
@@ -193,15 +253,16 @@ export default function ManagerDashboard() {
     }
   };
 
+  // Handlers for Renewal
   const handleRenewal = async (memberId) => {
     setError(null);
     setMessage(null);
-
     try {
       setLoading(true);
       const response = await api.post(`/members/${memberId}/subscriptions/renew`);
       setMessage(response.data.message || 'Subscription renewed');
       fetchDashboard();
+      setTimeout(() => setMessage(null), 4000);
     } catch (err) {
       setError(err.response?.data?.error || 'Renewal failed');
     } finally {
@@ -209,244 +270,113 @@ export default function ManagerDashboard() {
     }
   };
 
-  if (!user) {
-    return null;
-  }
+  // Live pricing calculator for registration preview
+  const calculateLivePrice = () => {
+    let sum = 0;
+    selectedServices.forEach(sName => {
+      const s = services.find(serv => serv.name === sName);
+      if (s) sum += Number(s.price_monthly) || 0;
+    });
+
+    let discountPct = 0;
+    const cleanCoupon = coupon.trim().toUpperCase();
+    if (cleanCoupon === '10OFF') discountPct = 10;
+    else if (cleanCoupon === '15OFF') discountPct = 15;
+    else if (cleanCoupon === '20OFF') discountPct = 20;
+
+    const discountAmt = Math.round(sum * (discountPct / 100));
+    const finalAmt = sum - discountAmt;
+    return { sum, discountPct, discountAmt, finalAmt };
+  };
+
+  const pricing = calculateLivePrice();
+
+  if (!user) return null;
+
+  const tabs = [
+    { id: 'checkin', label: 'Check-in Portal' },
+    { id: 'register', label: 'Register New Member' },
+    { id: 'renewals', label: 'Pending Renewals' },
+    { id: 'activity', label: 'Subscriber Activity' }
+  ];
 
   return (
-    <div className="dashboard">
+    <>
       {showPasswordModal && (
         <PasswordChangeModal onClose={() => setShowPasswordModal(false)} />
       )}
+      <DashboardLayout tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab}>
+        {message && <div className="alert alert-success" style={{ marginBottom: '20px' }}>{message}</div>}
+        {error && <div className="alert alert-error" style={{ marginBottom: '20px' }}>{error}</div>}
 
-      <header className="header">
-        <div className="container">
-          <div className="header-content">
-            <h1 className="header-title">🛠️ Manager Dashboard</h1>
-            <div className="header-user">
-              <div className="header-user-info">
-                <div className="header-user-email">{user.email}</div>
-                <div className="header-user-role">{user.role}</div>
-              </div>
-              <button className="btn-danger btn-small" onClick={handleLogout}>
-                Sign Out
-              </button>
-            </div>
+        {loading && activeTab !== 'checkin' && activeTab !== 'register' ? (
+          <div className="card text-center" style={{ padding: '60px 20px' }}>
+            <div className="spinner"></div>
+            <p style={{ marginTop: '10px' }}>Loading data...</p>
           </div>
-        </div>
-      </header>
-
-      <main className="container">
-        <div className="dashboard-content">
-          {error && <div className="alert alert-error">{error}</div>}
-          {message && <div className="alert alert-success">{message}</div>}
-
-          <div className="grid grid-2">
-            <div className="card">
-              <h2 className="card-title">Today Summary</h2>
-              {loading && !dashboardData ? (
-                <div className="text-center">
-                  <div className="spinner"></div>
-                  <p>Loading manager summary...</p>
-                </div>
-              ) : (
-                <div className="grid summary-grid">
-                  <div className="summary-card">
-                    <div className="summary-value">
-                      {dashboardData?.summary?.checkins_today ?? 0}
-                    </div>
-                    <div className="summary-label">Check-ins</div>
-                  </div>
-                  <div className="summary-card">
-                    <div className="summary-value">
-                      {(dashboardData?.summary?.revenue_today ?? 0).toLocaleString()}
-                    </div>
-                    <div className="summary-label">Revenue</div>
-                  </div>
-                  <div className="summary-card">
-                    <div className="summary-value">
-                      {dashboardData?.summary?.renewals_pending ?? 0}
-                    </div>
-                    <div className="summary-label">Pending Renewals</div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="card">
-              <h2 className="card-title">Quick Actions</h2>
-              <div className="card-section">
-                <p className="section-text">Scan a member QR code (placeholder)</p>
-                <form onSubmit={handleLookupQr} className="inline-form">
-                  <input
-                    type="text"
-                    placeholder="Paste member QR UUID"
-                    value={qrCode}
-                    onChange={(e) => setQrCode(e.target.value)}
-                  />
-                  <button className="btn-primary" type="submit" disabled={loading}>
-                    Lookup
-                  </button>
-                </form>
-
-                {memberLookup && (
-                  <div className="card card-small">
-                    <p>
-                      <strong>{memberLookup.name}</strong> ({memberLookup.subscription_status})
-                    </p>
-                    <p style={{ marginBottom: '10px', color: '#4b5563' }}>
-                      Allowed services: {memberLookup.allowed_services?.join(', ') || 'gym'}
-                    </p>
-                    <div className="form-group">
-                      <label>Service</label>
-                      <select
-                        value={memberService}
-                        onChange={(e) => setMemberService(e.target.value)}
-                      >
-                        {SERVICE_OPTIONS.map((option) => (
-                          <option key={option} value={option}>
-                            {option.charAt(0).toUpperCase() + option.slice(1)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <button
-                      className="btn-primary"
-                      onClick={handleCheckinMember}
-                      disabled={loading}
-                    >
-                      Check In Member
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-2">
-            <div className="card">
-              <h2 className="card-title">Register New Member</h2>
-              <form onSubmit={handleCreateMember} className="form-stack">
-                <div className="form-group">
-                  <label>Name</label>
-                  <input
-                    type="text"
-                    placeholder="Member name"
-                    value={newMember.name}
-                    onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Email</label>
-                  <input
-                    type="email"
-                    placeholder="Member email"
-                    value={newMember.email}
-                    onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Phone</label>
-                  <input
-                    type="text"
-                    placeholder="Member phone"
-                    value={newMember.phone}
-                    onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Subscription Tier</label>
-                  <select
-                    value={newMember.subscription_id}
-                    onChange={(e) => setNewMember({ ...newMember, subscription_id: e.target.value })}
-                  >
-                    {subscriptionOptions.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.name} ({Number(option.monthly_fee).toLocaleString()})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <button className="btn-primary" type="submit" disabled={loading}>
-                  Register Member
-                </button>
-              </form>
-              {newMemberQr && (
-                <div className="card card-small" style={{ marginTop: '20px' }}>
-                  <p style={{ marginBottom: '8px' }}>New QR code for testing:</p>
-                  <pre style={{ whiteSpace: 'break-spaces', wordBreak: 'break-word', margin: 0 }}>
-                    {newMemberQr}
-                  </pre>
-                </div>
-              )}
-            </div>
-
-            <div className="card">
-              <h2 className="card-title">Pending Renewals</h2>
-              {dashboardData?.pending_renewals?.length ? (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Plan</th>
-                      <th>Due</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dashboardData.pending_renewals.map((item) => (
-                      <tr key={item.id}>
-                        <td>{item.name}</td>
-                        <td>{item.subscription}</td>
-                        <td>{item.next_renewal_date}</td>
-                        <td>
-                          <button
-                            className="btn-secondary btn-small"
-                            onClick={() => handleRenewal(item.id)}
-                            disabled={loading}
-                          >
-                            Renew
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p className="section-text">No renewals pending for today.</p>
-              )}
-            </div>
-          </div>
-
-          <div className="card">
-            <h2 className="card-title">Recent Check-Ins</h2>
-            {dashboardData?.recent_checkins?.length ? (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Member</th>
-                    <th>Service</th>
-                    <th>Type</th>
-                    <th>Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dashboardData.recent_checkins.map((item, index) => (
-                    <tr key={`${item.member_name}-${index}`}>
-                      <td>{item.member_name}</td>
-                      <td>{item.service}</td>
-                      <td>{item.type}</td>
-                      <td>{item.timestamp}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p className="section-text">No recent check-ins yet.</p>
+        ) : (
+          <>
+            {activeTab === 'checkin' && (
+              <ManagerCheckinFlow
+                services={services}
+                dashboardData={dashboardData}
+                handleCheckinWalkIn={handleCheckinWalkIn}
+                handleLookupQr={handleLookupQr}
+                handleSearchName={handleSearchName}
+                handleSelectSearchResult={handleSelectSearchResult}
+                handleCheckinMember={handleCheckinMember}
+                qrCode={qrCode}
+                setQrCode={setQrCode}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                searchResults={searchResults}
+                memberLookup={memberLookup}
+                memberService={memberService}
+                setMemberService={setMemberService}
+                walkInName={walkInName}
+                setWalkInName={setWalkInName}
+                walkInServices={walkInServices}
+                setWalkInServices={setWalkInServices}
+                walkInAmount={walkInAmount}
+                setWalkInAmount={setWalkInAmount}
+                loading={loading}
+              />
             )}
-          </div>
-        </div>
-      </main>
-    </div>
+
+            {activeTab === 'register' && (
+              <RegisterNewMember
+                services={services}
+                newMember={newMember}
+                setNewMember={setNewMember}
+                selectedServices={selectedServices}
+                setSelectedServices={setSelectedServices}
+                isCard={isCard}
+                setIsCard={setIsCard}
+                taps={taps}
+                setTaps={setTaps}
+                coupon={coupon}
+                setCoupon={setCoupon}
+                pricing={pricing}
+                handleCreateMember={handleCreateMember}
+                loading={loading}
+                newMemberQr={newMemberQr}
+              />
+            )}
+
+            {activeTab === 'renewals' && (
+              <PendingRenewals
+                dashboardData={dashboardData}
+                handleRenewal={handleRenewal}
+                loading={loading}
+              />
+            )}
+
+            {activeTab === 'activity' && (
+              <SubscriberActivity dashboardData={dashboardData} />
+            )}
+          </>
+        )}
+      </DashboardLayout>
+    </>
   );
 }

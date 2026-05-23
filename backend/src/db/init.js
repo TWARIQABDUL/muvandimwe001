@@ -27,6 +27,22 @@ export async function initializeDatabase() {
     const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
     await db.exec(schema);
 
+    // Gracefully upgrade existing tables for new features if needed
+    try {
+      await db.exec('ALTER TABLE services ADD COLUMN price_monthly DECIMAL(10, 2) NOT NULL DEFAULT 0');
+      console.log('  Added price_monthly column to services table');
+    } catch (e) {
+      // Column already exists
+    }
+
+    try {
+      await db.exec('ALTER TABLE member_subscriptions ADD COLUMN is_card INTEGER DEFAULT 0');
+      await db.exec('ALTER TABLE member_subscriptions ADD COLUMN remaining_taps INTEGER DEFAULT NULL');
+      console.log('  Added is_card and remaining_taps columns to member_subscriptions table');
+    } catch (e) {
+      // Columns already exist
+    }
+
     console.log('✓ Database schema initialized');
 
     // Check if data already exists
@@ -81,9 +97,9 @@ async function seedDatabase() {
 
     // 3. Create Services
     const services = [
-      { name: 'gym', price: 15000 },
-      { name: 'sauna', price: 10000 },
-      { name: 'pool', price: 12000 }
+      { name: 'gym', price_daily: 15000, price_monthly: 40000 },
+      { name: 'sauna', price_daily: 10000, price_monthly: 30000 },
+      { name: 'pool', price_daily: 12000, price_monthly: 30000 }
     ];
 
     const serviceIds = {};
@@ -91,9 +107,9 @@ async function seedDatabase() {
       const serviceId = uuidv4();
       serviceIds[service.name] = serviceId;
       await db.run(
-        `INSERT INTO services (id, gym_id, name, price_daily)
-         VALUES (?, ?, ?, ?)`,
-        [serviceId, gymId, service.name, service.price]
+        `INSERT INTO services (id, gym_id, name, price_daily, price_monthly)
+         VALUES (?, ?, ?, ?, ?)`,
+        [serviceId, gymId, service.name, service.price_daily, service.price_monthly]
       );
     }
     console.log(`  Created services: gym, sauna, pool`);
@@ -166,24 +182,24 @@ async function seedDatabase() {
     const checkInData = [
       { name: 'Alice', service: 'gym', type: 'subscription', amount: null },
       { name: 'Bob', service: 'gym', type: 'subscription', amount: null },
-      { name: 'Walk-in: John', service: 'gym', type: 'walk_in', amount: 15000 },
+      { name: 'John', service: 'gym', type: 'walk_in', amount: 15000 },
       { name: 'Charlie', service: 'sauna', type: 'subscription', amount: null },
-      { name: 'Walk-in: Sarah', service: 'pool', type: 'walk_in', amount: 12000 },
+      { name: 'Sarah', service: 'pool', type: 'walk_in', amount: 12000 },
       { name: 'David', service: 'gym', type: 'subscription', amount: null },
       { name: 'Emma', service: 'gym', type: 'subscription', amount: null },
-      { name: 'Walk-in: Mike', service: 'gym', type: 'walk_in', amount: 15000 },
+      { name: 'Mike', service: 'gym', type: 'walk_in', amount: 15000 },
       { name: 'Frank', service: 'sauna', type: 'subscription', amount: null },
       { name: 'Grace', service: 'gym', type: 'subscription', amount: null },
-      { name: 'Walk-in: Lisa', service: 'sauna', type: 'walk_in', amount: 10000 },
+      { name: 'Lisa', service: 'sauna', type: 'walk_in', amount: 10000 },
       { name: 'Henry', service: 'pool', type: 'subscription', amount: null },
-      { name: 'Walk-in: Tom', service: 'pool', type: 'walk_in', amount: 12000 },
+      { name: 'Tom', service: 'pool', type: 'walk_in', amount: 12000 },
       { name: 'Ivy', service: 'gym', type: 'subscription', amount: null },
       { name: 'Jack', service: 'gym', type: 'subscription', amount: null },
     ];
 
     for (const checkIn of checkInData) {
       const checkInId = uuidv4();
-      const memberId = checkIn.name.startsWith('Walk-in:') 
+      const memberId = checkIn.type === 'walk_in'
         ? null 
         : (await db.get(`SELECT id FROM members WHERE gym_id = ? AND name = ?`, [gymId, checkIn.name]))?.id;
 

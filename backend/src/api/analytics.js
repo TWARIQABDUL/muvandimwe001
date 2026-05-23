@@ -149,6 +149,17 @@ router.get(
         [gym_id]
       );
 
+      // Get all active members list
+      const membersList = await db.all(
+        `SELECT m.id, m.name, m.email, m.phone, s.name as subscription_name, ms.next_renewal_date, ms.is_card, ms.remaining_taps
+         FROM member_subscriptions ms
+         JOIN subscriptions s ON ms.subscription_id = s.id
+         JOIN members m ON ms.member_id = m.id
+         WHERE ms.gym_id = ? AND ms.status = 'active'
+         ORDER BY m.name ASC`,
+        [gym_id]
+      );
+
       // Calculate totals
       const totalActive = tierData.reduce((sum, t) => sum + t.count, 0);
       const estimatedMRR = tierData.reduce((sum, t) => sum + t.monthly_fee * t.count, 0);
@@ -160,6 +171,7 @@ router.get(
           count: t.count,
           monthly_revenue_per_member: t.monthly_fee
         })),
+        members_list: membersList,
         estimated_mrr: estimatedMRR
       });
     } catch (err) {

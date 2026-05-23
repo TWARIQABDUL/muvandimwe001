@@ -48,5 +48,5 @@ export function useOwnerAnalytics(timeframe = 'today') {
     };
   }, [timeframe]);
 
-  return { data, loading, error };
+  return { data, loading, error, setError };
 }

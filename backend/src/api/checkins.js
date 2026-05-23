@@ -21,11 +21,6 @@ router.post(
         return res.status(400).json({ error: 'Type and service required' });
       }
 
-      // For subscription check-ins, member_id is required
-      if (type === 'subscription' && !member_id) {
-        return res.status(400).json({ error: 'member_id required for subscription check-in' });
-      }
-
       // For walk-in check-ins, member_name is required
       if (type === 'walk_in' && !member_name) {
         return res.status(400).json({ error: 'member_name required for walk-in check-in' });
@@ -34,17 +29,57 @@ router.post(
       const checkInId = uuidv4();
       const now = new Date().toISOString();
 
-      // Get member name if not provided
+      // Get member name and check subscription details
       let finalMemberName = member_name;
-      if (member_id && !member_name) {
+      if (member_id) {
         const member = await db.get(
-          `SELECT name FROM members WHERE id = ? AND gym_id = ?`,
+          `SELECT m.name, ms.id as sub_id, ms.is_card, ms.remaining_taps, ms.next_renewal_date
+           FROM members m 
+           LEFT JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
+           WHERE m.id = ? AND m.gym_id = ?`,
           [member_id, gym_id]
         );
         if (!member) {
           return res.status(404).json({ error: 'Member not found' });
         }
         finalMemberName = member.name;
+
+        // Validation for subscription type check-ins
+        if (type === 'subscription') {
+          if (!member.sub_id) {
+            return res.status(400).json({ error: 'Member has no active subscription' });
+          }
+
+          if (member.is_card) {
+            if (member.remaining_taps <= 0) {
+              return res.status(400).json({ error: 'No taps remaining on card. Please renew.' });
+            }
+            
+            // Decrement remaining taps
+            const nextTaps = member.remaining_taps - 1;
+            const status = nextTaps === 0 ? 'expired' : 'active';
+            await db.run(
+              `UPDATE member_subscriptions SET remaining_taps = ?, status = ? WHERE id = ?`,
+              [nextTaps, status, member.sub_id]
+            );
+          } else {
+            // Standard time-bound subscription expiry check
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (member.next_renewal_date < todayStr) {
+              return res.status(400).json({ error: 'Subscription has expired. Please renew.' });
+            }
+          }
+
+          // **New Restriction**: Subscriber can only check in once a day
+          const today = new Date().toISOString().split('T')[0];
+          const existingCheckin = await db.get(
+            `SELECT id FROM checkins WHERE member_id = ? AND DATE(timestamp) = ?`,
+            [member_id, today]
+          );
+          if (existingCheckin) {
+            return res.status(400).json({ error: 'Member has already checked in today.' });
+          }
+        }
       }
 
       // Insert check-in
@@ -129,7 +164,7 @@ router.get(
 export async function getCheckinsForPeriod(gymId, startDate, endDate) {
   try {
     return await db.all(
-      `SELECT service, type, amount, timestamp
+      `SELECT member_name, service, type, amount, timestamp
        FROM checkins
        WHERE gym_id = ? AND DATE(timestamp) BETWEEN ? AND ?
        ORDER BY timestamp DESC`,
