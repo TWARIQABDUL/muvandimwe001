@@ -55,7 +55,11 @@ export default function ManagerCheckinFlow({
         </div>
         <div className="card" style={{ background: 'var(--success-color)', color: 'white' }}>
           <div style={{ fontSize: '28px', fontWeight: 'bold' }}>{(dashboardData?.summary?.revenue_today ?? 0).toLocaleString()} RWF</div>
-          <div style={{ opacity: 0.9 }}>Revenue Today</div>
+          <div style={{ opacity: 0.9, marginBottom: '8px' }}>Total Revenue Today</div>
+          <div style={{ fontSize: '13px', borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
+            <span>Cash: {(dashboardData?.summary?.walk_in_revenue_today ?? 0).toLocaleString()}</span>
+            <span>Subs: {(dashboardData?.summary?.subscription_revenue_today ?? 0).toLocaleString()}</span>
+          </div>
         </div>
         <div className="card" style={{ background: '#f59e0b', color: 'white' }}>
           <div style={{ fontSize: '28px', fontWeight: 'bold' }}>{dashboardData?.summary?.renewals_pending ?? 0}</div>
