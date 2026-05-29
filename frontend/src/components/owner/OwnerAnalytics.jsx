@@ -43,11 +43,11 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
         </div>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.walk_in_checkins}</div>
-          <div style={{ color: 'var(--text-secondary)' }}>Walk-ins</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Per day</div>
         </div>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.subscriber_checkins}</div>
-          <div style={{ color: 'var(--text-secondary)' }}>Subscribers Checked-in</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Monthly</div>
         </div>
       </div>
 
@@ -75,7 +75,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary-color)' }}>
             {(dashboardData.snapshot.subscription_revenue || 0).toLocaleString()} RWF
           </div>
-          <div style={{ color: 'var(--text-secondary)' }}>Subscription Signup & Renewal Cash</div>
+          <div style={{ color: 'var(--text-secondary)' }}>New Abonment</div>
         </div>
         <div className="card" style={{ borderLeft: '4px solid var(--success-color)' }}>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--success-color)' }}>
