@@ -8,7 +8,7 @@ export default function Sidebar({ tabs, activeTab, setActiveTab }) {
   return (
     <div className="sidebar">
       <div className="sidebar-header">
-        GymSaaS
+        My Gym
       </div>
       
       <div className="sidebar-nav">

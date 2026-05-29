@@ -11,6 +11,7 @@ import OwnerMembers from '../components/owner/OwnerMembers.jsx';
 import OwnerServices from '../components/owner/OwnerServices.jsx';
 import OwnerCoupons from '../components/owner/OwnerCoupons.jsx';
 import OwnerPlans from '../components/owner/OwnerPlans.jsx';
+import OwnerStaff from '../components/owner/OwnerStaff.jsx';
 
 export default function OwnerDashboard() {
   const { user } = useAuth();
@@ -119,7 +120,8 @@ export default function OwnerDashboard() {
     { id: 'members', label: 'Members Directory' },
     { id: 'packages', label: 'Manage Packages' },
     { id: 'services', label: 'Manage Services' },
-    { id: 'coupons', label: 'Manage Coupons' }
+    { id: 'coupons', label: 'Manage Coupons' },
+    { id: 'staff', label: 'Manage Staff' }
   ];
 
   return (
@@ -131,7 +133,7 @@ export default function OwnerDashboard() {
         {message && <div className="alert alert-success" style={{ marginBottom: '20px' }}>{message}</div>}
         {error && <div className="alert alert-error" style={{ marginBottom: '20px' }}>{error}</div>}
 
-        {loading && activeTab !== 'packages' && activeTab !== 'services' && activeTab !== 'coupons' ? (
+        {loading && activeTab !== 'packages' && activeTab !== 'services' && activeTab !== 'coupons' && activeTab !== 'staff' ? (
           <div className="card text-center" style={{ padding: '60px 20px' }}>
             <div className="spinner"></div>
             <p style={{ marginTop: '10px' }}>Analyzing business metrics...</p>
@@ -173,6 +175,10 @@ export default function OwnerDashboard() {
 
             {activeTab === 'coupons' && (
               <OwnerCoupons setError={setError} setMessage={setMessage} />
+            )}
+            
+            {activeTab === 'staff' && (
+              <OwnerStaff setError={setError} setMessage={setMessage} />
             )}
           </>
         )}
