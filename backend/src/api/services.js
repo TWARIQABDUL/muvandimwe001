@@ -16,7 +16,7 @@ router.get(
     try {
       const { gym_id } = req.user;
       const services = await db.all(
-        `SELECT id, name, price_daily, price_monthly
+        `SELECT id, name, price_daily, price_monthly, allow_monthly
          FROM services
          WHERE gym_id = ?
          ORDER BY name ASC`,
@@ -38,7 +38,7 @@ router.post(
   gymIsolationMiddleware,
   async (req, res) => {
     try {
-      const { name, price_daily, price_monthly } = req.body;
+      const { name, price_daily, price_monthly, allow_monthly } = req.body;
       const { gym_id } = req.user;
 
       if (!name) {
@@ -58,18 +58,21 @@ router.post(
         return res.status(409).json({ error: 'Service already exists' });
       }
 
+      const allowMonthlyVal = allow_monthly !== undefined ? (allow_monthly ? 1 : 0) : 1;
+
       const serviceId = uuidv4();
       await db.run(
-        `INSERT INTO services (id, gym_id, name, price_daily, price_monthly)
-         VALUES (?, ?, ?, ?, ?)`,
-        [serviceId, gym_id, name.trim().toLowerCase(), dailyRate, monthlyRate]
+        `INSERT INTO services (id, gym_id, name, price_daily, price_monthly, allow_monthly)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [serviceId, gym_id, name.trim().toLowerCase(), dailyRate, monthlyRate, allowMonthlyVal]
       );
 
       res.status(201).json({
         id: serviceId,
         name: name.trim().toLowerCase(),
         price_daily: dailyRate,
-        price_monthly: monthlyRate
+        price_monthly: monthlyRate,
+        allow_monthly: allowMonthlyVal
       });
     } catch (err) {
       console.error('Create service error:', err.message);
@@ -87,7 +90,7 @@ router.patch(
   async (req, res) => {
     try {
       const serviceId = req.params.id;
-      const { name, price_daily, price_monthly } = req.body;
+      const { name, price_daily, price_monthly, allow_monthly } = req.body;
       const { gym_id } = req.user;
 
       const service = await db.get(
@@ -102,19 +105,21 @@ router.patch(
       const updateName = name ? name.trim().toLowerCase() : service.name;
       const dailyRate = price_daily !== undefined ? Number(price_daily) : service.price_daily;
       const monthlyRate = price_monthly !== undefined ? Number(price_monthly) : service.price_monthly;
+      const allowMonthlyVal = allow_monthly !== undefined ? (allow_monthly ? 1 : 0) : service.allow_monthly;
 
       await db.run(
         `UPDATE services
-         SET name = ?, price_daily = ?, price_monthly = ?
+         SET name = ?, price_daily = ?, price_monthly = ?, allow_monthly = ?
          WHERE id = ?`,
-        [updateName, dailyRate, monthlyRate, serviceId]
+        [updateName, dailyRate, monthlyRate, allowMonthlyVal, serviceId]
       );
 
       res.json({
         id: serviceId,
         name: updateName,
         price_daily: dailyRate,
-        price_monthly: monthlyRate
+        price_monthly: monthlyRate,
+        allow_monthly: allowMonthlyVal
       });
     } catch (err) {
       console.error('Update service error:', err.message);

@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS services (
   name TEXT NOT NULL,
   price_daily DECIMAL(10, 2) NOT NULL,
   price_monthly DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  allow_monthly INTEGER DEFAULT 1,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (gym_id) REFERENCES gyms(id),
   UNIQUE (gym_id, name)

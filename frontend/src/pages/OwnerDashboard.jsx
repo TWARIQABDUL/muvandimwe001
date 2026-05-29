@@ -20,7 +20,7 @@ export default function OwnerDashboard() {
   const [showPasswordModal, setShowPasswordModal] = useState(user?.first_login === 1);
   const { data, loading, error, setError } = useOwnerAnalytics(timeframe);
   const [services, setServices] = useState([]);
-  const [newService, setNewService] = useState({ name: '', price_daily: '', price_monthly: '' });
+  const [newService, setNewService] = useState({ name: '', price_daily: '', price_monthly: '', allow_monthly: true });
   const [message, setMessage] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -58,10 +58,11 @@ export default function OwnerDashboard() {
       await api.post('/services', {
         name: newService.name.trim(),
         price_daily: Number(newService.price_daily) || 0,
-        price_monthly: Number(newService.price_monthly) || 0
+        price_monthly: Number(newService.price_monthly) || 0,
+        allow_monthly: newService.allow_monthly
       });
       setMessage(`Service "${newService.name.trim()}" created successfully!`);
-      setNewService({ name: '', price_daily: '', price_monthly: '' });
+      setNewService({ name: '', price_daily: '', price_monthly: '', allow_monthly: true });
       fetchServices();
       // clear message after 3s
       setTimeout(() => setMessage(null), 3000);

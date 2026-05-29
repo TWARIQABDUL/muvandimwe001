@@ -158,7 +158,7 @@ export default function OwnerPlans({ services }) {
               <p style={{ color: 'var(--warning-color)', fontSize: '14px' }}>You need to create Services first before creating packages.</p>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
-                {services.map(service => (
+                {services.filter(s => s.allow_monthly !== 0 && s.allow_monthly !== false).map(service => (
                   <label 
                     key={service.id} 
                     style={{
