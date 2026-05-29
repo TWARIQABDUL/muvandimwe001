@@ -2,6 +2,7 @@ import React from 'react';
 
 export default function RegisterNewMember({
   services,
+  employers = [],
   newMember,
   setNewMember,
   selectedServices,
@@ -45,18 +46,33 @@ export default function RegisterNewMember({
               />
             </div>
           </div>
-          
-          <div className="form-group">
-            <label>Phone (Optional)</label>
-            <input
-              type="text"
-              placeholder="+250 788..."
-              value={newMember.phone}
-              onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
-            />
+          <div className="grid grid-2" style={{ marginTop: '15px' }}>
+            <div className="form-group">
+              <label>Phone (Optional)</label>
+              <input
+                type="text"
+                placeholder="+250 788..."
+                value={newMember.phone}
+                onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Partner Organization (B2B)</label>
+              <select
+                value={newMember.employer_id || ''}
+                onChange={(e) => setNewMember({ ...newMember, employer_id: e.target.value })}
+              >
+                <option value="">-- None (Standard Member) --</option>
+                {employers.map(emp => (
+                  <option key={emp.id} value={emp.id}>{emp.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="form-group" style={{ marginTop: '20px' }}>
+          {!newMember.employer_id && (
+            <>
+              <div className="form-group" style={{ marginTop: '20px' }}>
             <label style={{ fontSize: '16px', color: 'var(--primary-color)' }}>Step 1: Select Services for Dynamic Package</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginTop: '10px' }}>
               {services.map((s) => (
@@ -157,6 +173,8 @@ export default function RegisterNewMember({
                 <span>{pricing.finalAmt.toLocaleString()} RWF</span>
               </div>
             </div>
+          )}
+          </>
           )}
 
           <button className="btn-primary" type="submit" disabled={loading} style={{ marginTop: '30px', width: '100%', padding: '15px', fontSize: '16px' }}>

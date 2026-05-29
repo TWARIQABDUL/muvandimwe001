@@ -14,7 +14,7 @@ router.post(
   gymIsolationMiddleware,
   async (req, res) => {
     try {
-      const { name, email, phone, subscription_id, services, is_card, taps, coupon } = req.body;
+      const { name, email, phone, subscription_id, services, is_card, taps, coupon, employer_id } = req.body;
       const { gym_id } = req.user;
 
       if (!name) {
@@ -30,6 +30,28 @@ router.post(
         if (existing) {
           return res.status(409).json({ error: 'Email already registered' });
         }
+      }
+
+      // If B2B member, skip subscription logic
+      if (employer_id) {
+        const memberId = uuidv4();
+        const qrCodeId = uuidv4();
+
+        await db.run(
+          `INSERT INTO members (id, gym_id, name, email, phone, qr_code_id, type, employer_id, current_subscription_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [memberId, gym_id, name, email || null, phone || null, qrCodeId, 'b2b', employer_id, null]
+        );
+
+        return res.status(201).json({
+          id: memberId,
+          name,
+          email,
+          phone,
+          qr_code_id: qrCodeId,
+          type: 'b2b',
+          employer_id
+        });
       }
 
       // Calculate dynamic price
@@ -184,8 +206,9 @@ router.get(
       }
 
       const members = await db.all(
-        `SELECT m.id, m.name, m.type, ms.status as subscription_status, ms.next_renewal_date, ms.is_card, ms.remaining_taps, s.included_services
+        `SELECT m.id, m.name, m.type, m.employer_id, e.name as employer_name, ms.status as subscription_status, ms.next_renewal_date, ms.is_card, ms.remaining_taps, s.included_services
          FROM members m
+         LEFT JOIN employers e ON m.employer_id = e.id
          LEFT JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
          LEFT JOIN subscriptions s ON ms.subscription_id = s.id
          WHERE m.gym_id = ? AND m.name LIKE ?
@@ -224,8 +247,9 @@ router.post(
       }
 
       const member = await db.get(
-        `SELECT m.*, ms.status, ms.is_card, ms.remaining_taps, ms.next_renewal_date, s.included_services
+        `SELECT m.*, e.name as employer_name, ms.status, ms.is_card, ms.remaining_taps, ms.next_renewal_date, s.included_services
          FROM members m
+         LEFT JOIN employers e ON m.employer_id = e.id
          LEFT JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
          LEFT JOIN subscriptions s ON ms.subscription_id = s.id
          WHERE m.gym_id = ? AND m.qr_code_id = ?`,
@@ -246,6 +270,8 @@ router.post(
           id: member.id,
           name: member.name,
           type: member.type,
+          employer_id: member.employer_id,
+          employer_name: member.employer_name,
           subscription_status: member.status,
           allowed_services: allowedServices,
           is_card: member.is_card || 0,

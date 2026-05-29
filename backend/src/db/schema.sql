@@ -30,9 +30,11 @@ CREATE TABLE IF NOT EXISTS members (
   phone TEXT,
   qr_code_id TEXT NOT NULL,
   type TEXT NOT NULL CHECK (type IN ('subscription', 'daily', 'b2b', 'walk_in')),
+  employer_id TEXT,
   current_subscription_id TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (gym_id) REFERENCES gyms(id),
+  FOREIGN KEY (employer_id) REFERENCES employers(id),
   UNIQUE (gym_id, email),
   UNIQUE (gym_id, qr_code_id)
 );
@@ -106,6 +108,7 @@ CREATE TABLE IF NOT EXISTS employers (
   gym_id TEXT NOT NULL,
   name TEXT NOT NULL,
   contact_email TEXT,
+  phone TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (gym_id) REFERENCES gyms(id),
   UNIQUE (gym_id, name)

@@ -130,11 +130,11 @@ export default function ManagerCheckinFlow({
                       <div>
                         <strong style={{ display: 'block', color: '#0f172a' }}>{member.name}</strong>
                         <span style={{ fontSize: '13px', color: '#64748b' }}>
-                          {member.is_card === 1 ? `Session Card (${member.remaining_taps} taps)` : 'Monthly Subscription'}
+                          {member.type === 'b2b' ? `Partner Organization: ${member.employer_name || 'Yes'}` : member.is_card === 1 ? `Session Card (${member.remaining_taps} taps)` : 'Monthly Subscription'}
                         </span>
                       </div>
-                      <span className={`badge ${member.subscription_status === 'active' ? 'badge-success' : 'badge-danger'}`}>
-                        {member.subscription_status}
+                      <span className={`badge ${member.type === 'b2b' ? 'badge-success' : member.subscription_status === 'active' ? 'badge-success' : 'badge-danger'}`}>
+                        {member.type === 'b2b' ? 'PARTNER' : member.subscription_status}
                       </span>
                     </div>
                   ))}
@@ -146,10 +146,12 @@ export default function ManagerCheckinFlow({
                   <div className="flex-between" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px' }}>
                     <div>
                       <h4 style={{ fontSize: '18px', color: '#0f172a', margin: '0 0 5px 0' }}>{memberLookup.name}</h4>
-                      <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>Allowed: {memberLookup.allowed_services?.join(', ') || 'gym'}</p>
+                      <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>
+                        {memberLookup.type === 'b2b' ? `Partner: ${memberLookup.employer_name || 'B2B'}` : `Allowed: ${memberLookup.allowed_services?.join(', ') || 'gym'}`}
+                      </p>
                     </div>
-                    <span className={`badge ${memberLookup.subscription_status === 'active' ? 'badge-success' : 'badge-danger'}`} style={{ padding: '6px 12px', fontSize: '14px' }}>
-                      {memberLookup.subscription_status.toUpperCase()}
+                    <span className={`badge ${memberLookup.type === 'b2b' ? 'badge-success' : memberLookup.subscription_status === 'active' ? 'badge-success' : 'badge-danger'}`} style={{ padding: '6px 12px', fontSize: '14px' }}>
+                      {memberLookup.type === 'b2b' ? 'PARTNER MEMBER' : memberLookup.subscription_status.toUpperCase()}
                     </span>
                   </div>
 
@@ -161,6 +163,14 @@ export default function ManagerCheckinFlow({
                         today.setHours(0,0,0,0);
                         const renewal = new Date(memberLookup.next_renewal_date);
                         remainingDays = Math.ceil((renewal - today) / (1000 * 60 * 60 * 24));
+                      }
+                      
+                      if (memberLookup.type === 'b2b') {
+                        return (
+                          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '12px', borderRadius: '6px', color: '#166534', fontWeight: '500' }}>
+                            Organization Billing: Select any service below
+                          </div>
+                        );
                       }
                       
                       return memberLookup.is_card === 1 ? (
@@ -200,10 +210,11 @@ export default function ManagerCheckinFlow({
                       style={{ padding: '12px', fontSize: '15px' }}
                     >
                       {services.map((s) => {
-                        const isIncluded = memberLookup.allowed_services?.length ? memberLookup.allowed_services.includes(s.name) : false;
+                        const isIncluded = memberLookup.type === 'b2b' ? true : (memberLookup.allowed_services?.length ? memberLookup.allowed_services.includes(s.name) : false);
+                        const labelSuffix = memberLookup.type === 'b2b' ? '(Partner Billing)' : isIncluded ? '(Included)' : `(Extra: ${Number(s.price_daily).toLocaleString()} RWF)`;
                         return (
                           <option key={s.id} value={s.name}>
-                            {s.name.charAt(0).toUpperCase() + s.name.slice(1)} {isIncluded ? '(Included)' : `(Extra: ${Number(s.price_daily).toLocaleString()} RWF)`}
+                            {s.name.charAt(0).toUpperCase() + s.name.slice(1)} {labelSuffix}
                           </option>
                         );
                       })}
@@ -213,7 +224,7 @@ export default function ManagerCheckinFlow({
                   <button
                     className="btn-primary"
                     onClick={handleCheckinMember}
-                    disabled={loading || (memberLookup.is_card === 1 && memberLookup.remaining_taps <= 0) || memberLookup.subscription_status !== 'active'}
+                    disabled={loading || (memberLookup.type !== 'b2b' && ((memberLookup.is_card === 1 && memberLookup.remaining_taps <= 0) || memberLookup.subscription_status !== 'active'))}
                     style={{ width: '100%', padding: '15px', fontSize: '16px', marginTop: '10px' }}
                   >
                     Confirm Check-in

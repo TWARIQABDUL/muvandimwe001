@@ -20,6 +20,7 @@ export default function ManagerDashboard() {
   const [message, setMessage] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [coupons, setCoupons] = useState([]);
+  const [employers, setEmployers] = useState([]);
 
   // Check-in state
   const [qrCode, setQrCode] = useState('');
@@ -32,7 +33,7 @@ export default function ManagerDashboard() {
   const [walkInAmount, setWalkInAmount] = useState('15000');
 
   // Registration state
-  const [newMember, setNewMember] = useState({ name: '', email: '', phone: '' });
+  const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', employer_id: '' });
   const [selectedServices, setSelectedServices] = useState(['gym']);
   const [isCard, setIsCard] = useState(false);
   const [taps, setTaps] = useState(20);
@@ -49,7 +50,17 @@ export default function ManagerDashboard() {
     fetchDashboard();
     fetchServices();
     fetchCoupons();
+    fetchEmployers();
   }, []);
+
+  const fetchEmployers = async () => {
+    try {
+      const response = await api.get('/employers');
+      setEmployers(response.data.employers || []);
+    } catch (err) {
+      console.warn('Could not load employers:', err.message || err);
+    }
+  };
 
   const fetchCoupons = async () => {
     try {
@@ -157,11 +168,11 @@ export default function ManagerDashboard() {
     e.preventDefault();
     if (!memberLookup) return;
 
-    const isIncluded = memberLookup.allowed_services?.includes(memberService);
-    let type = 'subscription';
+    const isIncluded = memberLookup.type === 'b2b' ? true : memberLookup.allowed_services?.includes(memberService);
+    let type = memberLookup.type === 'b2b' ? 'b2b' : 'subscription';
     let amount = 0;
 
-    if (!isIncluded) {
+    if (type !== 'b2b' && !isIncluded) {
       type = 'daily';
       const serviceData = services.find(s => s.name === memberService);
       amount = Number(serviceData?.price_daily) || 0;
@@ -177,7 +188,7 @@ export default function ManagerDashboard() {
         service: memberService,
         amount
       });
-      setMessage(`${memberLookup.name} checked in to ${memberService}${!isIncluded ? ` (Paid ${amount.toLocaleString()} RWF)` : ''}`);
+      setMessage(`${memberLookup.name} checked in to ${memberService}${type === 'daily' ? ` (Paid ${amount.toLocaleString()} RWF)` : ''}`);
       setMemberLookup(null);
       setQrCode('');
       fetchDashboard();
@@ -256,6 +267,7 @@ export default function ManagerDashboard() {
         name: newMember.name.trim(),
         email: newMember.email.trim() || null,
         phone: newMember.phone.trim() || null,
+        employer_id: newMember.employer_id || null,
         services: selectedServices,
         is_card: isCard ? 1 : 0,
         taps: isCard ? Number(taps) : null,
@@ -264,7 +276,7 @@ export default function ManagerDashboard() {
 
       setMessage(`${response.data.name} registered successfully`);
       setNewMemberQr(response.data.qr_code_id);
-      setNewMember({ name: '', email: '', phone: '' });
+      setNewMember({ name: '', email: '', phone: '', employer_id: '' });
       setSelectedServices(['gym']);
       setIsCard(false);
       setTaps(20);
@@ -399,6 +411,7 @@ export default function ManagerDashboard() {
             {activeTab === 'register' && (
               <RegisterNewMember
                 services={services}
+                employers={employers}
                 newMember={newMember}
                 setNewMember={setNewMember}
                 selectedServices={selectedServices}

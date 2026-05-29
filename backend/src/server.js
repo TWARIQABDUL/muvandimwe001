@@ -25,6 +25,7 @@ import servicesRoutes from './api/services.js';
 import couponsRoutes from './api/coupons.js';
 import plansRoutes from './api/plans.js';
 import usersRoutes from './api/users.js';
+import employersRoutes from './api/employers.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -57,6 +58,7 @@ app.use('/api/services', servicesRoutes);
 app.use('/api/coupons', couponsRoutes);
 app.use('/api/plans', plansRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/employers', employersRoutes);
 
 // 404 handler
 app.use((req, res) => {
