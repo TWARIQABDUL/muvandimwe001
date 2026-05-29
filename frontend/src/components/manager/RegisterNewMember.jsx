@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 export default function RegisterNewMember({
   services,
@@ -20,6 +20,22 @@ export default function RegisterNewMember({
   loading,
   newMemberQr
 }) {
+  const [partnerSearch, setPartnerSearch] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredEmployers = employers.filter(emp => emp.name.toLowerCase().includes(partnerSearch.toLowerCase()));
+
   return (
     <div className="register-tab">
       <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -56,17 +72,95 @@ export default function RegisterNewMember({
                 onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
               />
             </div>
-            <div className="form-group">
+            <div className="form-group" ref={dropdownRef} style={{ position: 'relative' }}>
               <label>Partner Organization (B2B)</label>
-              <select
-                value={newMember.employer_id || ''}
-                onChange={(e) => setNewMember({ ...newMember, employer_id: e.target.value })}
+              <div
+                style={{
+                  border: '1px solid var(--border-color)',
+                  padding: '12px',
+                  borderRadius: '6px',
+                  background: 'var(--bg-light)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+                onClick={() => setShowDropdown(!showDropdown)}
               >
-                <option value="">-- None (Standard Member) --</option>
-                {employers.map(emp => (
-                  <option key={emp.id} value={emp.id}>{emp.name}</option>
-                ))}
-              </select>
+                <span>
+                  {newMember.employer_id 
+                    ? employers.find(e => e.id === newMember.employer_id)?.name 
+                    : '-- None (Standard Member) --'}
+                </span>
+                <span style={{ fontSize: '12px' }}>▼</span>
+              </div>
+              
+              {showDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  background: 'white',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '6px',
+                  marginTop: '4px',
+                  maxHeight: '250px',
+                  overflowY: 'auto',
+                  zIndex: 50,
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}>
+                  <div style={{ padding: '8px', position: 'sticky', top: 0, background: 'white', borderBottom: '1px solid var(--border-color)' }}>
+                    <input
+                      type="text"
+                      placeholder="Search partner..."
+                      value={partnerSearch}
+                      onChange={(e) => setPartnerSearch(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '4px',
+                        outline: 'none'
+                      }}
+                      autoFocus
+                    />
+                  </div>
+                  <div 
+                    style={{ padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }}
+                    onClick={() => {
+                      setNewMember({ ...newMember, employer_id: '' });
+                      setShowDropdown(false);
+                      setPartnerSearch('');
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    -- None (Standard Member) --
+                  </div>
+                  {filteredEmployers.map(emp => (
+                    <div 
+                      key={emp.id}
+                      style={{ padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }}
+                      onClick={() => {
+                        setNewMember({ ...newMember, employer_id: emp.id });
+                        setShowDropdown(false);
+                        setPartnerSearch('');
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      {emp.name}
+                    </div>
+                  ))}
+                  {filteredEmployers.length === 0 && (
+                    <div style={{ padding: '10px 12px', color: '#64748b', fontSize: '14px', textAlign: 'center' }}>
+                      No partners found
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
