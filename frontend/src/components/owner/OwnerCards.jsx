@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../store/authStore.js';
-import { Download, RefreshCw, Plus } from 'lucide-react';
+import { Download, RefreshCw, Plus, Share2 } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 
 export default function OwnerCards({ setError, setMessage }) {
   const [cards, setCards] = useState([]);
@@ -47,25 +50,50 @@ export default function OwnerCards({ setError, setMessage }) {
     }
   };
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
     const unassigned = cards.filter(c => c.status === 'unassigned');
     if (unassigned.length === 0) {
       setError('No unassigned cards to export.');
       return;
     }
 
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + "QR Code ID,Status,Created At\n" 
+    const csvContent = "QR Code ID,Status,Created At\n" 
       + unassigned.map(c => `${c.id},${c.status},${new Date(c.created_at).toLocaleDateString()}`).join("\n");
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `unassigned_qr_cards_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setMessage(`Successfully exported ${unassigned.length} unassigned cards.`);
+    const fileName = `unassigned_qr_cards_${new Date().toISOString().split('T')[0]}.csv`;
+
+    try {
+      if (Capacitor.isNativePlatform()) {
+        // Mobile: Save to device and Share natively
+        const writeResult = await Filesystem.writeFile({
+          path: fileName,
+          data: csvContent,
+          directory: Directory.Cache,
+          encoding: Encoding.UTF8
+        });
+        
+        await Share.share({
+          title: 'Unused QR Cards',
+          text: 'Here are the unassigned QR cards for printing.',
+          url: writeResult.uri,
+          dialogTitle: 'Share CSV'
+        });
+        setMessage(`Successfully shared ${unassigned.length} unassigned cards.`);
+      } else {
+        // Web: HTML5 Download
+        const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setMessage(`Successfully exported ${unassigned.length} unassigned cards.`);
+      }
+    } catch (err) {
+      console.error("Export Error:", err);
+      setError("Failed to export the CSV file.");
+    }
   };
 
   const stats = {
