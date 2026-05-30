@@ -19,7 +19,9 @@ function ProtectedRoute({ children, requiredRole = null }) {
   }
 
   if (requiredRole && user?.role !== requiredRole) {
-    return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+    // If they have the wrong role, redirect them to THEIR correct dashboard, not login
+    const target = user?.role === 'manager' ? '/manager' : '/owner';
+    return <Navigate to={target} replace />;
   }
 
   return children;

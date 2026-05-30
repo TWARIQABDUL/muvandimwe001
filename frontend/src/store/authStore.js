@@ -78,11 +78,7 @@ export const useAuthStore = create((set) => ({
 
   // Logout
   logout: async () => {
-    try {
-      await API.post('/auth/logout');
-    } catch (err) {
-      console.error('Logout error:', err);
-    }
+    // Clear state synchronously to prevent infinite redirect loops on 401 errors
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     set({
@@ -90,6 +86,12 @@ export const useAuthStore = create((set) => ({
       token: null,
       isAuthenticated: false
     });
+
+    try {
+      await API.post('/auth/logout');
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
   },
 
   // Change password
