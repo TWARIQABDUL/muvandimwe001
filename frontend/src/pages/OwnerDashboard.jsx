@@ -13,6 +13,7 @@ import OwnerCoupons from '../components/owner/OwnerCoupons.jsx';
 import OwnerPlans from '../components/owner/OwnerPlans.jsx';
 import OwnerStaff from '../components/owner/OwnerStaff.jsx';
 import OwnerPartners from '../components/owner/OwnerPartners.jsx';
+import OwnerCards from '../components/owner/OwnerCards.jsx';
 
 export default function OwnerDashboard() {
   const { user } = useAuth();
@@ -124,7 +125,8 @@ export default function OwnerDashboard() {
     { id: 'services', label: 'Manage Services' },
     { id: 'coupons', label: 'Manage Coupons' },
     { id: 'staff', label: 'Manage Staff' },
-    { id: 'partners', label: 'Manage Partners (B2B)' }
+    { id: 'partners', label: 'Manage Partners (B2B)' },
+    { id: 'cards', label: 'Manage Cards' }
   ];
 
   return (
@@ -184,8 +186,12 @@ export default function OwnerDashboard() {
               <OwnerStaff setError={setError} setMessage={setMessage} />
             )}
             
-            {activeTab === 'partners' && (
+            { activeTab === 'partners' && (
               <OwnerPartners setError={setError} setMessage={setMessage} />
+            )}
+
+            { activeTab === 'cards' && (
+              <OwnerCards setError={setError} setMessage={setMessage} />
             )}
           </>
         )}

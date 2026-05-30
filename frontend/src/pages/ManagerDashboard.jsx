@@ -33,7 +33,7 @@ export default function ManagerDashboard() {
   const [walkInAmount, setWalkInAmount] = useState('15000');
 
   // Registration state
-  const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', employer_id: '' });
+  const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', employer_id: '', qr_code_id: '' });
   const [selectedServices, setSelectedServices] = useState(['gym']);
   const [isCard, setIsCard] = useState(false);
   const [taps, setTaps] = useState(20);
@@ -268,6 +268,7 @@ export default function ManagerDashboard() {
         email: newMember.email.trim() || null,
         phone: newMember.phone.trim() || null,
         employer_id: newMember.employer_id || null,
+        qr_code_id: newMember.qr_code_id || null,
         services: selectedServices,
         is_card: isCard ? 1 : 0,
         taps: isCard ? Number(taps) : null,
@@ -276,7 +277,7 @@ export default function ManagerDashboard() {
 
       setMessage(`${response.data.name} registered successfully`);
       setNewMemberQr(response.data.qr_code_id);
-      setNewMember({ name: '', email: '', phone: '', employer_id: '' });
+      setNewMember({ name: '', email: '', phone: '', employer_id: '', qr_code_id: '' });
       setSelectedServices(['gym']);
       setIsCard(false);
       setTaps(20);

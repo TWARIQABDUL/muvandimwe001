@@ -8,7 +8,7 @@ function App() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://muvandimwe001.vercel.app';
       try {
         const [healthRes, usersRes] = await Promise.all([
           fetch(`${apiUrl}/api/health`),

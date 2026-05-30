@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: import.meta.env.MODE === 'production' ? '/api' : 'http://localhost:3000/api'
+  baseURL: import.meta.env.VITE_API_URL || 'https://muvandimwe001.vercel.app/api'
 });
 
 // Interceptor to attach token

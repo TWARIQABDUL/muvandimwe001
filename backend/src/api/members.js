@@ -14,11 +14,26 @@ router.post(
   gymIsolationMiddleware,
   async (req, res) => {
     try {
-      const { name, email, phone, subscription_id, services, is_card, taps, coupon, employer_id } = req.body;
+      const { name, email, phone, subscription_id, services, is_card, taps, coupon, employer_id, qr_code_id } = req.body;
       const { gym_id } = req.user;
 
       if (!name) {
         return res.status(400).json({ error: 'Name is required' });
+      }
+
+      if (qr_code_id) {
+        const validCard = await db.get(
+          `SELECT status FROM valid_qr_cards WHERE gym_id = ? AND id = ?`,
+          [gym_id, qr_code_id]
+        );
+        
+        if (!validCard) {
+          return res.status(403).json({ error: 'Unauthorized QR Card. Please use a valid pre-printed gym card.' });
+        }
+        
+        if (validCard.status !== 'unassigned') {
+          return res.status(409).json({ error: 'This QR card is already assigned to a member.' });
+        }
       }
 
       // Check if email already exists
@@ -35,20 +50,27 @@ router.post(
       // If B2B member, skip subscription logic
       if (employer_id) {
         const memberId = uuidv4();
-        const qrCodeId = uuidv4();
+        const finalQrCodeId = qr_code_id || uuidv4();
 
         await db.run(
           `INSERT INTO members (id, gym_id, name, email, phone, qr_code_id, type, employer_id, current_subscription_id)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [memberId, gym_id, name, email || null, phone || null, qrCodeId, 'b2b', employer_id, null]
+          [memberId, gym_id, name, email || null, phone || null, finalQrCodeId, 'b2b', employer_id, null]
         );
+
+        if (qr_code_id) {
+          await db.run(
+            `UPDATE valid_qr_cards SET status = 'assigned', assigned_member_id = ? WHERE id = ? AND gym_id = ?`,
+            [memberId, qr_code_id, gym_id]
+          );
+        }
 
         return res.status(201).json({
           id: memberId,
           name,
           email,
           phone,
-          qr_code_id: qrCodeId,
+          qr_code_id: finalQrCodeId,
           type: 'b2b',
           employer_id
         });
@@ -140,13 +162,13 @@ router.post(
       }
 
       const memberId = uuidv4();
-      const qrCodeId = uuidv4();
+      const finalQrCodeId = qr_code_id || uuidv4();
 
       // Insert member
       await db.run(
         `INSERT INTO members (id, gym_id, name, email, phone, qr_code_id, type, current_subscription_id)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [memberId, gym_id, name, email || null, phone || null, qrCodeId, 'subscription', null]
+        [memberId, gym_id, name, email || null, phone || null, finalQrCodeId, 'subscription', null]
       );
 
       // Create subscription
@@ -163,6 +185,13 @@ router.post(
         [memberSubId, memberId]
       );
 
+      if (qr_code_id) {
+        await db.run(
+          `UPDATE valid_qr_cards SET status = 'assigned', assigned_member_id = ? WHERE id = ? AND gym_id = ?`,
+          [memberId, qr_code_id, gym_id]
+        );
+      }
+
       // Log payment transaction
       const paymentId = uuidv4();
       await db.run(
@@ -176,7 +205,7 @@ router.post(
         name,
         email,
         phone,
-        qr_code_id: qrCodeId,
+        qr_code_id: finalQrCodeId,
         subscription: {
           name: dynamicSubName,
           next_renewal_date: nextRenewalStr,

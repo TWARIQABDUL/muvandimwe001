@@ -41,27 +41,63 @@ export default function RegisterNewMember({
       <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
         <h2 className="card-title">Register New Member</h2>
         <form onSubmit={handleCreateMember} className="form-stack">
-          <div className="grid grid-2">
-            <div className="form-group">
-              <label>Full Name</label>
+          {!newMember.qr_code_id ? (
+            <div style={{ padding: '40px 20px', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '12px', border: '2px dashed #cbd5e1', marginBottom: '20px' }}>
+              <h3 style={{ marginBottom: '15px', color: '#334155', fontSize: '20px' }}>Step 1: Scan Member Card</h3>
+              <p style={{ marginBottom: '25px', color: '#64748b', fontSize: '15px' }}>Scan the QR code on a blank physical card to assign it to this new member.</p>
               <input
                 type="text"
-                placeholder="e.g. John Doe"
-                value={newMember.name}
-                onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-                required
+                placeholder="Scan Card..."
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (e.target.value.trim()) {
+                      setNewMember({ ...newMember, qr_code_id: e.target.value.trim() });
+                    }
+                  }
+                }}
+                style={{ maxWidth: '350px', margin: '0 auto', textAlign: 'center', fontSize: '16px', padding: '12px' }}
               />
+              <p style={{ marginTop: '15px', fontSize: '13px', color: '#94a3b8' }}>Press Enter after scanning</p>
             </div>
-            <div className="form-group">
-              <label>Email (Optional)</label>
-              <input
-                type="email"
-                placeholder="john@example.com"
-                value={newMember.email}
-                onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
-              />
-            </div>
-          </div>
+          ) : (
+            <>
+              <div style={{ padding: '15px 20px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <strong style={{ color: '#166534', display: 'block', fontSize: '15px', marginBottom: '4px' }}>✓ Card Assigned</strong>
+                  <code style={{ color: '#15803d', fontSize: '14px', backgroundColor: '#dcfce3', padding: '2px 6px', borderRadius: '4px' }}>{newMember.qr_code_id}</code>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => setNewMember({ ...newMember, qr_code_id: '' })}
+                  style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: '500', padding: '8px' }}
+                >
+                  Scan Different Card
+                </button>
+              </div>
+
+              <div className="grid grid-2">
+                <div className="form-group">
+                  <label>Full Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. John Doe"
+                    value={newMember.name}
+                    onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Email (Optional)</label>
+                  <input
+                    type="email"
+                    placeholder="john@example.com"
+                    value={newMember.email}
+                    onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
+                  />
+                </div>
+              </div>
           <div className="grid grid-2" style={{ marginTop: '15px' }}>
             <div className="form-group">
               <label>Phone (Optional)</label>
@@ -272,8 +308,10 @@ export default function RegisterNewMember({
           )}
 
           <button className="btn-primary" type="submit" disabled={loading} style={{ marginTop: '30px', width: '100%', padding: '15px', fontSize: '16px' }}>
-            {loading ? 'Processing...' : 'Register Member & Generate QR'}
+            {loading ? 'Processing...' : 'Register Member & Assign Card'}
           </button>
+          </>
+          )}
         </form>
 
         {newMemberQr && (
