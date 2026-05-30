@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import QRScanner from '../QRScanner.jsx';
+import { Camera } from 'lucide-react';
+import FullScreenScanner from '../FullScreenScanner.jsx';
 
 export default function RegisterNewMember({
   services,
@@ -23,6 +24,7 @@ export default function RegisterNewMember({
 }) {
   const [partnerSearch, setPartnerSearch] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -39,21 +41,46 @@ export default function RegisterNewMember({
 
   const handleScanSuccess = (scannedId) => {
     setNewMember({ ...newMember, qr_code_id: scannedId.trim() });
+    setIsScanning(false);
   };
 
   return (
     <div className="register-tab">
+      {isScanning && (
+        <FullScreenScanner 
+          title="Scan New Card"
+          description="Scan a blank gym card to assign it."
+          onScan={handleScanSuccess}
+          onClose={() => setIsScanning(false)}
+        />
+      )}
+
       <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
         <h2 className="card-title">Register New Member</h2>
         <form onSubmit={handleCreateMember} className="form-stack">
           {!newMember.qr_code_id ? (
-            <div style={{ marginBottom: '30px' }}>
-              <QRScanner 
-                title="Scan Member Card" 
-                description="Point your camera at a blank, unassigned physical gym card to assign it to the new member."
-                onScan={handleScanSuccess} 
-              />
-              <div style={{ textAlign: 'center', marginTop: '15px' }}>
+            <div style={{ padding: '40px 20px', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '12px', border: '2px dashed #cbd5e1', marginBottom: '30px' }}>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#eff6ff', color: '#3b82f6', marginBottom: '20px'
+              }}>
+                <Camera size={32} />
+              </div>
+              <h3 style={{ marginBottom: '15px', color: '#334155', fontSize: '20px' }}>Step 1: Assign Physical Card</h3>
+              <p style={{ marginBottom: '25px', color: '#64748b', fontSize: '15px', maxWidth: '400px', margin: '0 auto 25px' }}>
+                Open the scanner and point your camera at a blank, unassigned physical gym card.
+              </p>
+              
+              <button 
+                type="button"
+                className="btn-primary" 
+                onClick={() => setIsScanning(true)}
+                style={{ padding: '16px 32px', fontSize: '18px', display: 'inline-flex', alignItems: 'center', gap: '10px' }}
+              >
+                <Camera size={24} /> Tap to Scan Card
+              </button>
+
+              <div style={{ textAlign: 'center', marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
                 <p style={{ fontSize: '13px', color: '#94a3b8' }}>Or enter ID manually if camera is unavailable:</p>
                 <input
                   type="text"
@@ -66,7 +93,7 @@ export default function RegisterNewMember({
                       }
                     }
                   }}
-                  style={{ maxWidth: '250px', margin: '10px auto 0', textAlign: 'center', padding: '8px', fontSize: '14px' }}
+                  style={{ maxWidth: '250px', margin: '10px auto 0', textAlign: 'center', padding: '10px', fontSize: '14px' }}
                 />
               </div>
             </div>

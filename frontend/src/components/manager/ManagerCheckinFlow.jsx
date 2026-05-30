@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import QRScanner from '../QRScanner.jsx';
+import { Camera } from 'lucide-react';
+import FullScreenScanner from '../FullScreenScanner.jsx';
 
 export default function ManagerCheckinFlow({
   services,
@@ -26,6 +27,7 @@ export default function ManagerCheckinFlow({
   loading
 }) {
   const [checkinType, setCheckinType] = useState('subscriber');
+  const [isScanning, setIsScanning] = useState(false);
 
   const handleToggleWalkInService = (serviceName) => {
     let newSelected;
@@ -47,11 +49,20 @@ export default function ManagerCheckinFlow({
 
   const onCameraScan = (scannedId) => {
     setQrCode(scannedId);
+    setIsScanning(false);
     handleLookupQr(null, scannedId);
   };
 
   return (
     <div className="checkin-flow-tab">
+      {isScanning && (
+        <FullScreenScanner 
+          title="Scan Member Card"
+          description="Scan a member's card to look up their profile."
+          onScan={onCameraScan}
+          onClose={() => setIsScanning(false)}
+        />
+      )}
       
       {/* Overview Cards */}
       <div className="grid grid-3" style={{ marginBottom: '30px' }}>
@@ -98,14 +109,28 @@ export default function ManagerCheckinFlow({
             <div style={{ background: 'var(--bg-light)', padding: '20px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
               
               {!memberLookup && (
-                <div style={{ marginBottom: '30px' }}>
-                  <QRScanner 
-                    title="Scan Member Card" 
-                    description="Point camera at the member's physical card to instantly pull up their profile and check them in."
-                    onScan={onCameraScan} 
-                  />
+                <div style={{ marginBottom: '30px', textAlign: 'center', padding: '30px 20px', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#f0fdf4', color: '#16a34a', marginBottom: '20px'
+                  }}>
+                    <Camera size={32} />
+                  </div>
+                  <h3 style={{ marginBottom: '15px', color: '#0f172a', fontSize: '20px' }}>Quick Scan Check-in</h3>
+                  <p style={{ marginBottom: '25px', color: '#64748b', fontSize: '15px' }}>
+                    Instantly pull up a member's profile by scanning their physical gym card.
+                  </p>
                   
-                  <div style={{ textAlign: 'center', marginTop: '15px' }}>
+                  <button 
+                    type="button"
+                    className="btn-primary" 
+                    onClick={() => setIsScanning(true)}
+                    style={{ padding: '16px 32px', fontSize: '18px', display: 'inline-flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <Camera size={24} /> Open Scanner
+                  </button>
+                  
+                  <div style={{ textAlign: 'center', marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
                     <p style={{ fontSize: '13px', color: '#94a3b8' }}>Or enter ID manually if camera is unavailable:</p>
                     <form onSubmit={(e) => handleLookupQr(e)} style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '10px' }}>
                       <input
