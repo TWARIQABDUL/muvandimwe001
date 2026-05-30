@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import QRScanner from '../QRScanner.jsx';
 
 export default function ManagerCheckinFlow({
   services,
@@ -42,6 +43,11 @@ export default function ManagerCheckinFlow({
       if (s) sum += Number(s.price_daily) || 0;
     });
     setWalkInAmount(sum.toString());
+  };
+
+  const onCameraScan = (scannedId) => {
+    setQrCode(scannedId);
+    handleLookupQr(null, scannedId);
   };
 
   return (
@@ -90,19 +96,32 @@ export default function ManagerCheckinFlow({
         {checkinType === 'subscriber' ? (
           <div className="subscriber-flow" style={{ animation: 'fadeIn 0.3s' }}>
             <div style={{ background: 'var(--bg-light)', padding: '20px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-              <h3 style={{ marginBottom: '15px', color: 'var(--text-primary)' }}>Scan Member QR or Search UUID</h3>
-              <form onSubmit={handleLookupQr} className="flex gap-10" style={{ marginBottom: '20px' }}>
-                <input
-                  type="text"
-                  placeholder="Paste member QR UUID"
-                  value={qrCode}
-                  onChange={(e) => setQrCode(e.target.value)}
-                  style={{ flex: 1, padding: '12px' }}
-                />
-                <button className="btn-primary" type="submit" disabled={loading} style={{ padding: '12px 24px' }}>
-                  Lookup by QR
-                </button>
-              </form>
+              
+              {!memberLookup && (
+                <div style={{ marginBottom: '30px' }}>
+                  <QRScanner 
+                    title="Scan Member Card" 
+                    description="Point camera at the member's physical card to instantly pull up their profile and check them in."
+                    onScan={onCameraScan} 
+                  />
+                  
+                  <div style={{ textAlign: 'center', marginTop: '15px' }}>
+                    <p style={{ fontSize: '13px', color: '#94a3b8' }}>Or enter ID manually if camera is unavailable:</p>
+                    <form onSubmit={(e) => handleLookupQr(e)} style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '10px' }}>
+                      <input
+                        type="text"
+                        placeholder="Manual QR UUID..."
+                        value={qrCode}
+                        onChange={(e) => setQrCode(e.target.value)}
+                        style={{ padding: '10px', fontSize: '14px', maxWidth: '250px' }}
+                      />
+                      <button className="btn-secondary" type="submit" disabled={loading} style={{ padding: '10px 15px' }}>
+                        Lookup
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
 
               <h3 style={{ marginBottom: '15px', color: 'var(--text-primary)', marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>Or Search by Name</h3>
               <form onSubmit={handleSearchName} className="flex gap-10">

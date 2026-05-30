@@ -107,21 +107,23 @@ export default function ManagerDashboard() {
   };
 
   // Handlers for Check-in flow
-  const handleLookupQr = async (e) => {
-    e.preventDefault();
+  const handleLookupQr = async (e, scannedId) => {
+    if (e) e.preventDefault();
     setMessage(null);
     setMemberLookup(null);
     setSearchResults([]);
     setError(null);
 
-    if (!qrCode.trim()) {
+    const queryId = scannedId || qrCode.trim();
+
+    if (!queryId) {
       setError('Please enter a QR code value');
       return;
     }
 
     try {
       setLoading(true);
-      const response = await api.post('/members/scan-qr', { qr_code_id: qrCode.trim() });
+      const response = await api.post('/members/scan-qr', { qr_code_id: queryId });
       setMemberLookup(response.data.member);
       setMemberService(response.data.member.allowed_services?.[0] || 'gym');
     } catch (err) {

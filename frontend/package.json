@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@capacitor/core": "^8.3.4",
+    "@yudiel/react-qr-scanner": "^2.6.0",
     "axios": "^1.4.0",
     "lucide-react": "^1.16.0",
     "react": "^18.2.0",

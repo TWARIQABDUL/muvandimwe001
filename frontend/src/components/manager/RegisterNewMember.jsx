@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import QRScanner from '../QRScanner.jsx';
 
 export default function RegisterNewMember({
   services,
@@ -36,30 +37,38 @@ export default function RegisterNewMember({
 
   const filteredEmployers = employers.filter(emp => emp.name.toLowerCase().includes(partnerSearch.toLowerCase()));
 
+  const handleScanSuccess = (scannedId) => {
+    setNewMember({ ...newMember, qr_code_id: scannedId.trim() });
+  };
+
   return (
     <div className="register-tab">
       <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
         <h2 className="card-title">Register New Member</h2>
         <form onSubmit={handleCreateMember} className="form-stack">
           {!newMember.qr_code_id ? (
-            <div style={{ padding: '40px 20px', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '12px', border: '2px dashed #cbd5e1', marginBottom: '20px' }}>
-              <h3 style={{ marginBottom: '15px', color: '#334155', fontSize: '20px' }}>Step 1: Scan Member Card</h3>
-              <p style={{ marginBottom: '25px', color: '#64748b', fontSize: '15px' }}>Scan the QR code on a blank physical card to assign it to this new member.</p>
-              <input
-                type="text"
-                placeholder="Scan Card..."
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (e.target.value.trim()) {
-                      setNewMember({ ...newMember, qr_code_id: e.target.value.trim() });
-                    }
-                  }
-                }}
-                style={{ maxWidth: '350px', margin: '0 auto', textAlign: 'center', fontSize: '16px', padding: '12px' }}
+            <div style={{ marginBottom: '30px' }}>
+              <QRScanner 
+                title="Scan Member Card" 
+                description="Point your camera at a blank, unassigned physical gym card to assign it to the new member."
+                onScan={handleScanSuccess} 
               />
-              <p style={{ marginTop: '15px', fontSize: '13px', color: '#94a3b8' }}>Press Enter after scanning</p>
+              <div style={{ textAlign: 'center', marginTop: '15px' }}>
+                <p style={{ fontSize: '13px', color: '#94a3b8' }}>Or enter ID manually if camera is unavailable:</p>
+                <input
+                  type="text"
+                  placeholder="Manual Card ID..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (e.target.value.trim()) {
+                        handleScanSuccess(e.target.value);
+                      }
+                    }
+                  }}
+                  style={{ maxWidth: '250px', margin: '10px auto 0', textAlign: 'center', padding: '8px', fontSize: '14px' }}
+                />
+              </div>
             </div>
           ) : (
             <>
