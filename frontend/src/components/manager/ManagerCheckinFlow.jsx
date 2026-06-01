@@ -349,8 +349,8 @@ export default function ManagerCheckinFlow({
                   <td><strong>{item.member_name || 'Walk-in'}</strong></td>
                   <td style={{ textTransform: 'capitalize' }}>{item.service}</td>
                   <td>
-                    <span className={`badge ${item.type === 'walk_in' ? 'badge-warning' : 'badge-success'}`}>
-                      {item.type}
+                    <span className={`badge ${item.type === 'walk_in' ? 'badge-warning' : item.type === 'b2b' ? 'badge-success' : 'badge-primary'}`}>
+                      {item.type === 'b2b' ? 'Partner' : item.type === 'subscription' ? 'Subscriber' : item.type}
                     </span>
                   </td>
                   <td>{item.timestamp}</td>

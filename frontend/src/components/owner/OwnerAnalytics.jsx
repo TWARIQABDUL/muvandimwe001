@@ -46,11 +46,19 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
           <div style={{ color: 'var(--text-secondary)' }}>Total Walkins</div>
         </div>
         <div className="card">
-          <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.subscriber_checkins}</div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
+            {dashboardData.snapshot.partner_checkins !== undefined 
+              ? dashboardData.snapshot.subscriber_checkins
+              : Math.max(0, dashboardData.snapshot.subscriber_checkins - (dashboardData.recent_checkins || []).filter(c => c.type === 'b2b').length)}
+          </div>
           <div style={{ color: 'var(--text-secondary)' }}>Subscribers</div>
         </div>
         <div className="card">
-          <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.partner_checkins || 0}</div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
+            {dashboardData.snapshot.partner_checkins !== undefined 
+              ? dashboardData.snapshot.partner_checkins 
+              : (dashboardData.recent_checkins || []).filter(c => c.type === 'b2b').length}
+          </div>
           <div style={{ color: 'var(--text-secondary)' }}>Partners Subscribers</div>
         </div>
       </div>
@@ -164,8 +172,8 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
                       <td>{c.member_name}</td>
                       <td style={{ textTransform: 'capitalize' }}>{c.service}</td>
                       <td>
-                        <span className={`badge badge-${c.type === 'walk_in' ? 'warning' : 'primary'}`}>
-                          {c.type === 'walk_in' ? 'Walk-in' : 'Subscriber'}
+                        <span className={`badge badge-${c.type === 'walk_in' ? 'warning' : c.type === 'b2b' ? 'success' : 'primary'}`}>
+                          {c.type === 'walk_in' ? 'Walk-in' : c.type === 'b2b' ? 'Partner' : 'Subscriber'}
                         </span>
                       </td>
                       <td style={{ color: 'var(--text-secondary)' }}>{c.timestamp}</td>

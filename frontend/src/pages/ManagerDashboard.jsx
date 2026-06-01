@@ -170,8 +170,9 @@ export default function ManagerDashboard() {
     e.preventDefault();
     if (!memberLookup) return;
 
-    const isIncluded = memberLookup.type === 'b2b' ? true : memberLookup.allowed_services?.includes(memberService);
-    let type = memberLookup.type === 'b2b' ? 'b2b' : 'subscription';
+    const isB2B = memberLookup.type === 'b2b' || !!memberLookup.employer_id;
+    const isIncluded = isB2B ? true : memberLookup.allowed_services?.includes(memberService);
+    let type = isB2B ? 'b2b' : 'subscription';
     let amount = 0;
 
     if (type !== 'b2b' && !isIncluded) {
