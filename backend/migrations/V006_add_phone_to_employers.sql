@@ -1,0 +1,1 @@
+ALTER TABLE employers ADD COLUMN IF NOT EXISTS phone TEXT;
