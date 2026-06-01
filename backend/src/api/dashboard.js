@@ -546,4 +546,64 @@ async function getSubscriberReports(gymId, startDate, endDate) {
   }
 }
 
+// GET /api/dashboard/report - Daily Report for a specific date
+router.get(
+  '/report',
+  authMiddleware,
+  roleMiddleware(['manager', 'owner']),
+  async (req, res) => {
+    try {
+      const { gym_id } = req.user;
+      const { date } = req.query;
+
+      if (!date) {
+        return res.status(400).json({ error: 'Date parameter is required' });
+      }
+
+      // Fetch all check-ins for the specified date
+      const checkins = await getCheckinsForPeriod(gym_id, date, date);
+
+      // Group them cleanly for the frontend
+      const walkins = [];
+      const subscribers = [];
+      const partners = [];
+
+      checkins.forEach(c => {
+        const formatted = {
+          member_name: c.member_name,
+          service: c.service,
+          amount: c.amount,
+          timestamp: new Date(c.timestamp).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }),
+          type: c.type
+        };
+
+        if (c.type === 'b2b') {
+          partners.push(formatted);
+        } else if (c.type === 'subscription') {
+          subscribers.push(formatted);
+        } else {
+          // 'walk_in' or 'daily'
+          walkins.push(formatted);
+        }
+      });
+
+      res.json({
+        date,
+        data: {
+          walkins,
+          subscribers,
+          partners
+        }
+      });
+    } catch (err) {
+      console.error('Get daily report error:', err.message);
+      res.status(500).json({ error: 'Failed to fetch daily report' });
+    }
+  }
+);
+
 export default router;

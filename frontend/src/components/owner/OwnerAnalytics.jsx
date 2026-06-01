@@ -1,9 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { api } from '../../store/authStore.js';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendData }) {
+  const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
+  const [reportData, setReportData] = useState(null);
+  const [reportLoading, setReportLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchReport = async () => {
+      setReportLoading(true);
+      try {
+        const response = await api.get(`/dashboard/report?date=${reportDate}`);
+        setReportData(response.data.data);
+      } catch (err) {
+        console.error("Failed to fetch report:", err);
+      } finally {
+        setReportLoading(false);
+      }
+    };
+    fetchReport();
+  }, [reportDate]);
+
   const dashboardData = data?.dashboard;
 
   if (!dashboardData) {
@@ -188,28 +208,64 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
         </div>
         
         <div className="card">
-          <h2 className="card-title">7-Day Revenue Trend</h2>
-          {trendData && trendData.length ? (
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Total Daily Revenue</th>
-                </tr>
-              </thead>
-              <tbody>
-                {trendData.map((entry) => (
-                  <tr key={entry.date}>
-                    <td>{entry.date}</td>
-                    <td style={{ fontWeight: '600', color: 'var(--success-color)' }}>
-                      {entry.revenue.toLocaleString()} RWF
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="flex-between" style={{ marginBottom: '15px' }}>
+            <h2 className="card-title" style={{ margin: 0 }}>Daily Check-ins Report</h2>
+            <input 
+              type="date" 
+              value={reportDate} 
+              onChange={e => setReportDate(e.target.value)} 
+              style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}
+            />
+          </div>
+          
+          {reportLoading ? (
+            <p>Loading report data...</p>
+          ) : reportData ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '400px', overflowY: 'auto' }}>
+              <div>
+                <h3 style={{ color: 'var(--warning-color)', marginBottom: '10px' }}>Walk-ins ({reportData.walkins.length})</h3>
+                {reportData.walkins.length > 0 ? (
+                  <table>
+                    <thead><tr><th>Name</th><th>Service</th><th>Amount</th><th>Time</th></tr></thead>
+                    <tbody>
+                      {reportData.walkins.map((w, i) => (
+                        <tr key={i}><td>{w.member_name}</td><td style={{ textTransform: 'capitalize' }}>{w.service}</td><td>{w.amount} RWF</td><td>{w.timestamp}</td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : <p style={{ fontSize: '14px', color: '#64748b' }}>No walk-ins on this date.</p>}
+              </div>
+
+              <div>
+                <h3 style={{ color: 'var(--primary-color)', marginBottom: '10px' }}>Subscribers ({reportData.subscribers.length})</h3>
+                {reportData.subscribers.length > 0 ? (
+                  <table>
+                    <thead><tr><th>Name</th><th>Service</th><th>Time</th></tr></thead>
+                    <tbody>
+                      {reportData.subscribers.map((s, i) => (
+                        <tr key={i}><td>{s.member_name}</td><td style={{ textTransform: 'capitalize' }}>{s.service}</td><td>{s.timestamp}</td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : <p style={{ fontSize: '14px', color: '#64748b' }}>No subscribers on this date.</p>}
+              </div>
+
+              <div>
+                <h3 style={{ color: 'var(--success-color)', marginBottom: '10px' }}>Partners ({reportData.partners.length})</h3>
+                {reportData.partners.length > 0 ? (
+                  <table>
+                    <thead><tr><th>Name</th><th>Service</th><th>Time</th></tr></thead>
+                    <tbody>
+                      {reportData.partners.map((p, i) => (
+                        <tr key={i}><td>{p.member_name}</td><td style={{ textTransform: 'capitalize' }}>{p.service}</td><td>{p.timestamp}</td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : <p style={{ fontSize: '14px', color: '#64748b' }}>No partner check-ins on this date.</p>}
+              </div>
+            </div>
           ) : (
-            <p style={{ color: 'var(--text-secondary)' }}>No trend data available yet for the last 7 days.</p>
+            <p style={{ color: 'var(--text-secondary)' }}>Select a date to view report.</p>
           )}
         </div>
       </div>
