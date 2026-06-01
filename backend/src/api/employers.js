@@ -168,4 +168,91 @@ router.delete(
   }
 );
 
+// GET /api/employers/:id/billing - Get 30-day billing report for an employer
+router.get(
+  '/:id/billing',
+  authMiddleware,
+  roleMiddleware(['owner', 'manager']),
+  gymIsolationMiddleware,
+  async (req, res) => {
+    try {
+      const employerId = req.params.id;
+      const { gym_id } = req.user;
+
+      const employer = await db.get(
+        `SELECT * FROM employers WHERE id = ? AND gym_id = ?`,
+        [employerId, gym_id]
+      );
+
+      if (!employer) {
+        return res.status(404).json({ error: 'Organization not found' });
+      }
+
+      // Determine date range from month parameter (e.g. '2026-06') or default to current month
+      const monthParam = req.query.month;
+      let startDateStr, endDateStr;
+
+      if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+        startDateStr = `${monthParam}-01T00:00:00.000Z`;
+        const start = new Date(startDateStr);
+        const end = new Date(start);
+        end.setMonth(end.getMonth() + 1);
+        endDateStr = end.toISOString();
+      } else {
+        // Default to last 30 days if no valid month is provided
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        startDateStr = thirtyDaysAgo.toISOString();
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        endDateStr = tomorrow.toISOString();
+      }
+
+      // Fetch all services to build a price map
+      const services = await db.all(
+        `SELECT name, price_daily FROM services WHERE gym_id = ?`,
+        [gym_id]
+      );
+      
+      const servicePrices = {};
+      services.forEach(s => {
+        servicePrices[s.name.toLowerCase()] = Number(s.price_daily) || 0;
+      });
+
+      // Fetch all B2B check-ins for this employer's members in the date range
+      const checkins = await db.all(
+        `SELECT c.id, c.timestamp, c.member_name, c.service
+         FROM checkins c
+         JOIN members m ON c.member_id = m.id
+         WHERE m.employer_id = ? AND c.gym_id = ? AND c.type = 'b2b' AND c.timestamp >= ? AND c.timestamp < ?
+         ORDER BY c.timestamp DESC`,
+        [employerId, gym_id, startDateStr, endDateStr]
+      );
+
+      let totalCost = 0;
+      const report = checkins.map(c => {
+        let cost = 0;
+        const accessedServices = c.service.split(',').map(s => s.trim().toLowerCase());
+        accessedServices.forEach(s => {
+          cost += (servicePrices[s] || 0); // Apply standard daily price for each accessed service
+        });
+        totalCost += cost;
+        
+        return {
+          id: c.id,
+          date: c.timestamp,
+          member_name: c.member_name,
+          service: c.service,
+          cost
+        };
+      });
+
+      res.json({ employer, report, total_cost: totalCost });
+    } catch (err) {
+      console.error('Get employer billing error:', err.message);
+      res.status(500).json({ error: 'Failed to generate billing report' });
+    }
+  }
+);
+
 export default router;
