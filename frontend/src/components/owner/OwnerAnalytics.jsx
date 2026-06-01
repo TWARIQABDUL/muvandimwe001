@@ -10,6 +10,16 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
   const [reportData, setReportData] = useState(null);
   const [reportLoading, setReportLoading] = useState(false);
 
+  const handleDateChange = (days) => {
+    const current = new Date(reportDate);
+    current.setDate(current.getDate() + days);
+    const newDateStr = current.toISOString().split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (newDateStr <= todayStr) {
+      setReportDate(newDateStr);
+    }
+  };
+
   useEffect(() => {
     const fetchReport = async () => {
       setReportLoading(true);
@@ -259,12 +269,34 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
                 <option value="subscribers">Subscribers</option>
                 <option value="partners">Partners</option>
               </select>
-              <input 
-                type="date" 
-                value={reportDate} 
-                onChange={e => setReportDate(e.target.value)} 
-                style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <button 
+                  onClick={() => handleDateChange(-1)}
+                  style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer' }}
+                >
+                  &lt;
+                </button>
+                <input 
+                  type="date" 
+                  value={reportDate} 
+                  max={new Date().toISOString().split('T')[0]}
+                  onChange={e => setReportDate(e.target.value)} 
+                  style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}
+                />
+                <button 
+                  onClick={() => handleDateChange(1)}
+                  disabled={reportDate >= new Date().toISOString().split('T')[0]}
+                  style={{ 
+                    padding: '8px 12px', 
+                    borderRadius: '6px', 
+                    border: '1px solid #e2e8f0', 
+                    background: reportDate >= new Date().toISOString().split('T')[0] ? '#f1f5f9' : 'white', 
+                    cursor: reportDate >= new Date().toISOString().split('T')[0] ? 'not-allowed' : 'pointer' 
+                  }}
+                >
+                  &gt;
+                </button>
+              </div>
             </div>
           </div>
           
