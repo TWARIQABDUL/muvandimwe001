@@ -36,18 +36,22 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
         </div>
       </div>
 
-      <div className="grid grid-3" style={{ marginBottom: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '20px' }}>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.total_checkins}</div>
-          <div style={{ color: 'var(--text-secondary)' }}>Total Check-ins</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Total People Entered</div>
         </div>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.walk_in_checkins}</div>
-          <div style={{ color: 'var(--text-secondary)' }}>Per day</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Total Walkins</div>
         </div>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.subscriber_checkins}</div>
-          <div style={{ color: 'var(--text-secondary)' }}>Monthly</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Subscribers</div>
+        </div>
+        <div className="card">
+          <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.partner_checkins || 0}</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Partners Subscribers</div>
         </div>
       </div>
 

@@ -130,7 +130,8 @@ router.get(
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
       const totalCheckins = checkins.length;
       const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
-      const subscriberCheckins = checkins.filter(c => c.type === 'subscription' || c.type === 'b2b').length;
+      const subscriberCheckins = checkins.filter(c => c.type === 'subscription').length;
+      const partnerCheckins = checkins.filter(c => c.type === 'b2b').length;
       
       const recentCheckins = checkins.map(c => ({
         member_name: c.member_name,
@@ -178,6 +179,7 @@ router.get(
           total_checkins: totalCheckins,
           walk_in_checkins: walkInCheckins,
           subscriber_checkins: subscriberCheckins,
+          partner_checkins: partnerCheckins,
           total_revenue: totalRevenue,
           walk_in_revenue: walkInRevenue,
           subscription_revenue: subscriptionRevenue,
@@ -276,7 +278,8 @@ router.get(
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
       const totalCheckins = checkins.length;
       const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
-      const subscriberCheckins = checkins.filter(c => c.type === 'subscription' || c.type === 'b2b').length;
+      const subscriberCheckins = checkins.filter(c => c.type === 'subscription').length;
+      const partnerCheckins = checkins.filter(c => c.type === 'b2b').length;
 
       const recentCheckins = checkins.slice(0, 50).map(c => ({
         member_name: c.member_name,
@@ -320,6 +323,7 @@ router.get(
           total_checkins: totalCheckins,
           walk_in_checkins: walkInCheckins,
           subscriber_checkins: subscriberCheckins,
+          partner_checkins: partnerCheckins,
           total_revenue: totalRevenue,
           walk_in_revenue: walkInRevenue,
           subscription_revenue: subscriptionRevenue,
@@ -357,7 +361,8 @@ router.get(
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
       const totalCheckins = checkins.length;
       const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
-      const subscriberCheckins = checkins.filter(c => c.type === 'subscription' || c.type === 'b2b').length;
+      const subscriberCheckins = checkins.filter(c => c.type === 'subscription').length;
+      const partnerCheckins = checkins.filter(c => c.type === 'b2b').length;
 
       const recentCheckins = checkins.slice(0, 50).map(c => ({
         member_name: c.member_name,
@@ -401,6 +406,7 @@ router.get(
           total_checkins: totalCheckins,
           walk_in_checkins: walkInCheckins,
           subscriber_checkins: subscriberCheckins,
+          partner_checkins: partnerCheckins,
           total_revenue: totalRevenue,
           walk_in_revenue: walkInRevenue,
           subscription_revenue: subscriptionRevenue,
@@ -438,7 +444,8 @@ router.get(
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
       const totalCheckins = checkins.length;
       const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
-      const subscriberCheckins = checkins.filter(c => c.type === 'subscription' || c.type === 'b2b').length;
+      const subscriberCheckins = checkins.filter(c => c.type === 'subscription').length;
+      const partnerCheckins = checkins.filter(c => c.type === 'b2b').length;
 
       const recentCheckins = checkins.slice(0, 50).map(c => ({
         member_name: c.member_name,
@@ -482,6 +489,7 @@ router.get(
           total_checkins: totalCheckins,
           walk_in_checkins: walkInCheckins,
           subscriber_checkins: subscriberCheckins,
+          partner_checkins: partnerCheckins,
           total_revenue: totalRevenue,
           walk_in_revenue: walkInRevenue,
           subscription_revenue: subscriptionRevenue,
