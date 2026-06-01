@@ -49,9 +49,9 @@ function getDateRange(timeframe) {
 // Helper function to calculate revenue breakdown based on true payments
 function calculateRevenueBreakdown(payments) {
   const breakdown = {
-    gym: { walk_in: 0, daily: 0, subscription: 0, b2b: 0, total: 0 },
-    sauna: { walk_in: 0, daily: 0, subscription: 0, b2b: 0, total: 0 },
-    pool: { walk_in: 0, daily: 0, subscription: 0, b2b: 0, total: 0 }
+    gym: { walk_in: 0, walk_in_count: 0, daily: 0, daily_count: 0, subscription: 0, subscription_count: 0, b2b: 0, b2b_count: 0, total: 0, total_count: 0 },
+    sauna: { walk_in: 0, walk_in_count: 0, daily: 0, daily_count: 0, subscription: 0, subscription_count: 0, b2b: 0, b2b_count: 0, total: 0, total_count: 0 },
+    pool: { walk_in: 0, walk_in_count: 0, daily: 0, daily_count: 0, subscription: 0, subscription_count: 0, b2b: 0, b2b_count: 0, total: 0, total_count: 0 }
   };
 
   payments.forEach(p => {
@@ -64,12 +64,16 @@ function calculateRevenueBreakdown(payments) {
       if (breakdown[cleanService]) {
         if (p.type === 'walk_in') {
           breakdown[cleanService].walk_in += share;
+          breakdown[cleanService].walk_in_count += 1;
         } else if (p.type === 'daily') {
           breakdown[cleanService].daily += share;
+          breakdown[cleanService].daily_count += 1;
         } else if (p.type === 'subscription_signup' || p.type === 'subscription_renewal') {
           breakdown[cleanService].subscription += share;
+          breakdown[cleanService].subscription_count += 1;
         } else if (p.type === 'b2b') {
           breakdown[cleanService].b2b += share;
+          breakdown[cleanService].b2b_count += 1;
         }
       }
     });
@@ -82,6 +86,11 @@ function calculateRevenueBreakdown(payments) {
       breakdown[service].daily +
       breakdown[service].subscription +
       breakdown[service].b2b;
+    breakdown[service].total_count =
+      breakdown[service].walk_in_count +
+      breakdown[service].daily_count +
+      breakdown[service].subscription_count +
+      breakdown[service].b2b_count;
   });
 
   return breakdown;

@@ -103,6 +103,12 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
           </div>
           <div style={{ color: 'var(--text-secondary)' }}>Partners Subscribers</div>
         </div>
+        <div className="card">
+          <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
+            {Object.values(dashboardData.revenue_breakdown || {}).reduce((sum, breakdown) => sum + (breakdown.subscription_count || 0), 0)}
+          </div>
+          <div style={{ color: 'var(--text-secondary)' }}>New Abonnements</div>
+        </div>
       </div>
 
       <div className="grid grid-2" style={{ marginBottom: '20px' }}>
@@ -180,11 +186,21 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
                 {Object.entries(dashboardData.revenue_breakdown || {}).map(([service, breakdown]) => (
                   <tr key={service}>
                     <td style={{ textTransform: 'capitalize', fontWeight: '600' }}>{service}</td>
-                    <td>{(breakdown.walk_in || 0).toLocaleString()}</td>
-                    <td>{(breakdown.daily || 0).toLocaleString()}</td>
-                    <td>{(breakdown.subscription || 0).toLocaleString()}</td>
+                    <td>
+                      <div>{(breakdown.walk_in || 0).toLocaleString()}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{breakdown.walk_in_count || 0} visits</div>
+                    </td>
+                    <td>
+                      <div>{(breakdown.daily || 0).toLocaleString()}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{breakdown.daily_count || 0} visits</div>
+                    </td>
+                    <td>
+                      <div>{(breakdown.subscription || 0).toLocaleString()}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{breakdown.subscription_count || 0} paid</div>
+                    </td>
                     <td style={{ fontWeight: '700', color: 'var(--primary-color)' }}>
-                      {(breakdown.total || 0).toLocaleString()} RWF
+                      <div>{(breakdown.total || 0).toLocaleString()} RWF</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 'normal' }}>{breakdown.total_count || 0} total</div>
                     </td>
                   </tr>
                 ))}
