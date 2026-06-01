@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Table } from 'antd';
 import { api } from '../../store/authStore.js';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
@@ -60,21 +61,155 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
     if (reportTypeFilter === 'all' || reportTypeFilter === 'partners') {
       combined = combined.concat(reportData.partners.map(p => ({ ...p, displayType: 'Partner', badgeClass: 'success' })));
     }
-    
-    // Sort by timestamp descending if needed, or assume they are mostly sorted
-    // Actually the backend returns them sorted, but splitting and combining might break sort order if done across types.
-    // Let's sort by timestamp descending.
-    // Since timestamp is 'hh:mm AM/PM', standard JS sorting on string isn't perfect, but we can do a simple parse if needed, 
-    // or just leave as combined because it's a daily report.
     filteredReportCheckins = combined;
   }
+
+  // Ant Design Table Columns Configuration
+  const revenueColumns = [
+    {
+      title: 'Service',
+      dataIndex: 'service',
+      key: 'service',
+      fixed: 'left',
+      width: 150,
+      render: (text) => <span style={{ textTransform: 'capitalize', fontWeight: '600' }}>{text}</span>,
+    },
+    {
+      title: 'Walk-in',
+      key: 'walk_in',
+      width: 120,
+      render: (_, record) => (
+        <div>
+          <div>{(record.walk_in || 0).toLocaleString()}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{record.walk_in_count || 0} visits</div>
+        </div>
+      ),
+    },
+    {
+      title: 'Daily',
+      key: 'daily',
+      width: 120,
+      render: (_, record) => (
+        <div>
+          <div>{(record.daily || 0).toLocaleString()}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{record.daily_count || 0} visits</div>
+        </div>
+      ),
+    },
+    {
+      title: 'Subscription',
+      key: 'subscription',
+      width: 150,
+      render: (_, record) => (
+        <div>
+          <div>{(record.subscription || 0).toLocaleString()}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{record.subscription_count || 0} paid</div>
+        </div>
+      ),
+    },
+    {
+      title: 'Total',
+      key: 'total',
+      width: 150,
+      render: (_, record) => (
+        <div style={{ fontWeight: '700', color: 'var(--primary-color)' }}>
+          <div>{(record.total || 0).toLocaleString()} RWF</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 'normal' }}>{record.total_count || 0} total</div>
+        </div>
+      ),
+    },
+  ];
+
+  const revenueData = Object.entries(dashboardData.revenue_breakdown || {}).map(([service, breakdown]) => ({
+    key: service,
+    service,
+    ...breakdown,
+  }));
+
+  const recentCheckinColumns = [
+    {
+      title: 'Name',
+      dataIndex: 'member_name',
+      key: 'member_name',
+      fixed: 'left',
+      width: 150,
+    },
+    {
+      title: 'Service',
+      dataIndex: 'service',
+      key: 'service',
+      width: 120,
+      render: (text) => <span style={{ textTransform: 'capitalize' }}>{text}</span>,
+    },
+    {
+      title: 'Type',
+      key: 'type',
+      width: 120,
+      render: (_, record) => {
+        const badgeClass = record.type === 'walk_in' ? 'warning' : record.type === 'b2b' ? 'success' : 'primary';
+        const displayText = record.type === 'walk_in' ? 'Walk-in' : record.type === 'b2b' ? 'Partner' : 'Subscriber';
+        return <span className={`badge badge-${badgeClass}`}>{displayText}</span>;
+      },
+    },
+    {
+      title: 'Time',
+      dataIndex: 'timestamp',
+      key: 'timestamp',
+      width: 120,
+      render: (text) => <span style={{ color: 'var(--text-secondary)' }}>{text}</span>,
+    },
+  ];
+
+  const recentCheckinsData = (dashboardData.recent_checkins || []).map((c, i) => ({ ...c, key: i }));
+
+  const dailyCheckinColumns = [
+    {
+      title: 'Name',
+      dataIndex: 'member_name',
+      key: 'member_name',
+      fixed: 'left',
+      width: 150,
+    },
+    {
+      title: 'Service',
+      dataIndex: 'service',
+      key: 'service',
+      width: 120,
+      render: (text) => <span style={{ textTransform: 'capitalize' }}>{text}</span>,
+    },
+    {
+      title: 'Type',
+      key: 'type',
+      width: 120,
+      render: (_, record) => (
+        <span className={`badge badge-${record.badgeClass}`}>
+          {record.displayType}
+        </span>
+      ),
+    },
+    {
+      title: 'Amount',
+      key: 'amount',
+      width: 120,
+      render: (_, record) => record.amount ? `${record.amount} RWF` : '-',
+    },
+    {
+      title: 'Time',
+      dataIndex: 'timestamp',
+      key: 'timestamp',
+      width: 120,
+      render: (text) => <span style={{ color: 'var(--text-secondary)' }}>{text}</span>,
+    },
+  ];
+
+  const dailyCheckinsData = filteredReportCheckins.map((c, i) => ({ ...c, key: i }));
 
   return (
     <div className="analytics-tab">
       <div className="card">
         <div className="flex-between">
           <h2 className="card-title" style={{ margin: 0 }}>Snapshot Period</h2>
-          <div className="timeframe-buttons" style={{ display: 'flex', gap: '8px' }}>
+          <div className="timeframe-buttons">
             {['today', 'week', 'month', 'year'].map(tf => (
               <button
                 key={tf}
@@ -88,7 +223,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '20px', marginBottom: '20px' }}>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.total_checkins}</div>
           <div style={{ color: 'var(--text-secondary)' }}>Total People Entered</div>
@@ -182,40 +317,13 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
                 </ResponsiveContainer>
               </div>
             )}
-            <table>
-              <thead>
-                <tr>
-                  <th>Service</th>
-                  <th>Walk-in</th>
-                  <th>Daily</th>
-                  <th>Subscription</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(dashboardData.revenue_breakdown || {}).map(([service, breakdown]) => (
-                  <tr key={service}>
-                    <td style={{ textTransform: 'capitalize', fontWeight: '600' }}>{service}</td>
-                    <td>
-                      <div>{(breakdown.walk_in || 0).toLocaleString()}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{breakdown.walk_in_count || 0} visits</div>
-                    </td>
-                    <td>
-                      <div>{(breakdown.daily || 0).toLocaleString()}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{breakdown.daily_count || 0} visits</div>
-                    </td>
-                    <td>
-                      <div>{(breakdown.subscription || 0).toLocaleString()}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{breakdown.subscription_count || 0} paid</div>
-                    </td>
-                    <td style={{ fontWeight: '700', color: 'var(--primary-color)' }}>
-                      <div>{(breakdown.total || 0).toLocaleString()} RWF</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 'normal' }}>{breakdown.total_count || 0} total</div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <Table 
+              columns={revenueColumns} 
+              dataSource={revenueData} 
+              pagination={false}
+              scroll={{ x: 700 }}
+              size="middle"
+            />
           </div>
         </div>
       </div>
@@ -223,33 +331,14 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
       <div className="grid grid-1">
         <div className="card">
           <h2 className="card-title">Recent Check-ins</h2>
-          {dashboardData.recent_checkins && dashboardData.recent_checkins.length ? (
-            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Service</th>
-                    <th>Type</th>
-                    <th>Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dashboardData.recent_checkins.map((c, i) => (
-                    <tr key={i}>
-                      <td>{c.member_name}</td>
-                      <td style={{ textTransform: 'capitalize' }}>{c.service}</td>
-                      <td>
-                        <span className={`badge badge-${c.type === 'walk_in' ? 'warning' : c.type === 'b2b' ? 'success' : 'primary'}`}>
-                          {c.type === 'walk_in' ? 'Walk-in' : c.type === 'b2b' ? 'Partner' : 'Subscriber'}
-                        </span>
-                      </td>
-                      <td style={{ color: 'var(--text-secondary)' }}>{c.timestamp}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {recentCheckinsData.length ? (
+            <Table 
+              columns={recentCheckinColumns} 
+              dataSource={recentCheckinsData} 
+              pagination={{ pageSize: 5 }}
+              scroll={{ x: 600 }}
+              size="small"
+            />
           ) : (
             <p style={{ color: 'var(--text-secondary)' }}>No check-ins for this period yet.</p>
           )}
@@ -303,34 +392,15 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
           {reportLoading ? (
             <p>Loading report data...</p>
           ) : reportData ? (
-            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-              {filteredReportCheckins.length > 0 ? (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Service</th>
-                      <th>Type</th>
-                      <th>Amount</th>
-                      <th>Time</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredReportCheckins.map((c, i) => (
-                      <tr key={i}>
-                        <td>{c.member_name}</td>
-                        <td style={{ textTransform: 'capitalize' }}>{c.service}</td>
-                        <td>
-                          <span className={`badge badge-${c.badgeClass}`}>
-                            {c.displayType}
-                          </span>
-                        </td>
-                        <td>{c.amount ? `${c.amount} RWF` : '-'}</td>
-                        <td style={{ color: 'var(--text-secondary)' }}>{c.timestamp}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div>
+              {dailyCheckinsData.length > 0 ? (
+                <Table 
+                  columns={dailyCheckinColumns} 
+                  dataSource={dailyCheckinsData} 
+                  pagination={{ pageSize: 10 }}
+                  scroll={{ x: 700 }}
+                  size="small"
+                />
               ) : (
                 <p style={{ color: 'var(--text-secondary)' }}>No check-ins found for the selected filter.</p>
               )}

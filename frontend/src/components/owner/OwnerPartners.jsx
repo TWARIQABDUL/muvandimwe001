@@ -163,7 +163,7 @@ export default function OwnerPartners({ setError, setMessage }) {
             </button>
             <h2 className="card-title" style={{ margin: 0 }}>Billing Report: {selectedPartner.name}</h2>
           </div>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <label style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Billing Month</label>
               <input 
