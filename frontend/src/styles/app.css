@@ -179,7 +179,7 @@ button {
   margin-bottom: 20px;
 }
 
-table {
+table:not(.ant-table table) {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
@@ -190,24 +190,24 @@ thead {
   border-bottom: 2px solid var(--border-color);
 }
 
-th {
+th:not(.ant-table th) {
   padding: 20px;
   text-align: left;
   font-weight: 600;
   color: var(--text-primary);
 }
 
-td {
+td:not(.ant-table td) {
   padding: 20px;
   border-bottom: 1px solid var(--border-color);
 }
 
-tbody tr:hover {
+tbody:not(.ant-table tbody) tr:hover {
   background-color: var(--bg-light);
 }
 
 @media (max-width: 768px) {
-  table {
+  table:not(.ant-table table) {
     display: block;
     overflow-x: auto;
     white-space: nowrap;
