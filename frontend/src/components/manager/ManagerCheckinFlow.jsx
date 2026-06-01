@@ -66,22 +66,24 @@ export default function ManagerCheckinFlow({
       )}
       
       {/* Overview Cards */}
-      <div className="grid grid-3" style={{ marginBottom: '30px' }}>
+      <div className="grid grid-2" style={{ marginBottom: '30px', gap: '20px' }}>
         <div className="card" style={{ background: 'var(--primary-color)', color: 'white' }}>
-          <div style={{ fontSize: '28px', fontWeight: 'bold' }}>{dashboardData?.summary?.checkins_today ?? 0}</div>
-          <div style={{ opacity: 0.9 }}>All Total People</div>
-        </div>
-        <div className="card" style={{ background: 'var(--success-color)', color: 'white' }}>
-          <div style={{ fontSize: '28px', fontWeight: 'bold' }}>{(dashboardData?.summary?.revenue_today ?? 0).toLocaleString()} RWF</div>
-          <div style={{ opacity: 0.9, marginBottom: '8px' }}>All total Money</div>
-          <div style={{ fontSize: '13px', borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
-            <span>Cash: {(dashboardData?.summary?.walk_in_revenue_today ?? 0).toLocaleString()}</span>
-            <span>Subs: {(dashboardData?.summary?.subscription_revenue_today ?? 0).toLocaleString()}</span>
+          <div style={{ opacity: 0.9, marginBottom: '5px' }}>Total People Entered</div>
+          <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '15px' }}>{dashboardData?.summary?.checkins_today ?? 0}</div>
+          <div style={{ fontSize: '14px', borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
+            <span>Walkins: {dashboardData?.summary?.walkin_checkins ?? 0}</span>
+            <span>Subscribers: {dashboardData?.summary?.subscriber_checkins ?? 0}</span>
+            <span>Partners: {dashboardData?.summary?.partner_checkins ?? 0}</span>
           </div>
         </div>
-        <div className="card" style={{ background: '#f59e0b', color: 'white' }}>
-          <div style={{ fontSize: '28px', fontWeight: 'bold' }}>{dashboardData?.summary?.renewals_pending ?? 0}</div>
-          <div style={{ opacity: 0.9 }}>Pending Renewals</div>
+        
+        <div className="card" style={{ background: 'var(--success-color)', color: 'white' }}>
+          <div style={{ opacity: 0.9, marginBottom: '5px' }}>Total Cash Collected</div>
+          <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '15px' }}>{(dashboardData?.summary?.revenue_today ?? 0).toLocaleString()} RWF</div>
+          <div style={{ fontSize: '14px', borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
+            <span>Walk-in (At Door): {(dashboardData?.summary?.walk_in_revenue_today ?? 0).toLocaleString()} RWF</span>
+            <span>New Abonnements: {(dashboardData?.summary?.subscription_revenue_today ?? 0).toLocaleString()} RWF</span>
+          </div>
         </div>
       </div>
 

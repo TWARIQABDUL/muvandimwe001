@@ -230,6 +230,9 @@ async function getManagerTodayDashboard(req, res) {
       .reduce((sum, p) => sum + Number(p.amount), 0);
 
     const totalCheckins = checkins.length;
+    const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
+    const subscriberCheckins = checkins.filter(c => c.type === 'subscription').length;
+    const partnerCheckins = checkins.filter(c => c.type === 'b2b').length;
 
     // Get recent check-ins for display
     const recentCheckins = checkins
@@ -252,6 +255,9 @@ async function getManagerTodayDashboard(req, res) {
       date: today,
       summary: {
         checkins_today: totalCheckins,
+        walkin_checkins: walkInCheckins,
+        subscriber_checkins: subscriberCheckins,
+        partner_checkins: partnerCheckins,
         revenue_today: totalRevenue,
         walk_in_revenue_today: walkInRevenue,
         subscription_revenue_today: subscriptionRevenue,
