@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Table } from 'antd';
 
 export default function OwnerServices({
   services,
@@ -43,110 +44,74 @@ export default function OwnerServices({
       <div className="grid grid-2">
         <div className="card" style={{ overflowX: 'auto' }}>
           <h2 className="card-title">Current Services & Pricing</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Service Name</th>
-                <th>Daily Price</th>
-                <th>Monthly Price</th>
-                <th>Allow Monthly?</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {services.map((s) => (
-                <tr key={s.id}>
-                  {editingId === s.id ? (
-                    <>
-                      <td>
-                        <input
-                          type="text"
-                          value={editForm.name}
-                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                          style={{ padding: '6px', width: '100px' }}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          value={editForm.price_daily}
-                          onChange={(e) => setEditForm({ ...editForm, price_daily: e.target.value })}
-                          style={{ padding: '6px', width: '100px' }}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          value={editForm.price_monthly}
-                          onChange={(e) => setEditForm({ ...editForm, price_monthly: e.target.value })}
-                          style={{ padding: '6px', width: '100px' }}
-                          disabled={!editForm.allow_monthly}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="checkbox"
-                          checked={editForm.allow_monthly}
-                          onChange={(e) => setEditForm({ ...editForm, allow_monthly: e.target.checked })}
-                        />
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button 
-                            className="btn-primary btn-small"
-                            onClick={() => saveEdit(s.id)}
-                            disabled={actionLoading}
-                          >
-                            Save
-                          </button>
-                          <button 
-                            className="btn-secondary btn-small"
-                            onClick={cancelEdit}
-                            disabled={actionLoading}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td style={{ textTransform: 'capitalize', fontWeight: '600' }}>{s.name}</td>
-                      <td>{Number(s.price_daily).toLocaleString()} RWF</td>
-                      <td>{s.allow_monthly ? `${Number(s.price_monthly).toLocaleString()} RWF` : 'N/A'}</td>
-                      <td>{s.allow_monthly ? 'Yes' : 'No'}</td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button 
-                            className="btn-secondary btn-small"
-                            onClick={() => startEdit(s)}
-                            disabled={actionLoading}
-                          >
-                            Edit
-                          </button>
-                          <button 
-                            className="btn-secondary btn-small"
-                            style={{ color: '#dc2626', borderColor: '#fca5a5' }}
-                            onClick={() => handleDeleteService(s.id)}
-                            disabled={actionLoading}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </>
-                  )}
-                </tr>
-              ))}
-              {services.length === 0 && (
-                <tr>
-                  <td colSpan="5" className="text-center" style={{ padding: '20px', color: 'var(--text-secondary)' }}>
-                    No services created yet. Add one to the right.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          <Table 
+            columns={[
+              {
+                title: 'Service Name',
+                dataIndex: 'name',
+                key: 'name',
+                fixed: 'left',
+                width: 150,
+                render: (text, record) => editingId === record.id ? (
+                  <input type="text" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} style={{ padding: '6px', width: '100px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                ) : (
+                  <span style={{ textTransform: 'capitalize', fontWeight: '600' }}>{text}</span>
+                )
+              },
+              {
+                title: 'Daily Price',
+                dataIndex: 'price_daily',
+                key: 'price_daily',
+                width: 120,
+                render: (text, record) => editingId === record.id ? (
+                  <input type="number" value={editForm.price_daily} onChange={(e) => setEditForm({ ...editForm, price_daily: e.target.value })} style={{ padding: '6px', width: '100px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                ) : (
+                  `${Number(text).toLocaleString()} RWF`
+                )
+              },
+              {
+                title: 'Monthly Price',
+                dataIndex: 'price_monthly',
+                key: 'price_monthly',
+                width: 120,
+                render: (text, record) => editingId === record.id ? (
+                  <input type="number" value={editForm.price_monthly} onChange={(e) => setEditForm({ ...editForm, price_monthly: e.target.value })} style={{ padding: '6px', width: '100px', border: '1px solid #ccc', borderRadius: '4px' }} disabled={!editForm.allow_monthly} />
+                ) : (
+                  record.allow_monthly ? `${Number(text).toLocaleString()} RWF` : 'N/A'
+                )
+              },
+              {
+                title: 'Allow Monthly?',
+                key: 'allow_monthly',
+                width: 120,
+                render: (_, record) => editingId === record.id ? (
+                  <input type="checkbox" checked={editForm.allow_monthly} onChange={(e) => setEditForm({ ...editForm, allow_monthly: e.target.checked })} />
+                ) : (
+                  record.allow_monthly ? 'Yes' : 'No'
+                )
+              },
+              {
+                title: 'Actions',
+                key: 'actions',
+                width: 150,
+                render: (_, record) => editingId === record.id ? (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="btn-primary btn-small" onClick={() => saveEdit(record.id)} disabled={actionLoading} style={{ padding: '4px 8px' }}>Save</button>
+                    <button className="btn-secondary btn-small" onClick={cancelEdit} disabled={actionLoading} style={{ padding: '4px 8px' }}>Cancel</button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="btn-secondary btn-small" onClick={() => startEdit(record)} disabled={actionLoading} style={{ padding: '4px 8px' }}>Edit</button>
+                    <button className="btn-secondary btn-small" style={{ color: '#dc2626', borderColor: '#fca5a5', padding: '4px 8px' }} onClick={() => handleDeleteService(record.id)} disabled={actionLoading}>Delete</button>
+                  </div>
+                )
+              }
+            ]}
+            dataSource={services.map((s, i) => ({ ...s, key: s.id || i }))}
+            pagination={{ pageSize: 10 }}
+            scroll={{ x: 'max-content' }}
+            size="middle"
+          />
         </div>
 
         <div className="card">

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Camera } from 'lucide-react';
+import { Table } from 'antd';
 import FullScreenScanner from '../FullScreenScanner.jsx';
 
 export default function ManagerCheckinFlow({
@@ -334,30 +335,22 @@ export default function ManagerCheckinFlow({
       <div className="card" style={{ marginTop: '30px' }}>
         <h3 className="card-title">Recent Check-ins Today</h3>
         {dashboardData?.recent_checkins?.length ? (
-          <table>
-            <thead>
-              <tr>
-                <th>Member</th>
-                <th>Service</th>
-                <th>Type</th>
-                <th>Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dashboardData.recent_checkins.slice(0, 20).map((item, index) => (
-                <tr key={`${item.member_name}-${index}`}>
-                  <td><strong>{item.member_name || 'Walk-in'}</strong></td>
-                  <td style={{ textTransform: 'capitalize' }}>{item.service}</td>
-                  <td>
-                    <span className={`badge ${item.type === 'walk_in' ? 'badge-warning' : item.type === 'b2b' ? 'badge-success' : 'badge-primary'}`}>
-                      {item.type === 'b2b' ? 'Partner' : item.type === 'subscription' ? 'Subscriber' : item.type}
-                    </span>
-                  </td>
-                  <td>{item.timestamp}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <Table 
+            columns={[
+              { title: 'Member', key: 'member_name', fixed: 'left', width: 150, render: (_, item) => <strong>{item.member_name || 'Walk-in'}</strong> },
+              { title: 'Service', dataIndex: 'service', key: 'service', width: 150, render: text => <span style={{ textTransform: 'capitalize' }}>{text}</span> },
+              { title: 'Type', key: 'type', width: 150, render: (_, item) => (
+                <span className={`badge ${item.type === 'walk_in' ? 'badge-warning' : item.type === 'b2b' ? 'badge-success' : 'badge-primary'}`}>
+                  {item.type === 'b2b' ? 'Partner' : item.type === 'subscription' ? 'Subscriber' : item.type}
+                </span>
+              ) },
+              { title: 'Time', dataIndex: 'timestamp', key: 'timestamp', width: 150 }
+            ]}
+            dataSource={dashboardData.recent_checkins.slice(0, 20).map((item, index) => ({ ...item, key: `${item.member_name}-${index}` }))}
+            pagination={{ pageSize: 5 }}
+            scroll={{ x: 'max-content' }}
+            size="small"
+          />
         ) : (
           <p style={{ color: 'var(--text-secondary)' }}>No check-ins today yet.</p>
         )}

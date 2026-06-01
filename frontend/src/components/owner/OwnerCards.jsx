@@ -4,6 +4,7 @@ import { Download, RefreshCw, Plus, Share2 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
+import { Table } from 'antd';
 
 export default function OwnerCards({ setError, setMessage }) {
   const [cards, setCards] = useState([]);
@@ -173,43 +174,58 @@ export default function OwnerCards({ setError, setMessage }) {
             No cards have been generated yet.
           </div>
         ) : (
-          <div className="table-responsive" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-            <table className="data-table">
-              <thead style={{ position: 'sticky', top: 0, background: 'white', zIndex: 1 }}>
-                <tr>
-                  <th>Card UUID</th>
-                  <th>Status</th>
-                  <th>Assigned To</th>
-                  <th>Generated Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cards.map(card => (
-                  <tr key={card.id}>
-                    <td><code style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', color: '#334155' }}>{card.id}</code></td>
-                    <td>
-                      <span className={`status-badge ${card.status === 'assigned' ? 'status-active' : 'status-inactive'}`} style={{
-                        background: card.status === 'assigned' ? '#dcfce3' : '#e2e8f0',
-                        color: card.status === 'assigned' ? '#166534' : '#475569',
-                        padding: '4px 10px',
-                        borderRadius: '20px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        textTransform: 'uppercase'
-                      }}>
-                        {card.status}
-                      </span>
-                    </td>
-                    <td style={{ fontWeight: '500', color: card.assigned_member_name ? '#0f172a' : '#94a3b8' }}>
+          <div style={{ maxHeight: '600px' }}>
+            <Table 
+              columns={[
+                { 
+                  title: 'Card UUID', 
+                  dataIndex: 'id', 
+                  key: 'id', 
+                  fixed: 'left', 
+                  width: 150, 
+                  render: text => <code style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', color: '#334155' }}>{text}</code> 
+                },
+                { 
+                  title: 'Status', 
+                  key: 'status', 
+                  width: 120, 
+                  render: (_, card) => (
+                    <span className={`status-badge ${card.status === 'assigned' ? 'status-active' : 'status-inactive'}`} style={{
+                      background: card.status === 'assigned' ? '#dcfce3' : '#e2e8f0',
+                      color: card.status === 'assigned' ? '#166534' : '#475569',
+                      padding: '4px 10px',
+                      borderRadius: '20px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      textTransform: 'uppercase'
+                    }}>
+                      {card.status}
+                    </span>
+                  ) 
+                },
+                { 
+                  title: 'Assigned To', 
+                  key: 'assigned_member_name', 
+                  width: 150, 
+                  render: (_, card) => (
+                    <span style={{ fontWeight: '500', color: card.assigned_member_name ? '#0f172a' : '#94a3b8' }}>
                       {card.assigned_member_name || '--'}
-                    </td>
-                    <td style={{ color: '#64748b', fontSize: '13px' }}>
-                      {new Date(card.created_at).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </span>
+                  ) 
+                },
+                { 
+                  title: 'Generated Date', 
+                  dataIndex: 'created_at', 
+                  key: 'created_at', 
+                  width: 150, 
+                  render: text => <span style={{ color: '#64748b', fontSize: '13px' }}>{new Date(text).toLocaleString()}</span> 
+                }
+              ]}
+              dataSource={cards.map((c, i) => ({ ...c, key: c.id || i }))}
+              pagination={{ pageSize: 10 }}
+              scroll={{ x: 'max-content' }}
+              size="middle"
+            />
           </div>
         )}
       </div>

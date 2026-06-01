@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../store/authStore.js';
+import { Table } from 'antd';
 
 export default function OwnerStaff({ setError, setMessage }) {
   const [staff, setStaff] = useState([]);
@@ -104,41 +105,27 @@ export default function OwnerStaff({ setError, setMessage }) {
         )}
       </div>
 
-      <div className="table-responsive">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Date Added</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {staff.length === 0 ? (
-              <tr>
-                <td colSpan="4" className="text-center">No staff members found.</td>
-              </tr>
-            ) : (
-              staff.map(user => (
-                <tr key={user.id}>
-                  <td>{user.email}</td>
-                  <td><span className="badge">{user.role}</span></td>
-                  <td>{new Date(user.created_at).toLocaleDateString()}</td>
-                  <td>
-                    <button 
-                      className="btn btn-outline" 
-                      onClick={() => handleDeleteStaff(user.id)}
-                      disabled={actionLoading}
-                    >
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      <div style={{ maxHeight: '600px' }}>
+        <Table 
+          columns={[
+            { title: 'Email', dataIndex: 'email', key: 'email', fixed: 'left', width: 200 },
+            { title: 'Role', dataIndex: 'role', key: 'role', width: 120, render: text => <span className="badge">{text}</span> },
+            { title: 'Date Added', dataIndex: 'created_at', key: 'created_at', width: 150, render: text => new Date(text).toLocaleDateString() },
+            { title: 'Actions', key: 'actions', width: 150, render: (_, user) => (
+              <button 
+                className="btn btn-outline" 
+                onClick={() => handleDeleteStaff(user.id)}
+                disabled={actionLoading}
+              >
+                Remove
+              </button>
+            ) }
+          ]}
+          dataSource={staff.map(user => ({ ...user, key: user.id }))}
+          pagination={{ pageSize: 10 }}
+          scroll={{ x: 'max-content' }}
+          size="middle"
+        />
       </div>
     </div>
   );

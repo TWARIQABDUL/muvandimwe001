@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../store/authStore';
+import { Table } from 'antd';
 import { Plus, Edit2, Trash2, Check, X, ShieldAlert } from 'lucide-react';
 
 export default function OwnerPlans({ services }) {
@@ -211,72 +212,45 @@ export default function OwnerPlans({ services }) {
       {/* Packages List */}
       <div className="card">
         <h2 className="text-xl font-bold mb-4">Current Packages</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50/80 border-b border-gray-100">
-                <th className="p-4 font-semibold text-gray-600 text-sm">Package Name</th>
-                <th className="p-4 font-semibold text-gray-600 text-sm">Monthly Fee</th>
-                <th className="p-4 font-semibold text-gray-600 text-sm">Included Services</th>
-                <th className="p-4 font-semibold text-gray-600 text-sm">Status</th>
-                <th className="p-4 font-semibold text-gray-600 text-sm text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {plans.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="p-8 text-center text-gray-500">
-                    No packages created yet.
-                  </td>
-                </tr>
-              ) : (
-                plans.map((plan) => (
-                  <tr key={plan.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                    <td className="p-4 font-medium text-gray-900">{plan.name}</td>
-                    <td className="p-4 font-mono text-gray-700">RWF {plan.monthly_fee.toLocaleString()}</td>
-                    <td style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                        {plan.included_services?.split(',').map(s => (
-                          <span key={s} className="badge" style={{ backgroundColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
-                            {s}
-                          </span>
-                        ))}
-                    </td>
-                    <td>
-                      <button
-                        onClick={() => toggleActiveStatus(plan.id, plan.active)}
-                        className={`badge ${plan.active === 1 ? 'badge-success' : 'badge-warning'}`}
-                        style={{ border: 'none', cursor: 'pointer', padding: '6px 12px' }}
-                        title="Click to toggle status"
-                      >
-                        {plan.active === 1 ? 'Active' : 'Deactivated'}
-                      </button>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                        <button
-                          onClick={() => handleEdit(plan)}
-                          className="btn-secondary btn-small"
-                          style={{ padding: '6px' }}
-                          title="Edit"
-                        >
-                          <Edit2 size={16} color="var(--primary-color)" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(plan.id)}
-                          className="btn-secondary btn-small"
-                          style={{ padding: '6px', borderColor: 'var(--danger-color)' }}
-                          title="Delete Permanently"
-                        >
-                          <Trash2 size={16} color="var(--danger-color)" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <Table 
+          columns={[
+            { title: 'Package Name', dataIndex: 'name', key: 'name', fixed: 'left', width: 150, render: text => <span className="font-medium text-gray-900">{text}</span> },
+            { title: 'Monthly Fee', dataIndex: 'monthly_fee', key: 'monthly_fee', width: 150, render: text => <span className="font-mono text-gray-700">RWF {text.toLocaleString()}</span> },
+            { title: 'Included Services', dataIndex: 'included_services', key: 'included_services', width: 250, render: text => (
+              <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                {text?.split(',').map(s => (
+                  <span key={s} className="badge" style={{ backgroundColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
+                    {s}
+                  </span>
+                ))}
+              </div>
+            ) },
+            { title: 'Status', key: 'status', width: 150, render: (_, plan) => (
+              <button
+                onClick={() => toggleActiveStatus(plan.id, plan.active)}
+                className={`badge ${plan.active === 1 ? 'badge-success' : 'badge-warning'}`}
+                style={{ border: 'none', cursor: 'pointer', padding: '6px 12px' }}
+                title="Click to toggle status"
+              >
+                {plan.active === 1 ? 'Active' : 'Deactivated'}
+              </button>
+            ) },
+            { title: 'Actions', key: 'actions', width: 150, align: 'right', render: (_, plan) => (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                <button onClick={() => handleEdit(plan)} className="btn-secondary btn-small" style={{ padding: '6px' }} title="Edit">
+                  <Edit2 size={16} color="var(--primary-color)" />
+                </button>
+                <button onClick={() => handleDelete(plan.id)} className="btn-secondary btn-small" style={{ padding: '6px', borderColor: 'var(--danger-color)' }} title="Delete Permanently">
+                  <Trash2 size={16} color="var(--danger-color)" />
+                </button>
+              </div>
+            ) }
+          ]}
+          dataSource={plans.map(p => ({ ...p, key: p.id }))}
+          pagination={{ pageSize: 10 }}
+          scroll={{ x: 'max-content' }}
+          size="middle"
+        />
       </div>
     </div>
   );

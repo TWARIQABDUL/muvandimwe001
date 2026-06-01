@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../store/authStore';
 import { Edit2, Trash2, FileText, X, ArrowLeft, Download } from 'lucide-react';
+import { Table } from 'antd';
 
 export default function OwnerPartners({ setError, setMessage }) {
   const [partners, setPartners] = useState([]);
@@ -188,30 +189,19 @@ export default function OwnerPartners({ setError, setMessage }) {
           <div>
             {billingReport.report && billingReport.report.length > 0 ? (
               <>
-                <table className="w-full text-left border-collapse" style={{ marginBottom: '20px' }}>
-                  <thead>
-                    <tr className="bg-gray-50/80 border-b border-gray-100">
-                      <th className="p-3 font-semibold text-gray-600 text-sm">Date</th>
-                      <th className="p-3 font-semibold text-gray-600 text-sm">Member</th>
-                      <th className="p-3 font-semibold text-gray-600 text-sm">Service</th>
-                      <th className="p-3 font-semibold text-gray-600 text-sm text-right">Cost</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {billingReport.report.map((row) => (
-                      <tr key={row.id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                        <td className="p-3 text-gray-700" style={{ whiteSpace: 'nowrap' }}>
-                          {new Date(row.date).toLocaleDateString()}
-                        </td>
-                        <td className="p-3 font-medium text-gray-900">{row.member_name}</td>
-                        <td className="p-3 text-gray-700" style={{ textTransform: 'capitalize' }}>{row.service}</td>
-                        <td className="p-3 text-right font-medium text-gray-900">
-                          {row.cost.toLocaleString()} RWF
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <Table 
+                  columns={[
+                    { title: 'Date', dataIndex: 'date', key: 'date', fixed: 'left', width: 120, render: text => new Date(text).toLocaleDateString() },
+                    { title: 'Member', dataIndex: 'member_name', key: 'member_name', width: 150, render: text => <span className="font-medium text-gray-900">{text}</span> },
+                    { title: 'Service', dataIndex: 'service', key: 'service', width: 120, render: text => <span style={{ textTransform: 'capitalize' }}>{text}</span> },
+                    { title: 'Cost', dataIndex: 'cost', key: 'cost', width: 120, align: 'right', render: text => <span className="font-medium text-gray-900">{text.toLocaleString()} RWF</span> }
+                  ]}
+                  dataSource={billingReport.report.map((r, i) => ({ ...r, key: r.id || i }))}
+                  pagination={{ pageSize: 10 }}
+                  scroll={{ x: 'max-content' }}
+                  size="middle"
+                  style={{ marginBottom: '20px' }}
+                />
                 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '15px', background: '#f8fafc', borderRadius: '8px' }}>
                   <div style={{ textAlign: 'right' }}>
@@ -237,62 +227,29 @@ export default function OwnerPartners({ setError, setMessage }) {
     <div className="grid grid-2">
       <div className="card" style={{ overflowX: 'auto' }}>
         <h2 className="card-title">Registered Partner Organizations</h2>
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50/80 border-b border-gray-100">
-              <th className="p-4 font-semibold text-gray-600 text-sm">Organization Name</th>
-              <th className="p-4 font-semibold text-gray-600 text-sm">Phone Number</th>
-              <th className="p-4 font-semibold text-gray-600 text-sm text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {partners.length === 0 ? (
-              <tr>
-                <td colSpan="3" className="p-8 text-center text-gray-500">
-                  No partner organizations created yet.
-                </td>
-              </tr>
-            ) : (
-              partners.map((p) => (
-                <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                  <td className="p-4 font-medium text-gray-900">{p.name}</td>
-                  <td className="p-4 text-gray-700">{p.phone || 'N/A'}</td>
-                  <td className="p-4">
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                      <button
-                        onClick={() => handleGenerateReport(p)}
-                        className="btn-secondary btn-small"
-                        style={{ padding: '6px' }}
-                        title="Billing Report"
-                        disabled={actionLoading}
-                      >
-                        <FileText size={16} color="var(--primary-color)" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(p)}
-                        className="btn-secondary btn-small"
-                        style={{ padding: '6px' }}
-                        title="Edit"
-                        disabled={actionLoading}
-                      >
-                        <Edit2 size={16} color="var(--primary-color)" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(p.id)}
-                        className="btn-secondary btn-small"
-                        style={{ padding: '6px', borderColor: 'var(--danger-color)' }}
-                        title="Delete"
-                        disabled={actionLoading}
-                      >
-                        <Trash2 size={16} color="var(--danger-color)" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <Table 
+          columns={[
+            { title: 'Organization Name', dataIndex: 'name', key: 'name', fixed: 'left', width: 180, render: text => <span className="font-medium text-gray-900">{text}</span> },
+            { title: 'Phone Number', dataIndex: 'phone', key: 'phone', width: 150, render: text => <span className="text-gray-700">{text || 'N/A'}</span> },
+            { title: 'Actions', key: 'actions', width: 150, align: 'right', render: (_, p) => (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                <button onClick={() => handleGenerateReport(p)} className="btn-secondary btn-small" style={{ padding: '6px' }} title="Billing Report" disabled={actionLoading}>
+                  <FileText size={16} color="var(--primary-color)" />
+                </button>
+                <button onClick={() => handleEdit(p)} className="btn-secondary btn-small" style={{ padding: '6px' }} title="Edit" disabled={actionLoading}>
+                  <Edit2 size={16} color="var(--primary-color)" />
+                </button>
+                <button onClick={() => handleDelete(p.id)} className="btn-secondary btn-small" style={{ padding: '6px', borderColor: 'var(--danger-color)' }} title="Delete" disabled={actionLoading}>
+                  <Trash2 size={16} color="var(--danger-color)" />
+                </button>
+              </div>
+            ) }
+          ]}
+          dataSource={partners.map((p, i) => ({ ...p, key: p.id || i }))}
+          pagination={{ pageSize: 10 }}
+          scroll={{ x: 'max-content' }}
+          size="middle"
+        />
       </div>
 
       <div className="card h-fit">

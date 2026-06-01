@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../store/authStore.js';
+import { Table } from 'antd';
 
 export default function OwnerCoupons({ setError, setMessage }) {
   const [coupons, setCoupons] = useState([]);
@@ -175,79 +176,98 @@ export default function OwnerCoupons({ setError, setMessage }) {
             No promo coupon codes created yet. Use the form above to add your first promotion.
           </p>
         ) : (
-          <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
-                <th style={{ padding: '12px 8px' }}>Promo Code</th>
-                <th style={{ padding: '12px 8px' }}>Discount Percent</th>
-                <th style={{ padding: '12px 8px' }}>Deduction Example (40k plan)</th>
-                <th style={{ padding: '12px 8px' }}>Status</th>
-                <th style={{ padding: '12px 8px', textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {coupons.map((cp) => {
-                const sampleDeduction = Math.round(40000 * (cp.discount_percent / 100));
-                const sampleFinal = 40000 - sampleDeduction;
-
-                return (
-                  <tr key={cp.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '12px 8px', fontWeight: 'bold', fontSize: '15px' }}>
-                      <code>{cp.code}</code>
-                    </td>
-                    <td style={{ padding: '12px 8px', fontWeight: '600' }}>
-                      {cp.discount_percent}% OFF
-                    </td>
-                    <td style={{ padding: '12px 8px', color: 'var(--text-secondary)', fontSize: '13px' }}>
+          <Table 
+            columns={[
+              {
+                title: 'Promo Code',
+                dataIndex: 'code',
+                key: 'code',
+                fixed: 'left',
+                width: 150,
+                render: text => <code>{text}</code>
+              },
+              {
+                title: 'Discount Percent',
+                dataIndex: 'discount_percent',
+                key: 'discount_percent',
+                width: 150,
+                render: text => <span style={{ fontWeight: '600' }}>{text}% OFF</span>
+              },
+              {
+                title: 'Deduction Example (40k plan)',
+                key: 'deduction',
+                width: 250,
+                render: (_, cp) => {
+                  const sampleDeduction = Math.round(40000 * (cp.discount_percent / 100));
+                  const sampleFinal = 40000 - sampleDeduction;
+                  return (
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
                       40,000 → <span style={{ color: 'var(--success-color)', fontWeight: 'bold' }}>{sampleFinal.toLocaleString()} RWF</span>
-                    </td>
-                    <td style={{ padding: '12px 8px' }}>
-                      <span 
-                        className={`status-badge ${cp.active === 1 ? 'badge-active' : 'badge-inactive'}`}
-                        style={{
-                          display: 'inline-block',
-                          padding: '4px 8px',
-                          borderRadius: '12px',
-                          fontSize: '11px',
-                          fontWeight: 'bold',
-                          backgroundColor: cp.active === 1 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                          color: cp.active === 1 ? 'var(--success-color)' : 'var(--danger-color)'
-                        }}
-                      >
-                        {cp.active === 1 ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 8px', textAlign: 'right', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                      <button
-                        className={`btn ${cp.active === 1 ? 'btn-secondary' : 'btn-primary'}`}
-                        style={{ padding: '6px 12px', fontSize: '12px' }}
-                        onClick={() => handleToggleCoupon(cp)}
-                        disabled={actionLoading}
-                      >
-                        {cp.active === 1 ? 'Deactivate' : 'Activate'}
-                      </button>
-                      <button
-                        className="btn btn-danger"
-                        style={{ 
-                          padding: '6px 12px', 
-                          fontSize: '12px',
-                          backgroundColor: '#ef4444',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
-                        }}
-                        onClick={() => handleDeleteCoupon(cp)}
-                        disabled={actionLoading}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    </span>
+                  );
+                }
+              },
+              {
+                title: 'Status',
+                key: 'status',
+                width: 120,
+                render: (_, cp) => (
+                  <span 
+                    className={`status-badge ${cp.active === 1 ? 'badge-active' : 'badge-inactive'}`}
+                    style={{
+                      display: 'inline-block',
+                      padding: '4px 8px',
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      fontWeight: 'bold',
+                      backgroundColor: cp.active === 1 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                      color: cp.active === 1 ? 'var(--success-color)' : 'var(--danger-color)'
+                    }}
+                  >
+                    {cp.active === 1 ? 'Active' : 'Inactive'}
+                  </span>
+                )
+              },
+              {
+                title: 'Actions',
+                key: 'actions',
+                width: 200,
+                align: 'right',
+                render: (_, cp) => (
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <button
+                      className={`btn ${cp.active === 1 ? 'btn-secondary' : 'btn-primary'}`}
+                      style={{ padding: '6px 12px', fontSize: '12px' }}
+                      onClick={() => handleToggleCoupon(cp)}
+                      disabled={actionLoading}
+                    >
+                      {cp.active === 1 ? 'Deactivate' : 'Activate'}
+                    </button>
+                    <button
+                      className="btn btn-danger"
+                      style={{ 
+                        padding: '6px 12px', 
+                        fontSize: '12px',
+                        backgroundColor: '#ef4444',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => handleDeleteCoupon(cp)}
+                      disabled={actionLoading}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )
+              }
+            ]}
+            dataSource={coupons.map((cp, i) => ({ ...cp, key: cp.id || i }))}
+            pagination={{ pageSize: 10 }}
+            scroll={{ x: 'max-content' }}
+            size="middle"
+          />
         )}
       </div>
 
