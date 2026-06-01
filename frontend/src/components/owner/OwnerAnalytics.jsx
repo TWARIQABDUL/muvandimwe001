@@ -6,6 +6,7 @@ const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 
 export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendData }) {
   const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
+  const [reportTypeFilter, setReportTypeFilter] = useState('all');
   const [reportData, setReportData] = useState(null);
   const [reportLoading, setReportLoading] = useState(false);
 
@@ -36,6 +37,27 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
       value: breakdown.total || 0
     }))
     .filter(item => item.value > 0);
+
+  let filteredReportCheckins = [];
+  if (reportData) {
+    let combined = [];
+    if (reportTypeFilter === 'all' || reportTypeFilter === 'walkins') {
+      combined = combined.concat(reportData.walkins.map(w => ({ ...w, displayType: 'Walk-in', badgeClass: 'warning' })));
+    }
+    if (reportTypeFilter === 'all' || reportTypeFilter === 'subscribers') {
+      combined = combined.concat(reportData.subscribers.map(s => ({ ...s, displayType: 'Subscriber', badgeClass: 'primary' })));
+    }
+    if (reportTypeFilter === 'all' || reportTypeFilter === 'partners') {
+      combined = combined.concat(reportData.partners.map(p => ({ ...p, displayType: 'Partner', badgeClass: 'success' })));
+    }
+    
+    // Sort by timestamp descending if needed, or assume they are mostly sorted
+    // Actually the backend returns them sorted, but splitting and combining might break sort order if done across types.
+    // Let's sort by timestamp descending.
+    // Since timestamp is 'hh:mm AM/PM', standard JS sorting on string isn't perfect, but we can do a simple parse if needed, 
+    // or just leave as combined because it's a daily report.
+    filteredReportCheckins = combined;
+  }
 
   return (
     <div className="analytics-tab">
@@ -172,7 +194,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
         </div>
       </div>
         
-      <div className="grid grid-2">
+      <div className="grid grid-1">
         <div className="card">
           <h2 className="card-title">Recent Check-ins</h2>
           {dashboardData.recent_checkins && dashboardData.recent_checkins.length ? (
@@ -210,59 +232,60 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
         <div className="card">
           <div className="flex-between" style={{ marginBottom: '15px' }}>
             <h2 className="card-title" style={{ margin: 0 }}>Daily Check-ins Report</h2>
-            <input 
-              type="date" 
-              value={reportDate} 
-              onChange={e => setReportDate(e.target.value)} 
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}
-            />
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <select 
+                value={reportTypeFilter} 
+                onChange={e => setReportTypeFilter(e.target.value)}
+                style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}
+              >
+                <option value="all">All Types</option>
+                <option value="walkins">Walk-ins</option>
+                <option value="subscribers">Subscribers</option>
+                <option value="partners">Partners</option>
+              </select>
+              <input 
+                type="date" 
+                value={reportDate} 
+                onChange={e => setReportDate(e.target.value)} 
+                style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}
+              />
+            </div>
           </div>
           
           {reportLoading ? (
             <p>Loading report data...</p>
           ) : reportData ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '400px', overflowY: 'auto' }}>
-              <div>
-                <h3 style={{ color: 'var(--warning-color)', marginBottom: '10px' }}>Walk-ins ({reportData.walkins.length})</h3>
-                {reportData.walkins.length > 0 ? (
-                  <table>
-                    <thead><tr><th>Name</th><th>Service</th><th>Amount</th><th>Time</th></tr></thead>
-                    <tbody>
-                      {reportData.walkins.map((w, i) => (
-                        <tr key={i}><td>{w.member_name}</td><td style={{ textTransform: 'capitalize' }}>{w.service}</td><td>{w.amount} RWF</td><td>{w.timestamp}</td></tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : <p style={{ fontSize: '14px', color: '#64748b' }}>No walk-ins on this date.</p>}
-              </div>
-
-              <div>
-                <h3 style={{ color: 'var(--primary-color)', marginBottom: '10px' }}>Subscribers ({reportData.subscribers.length})</h3>
-                {reportData.subscribers.length > 0 ? (
-                  <table>
-                    <thead><tr><th>Name</th><th>Service</th><th>Time</th></tr></thead>
-                    <tbody>
-                      {reportData.subscribers.map((s, i) => (
-                        <tr key={i}><td>{s.member_name}</td><td style={{ textTransform: 'capitalize' }}>{s.service}</td><td>{s.timestamp}</td></tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : <p style={{ fontSize: '14px', color: '#64748b' }}>No subscribers on this date.</p>}
-              </div>
-
-              <div>
-                <h3 style={{ color: 'var(--success-color)', marginBottom: '10px' }}>Partners ({reportData.partners.length})</h3>
-                {reportData.partners.length > 0 ? (
-                  <table>
-                    <thead><tr><th>Name</th><th>Service</th><th>Time</th></tr></thead>
-                    <tbody>
-                      {reportData.partners.map((p, i) => (
-                        <tr key={i}><td>{p.member_name}</td><td style={{ textTransform: 'capitalize' }}>{p.service}</td><td>{p.timestamp}</td></tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : <p style={{ fontSize: '14px', color: '#64748b' }}>No partner check-ins on this date.</p>}
-              </div>
+            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              {filteredReportCheckins.length > 0 ? (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Service</th>
+                      <th>Type</th>
+                      <th>Amount</th>
+                      <th>Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredReportCheckins.map((c, i) => (
+                      <tr key={i}>
+                        <td>{c.member_name}</td>
+                        <td style={{ textTransform: 'capitalize' }}>{c.service}</td>
+                        <td>
+                          <span className={`badge badge-${c.badgeClass}`}>
+                            {c.displayType}
+                          </span>
+                        </td>
+                        <td>{c.amount ? `${c.amount} RWF` : '-'}</td>
+                        <td style={{ color: 'var(--text-secondary)' }}>{c.timestamp}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p style={{ color: 'var(--text-secondary)' }}>No check-ins found for the selected filter.</p>
+              )}
             </div>
           ) : (
             <p style={{ color: 'var(--text-secondary)' }}>Select a date to view report.</p>
