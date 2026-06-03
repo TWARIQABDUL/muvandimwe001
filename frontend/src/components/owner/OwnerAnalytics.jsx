@@ -237,7 +237,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '20px', marginBottom: '20px' }}>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.total_checkins}</div>
-          <div style={{ color: 'var(--text-secondary)' }}>Total People Entered</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Daily Passes</div>
         </div>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.walk_in_checkins}</div>
