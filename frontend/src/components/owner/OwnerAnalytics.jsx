@@ -75,7 +75,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
       render: (text) => <span style={{ textTransform: 'capitalize', fontWeight: '600' }}>{text}</span>,
     },
     {
-      title: 'Walk-in',
+      title: 'Daily Users',
       key: 'walk_in',
       width: 120,
       render: (_, record) => (
