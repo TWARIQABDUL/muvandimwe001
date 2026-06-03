@@ -97,7 +97,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
       ),
     },
     {
-      title: 'Monthly users',
+      title: 'Total Abonnement',
       key: 'subscription',
       width: 150,
       render: (_, record) => (
@@ -237,7 +237,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '20px', marginBottom: '20px' }}>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.total_checkins}</div>
-          <div style={{ color: 'var(--text-secondary)' }}>Daily Passes</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Total client Served</div>
         </div>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.walk_in_checkins}</div>
@@ -245,7 +245,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
         </div>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
-            {dashboardData.snapshot.partner_checkins !== undefined 
+            {dashboardData.snapshot.partner_checkins !== undefined
               ? dashboardData.snapshot.subscriber_checkins
               : Math.max(0, dashboardData.snapshot.subscriber_checkins - (dashboardData.recent_checkins || []).filter(c => c.type === 'b2b').length)}
           </div>
@@ -253,8 +253,8 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
         </div>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
-            {dashboardData.snapshot.partner_checkins !== undefined 
-              ? dashboardData.snapshot.partner_checkins 
+            {dashboardData.snapshot.partner_checkins !== undefined
+              ? dashboardData.snapshot.partner_checkins
               : (dashboardData.recent_checkins || []).filter(c => c.type === 'b2b').length}
           </div>
           <div style={{ color: 'var(--text-secondary)' }}> VIP membership</div>
@@ -285,7 +285,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--warning-color)' }}>
             {(dashboardData.snapshot.walk_in_revenue || 0).toLocaleString()} RWF
           </div>
-          <div style={{ color: 'var(--text-secondary)' }}>Daily Cash (At Door)</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Cash</div>
         </div>
         <div className="card" style={{ borderLeft: '4px solid var(--primary-color)' }}>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary-color)' }}>
@@ -297,7 +297,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--success-color)' }}>
             {(dashboardData.snapshot.total_revenue || 0).toLocaleString()} RWF
           </div>
-          <div style={{ color: 'var(--text-secondary)' }}>Total Cash Collected</div>
+          <div style={{ color: 'var(--text-secondary)' }}></div>
         </div>
       </div>
 
@@ -328,9 +328,9 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
                 </ResponsiveContainer>
               </div>
             )}
-            <Table 
-              columns={revenueColumns} 
-              dataSource={revenueData} 
+            <Table
+              columns={revenueColumns}
+              dataSource={revenueData}
               pagination={false}
               scroll={{ x: 700 }}
               size="middle"
@@ -338,14 +338,14 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
           </div>
         </div>
       </div>
-        
+
       <div className="grid grid-1">
         <div className="card">
           <h2 className="card-title">Recent Check-ins</h2>
           {recentCheckinsData.length ? (
-            <Table 
-              columns={recentCheckinColumns} 
-              dataSource={recentCheckinsData} 
+            <Table
+              columns={recentCheckinColumns}
+              dataSource={recentCheckinsData}
               pagination={{ pageSize: 5 }}
               scroll={{ x: 600 }}
               size="small"
@@ -354,13 +354,13 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
             <p style={{ color: 'var(--text-secondary)' }}>No check-ins for this period yet.</p>
           )}
         </div>
-        
+
         <div className="card">
           <div className="flex-between" style={{ marginBottom: '15px' }}>
             <h2 className="card-title" style={{ margin: 0 }}>Daily Check-ins Report</h2>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <select 
-                value={reportTypeFilter} 
+              <select
+                value={reportTypeFilter}
                 onChange={e => setReportTypeFilter(e.target.value)}
                 style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}
               >
@@ -370,28 +370,28 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
                 <option value="partners">Partners (VIP)</option>
               </select>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <button 
+                <button
                   onClick={() => handleDateChange(-1)}
                   style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer' }}
                 >
                   &lt;
                 </button>
-                <input 
-                  type="date" 
-                  value={reportDate} 
+                <input
+                  type="date"
+                  value={reportDate}
                   max={new Date().toISOString().split('T')[0]}
-                  onChange={e => setReportDate(e.target.value)} 
+                  onChange={e => setReportDate(e.target.value)}
                   style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}
                 />
-                <button 
+                <button
                   onClick={() => handleDateChange(1)}
                   disabled={reportDate >= new Date().toISOString().split('T')[0]}
-                  style={{ 
-                    padding: '8px 12px', 
-                    borderRadius: '6px', 
-                    border: '1px solid #e2e8f0', 
-                    background: reportDate >= new Date().toISOString().split('T')[0] ? '#f1f5f9' : 'white', 
-                    cursor: reportDate >= new Date().toISOString().split('T')[0] ? 'not-allowed' : 'pointer' 
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #e2e8f0',
+                    background: reportDate >= new Date().toISOString().split('T')[0] ? '#f1f5f9' : 'white',
+                    cursor: reportDate >= new Date().toISOString().split('T')[0] ? 'not-allowed' : 'pointer'
                   }}
                 >
                   &gt;
@@ -399,15 +399,15 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
               </div>
             </div>
           </div>
-          
+
           {reportLoading ? (
             <p>Loading report data...</p>
           ) : reportData ? (
             <div>
               {dailyCheckinsData.length > 0 ? (
-                <Table 
-                  columns={dailyCheckinColumns} 
-                  dataSource={dailyCheckinsData} 
+                <Table
+                  columns={dailyCheckinColumns}
+                  dataSource={dailyCheckinsData}
                   pagination={{ pageSize: 10 }}
                   scroll={{ x: 700 }}
                   size="small"
