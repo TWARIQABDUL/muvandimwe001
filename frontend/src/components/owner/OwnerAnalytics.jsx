@@ -230,7 +230,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
         </div>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dashboardData.snapshot.walk_in_checkins}</div>
-          <div style={{ color: 'var(--text-secondary)' }}>Total Walkins</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Total Daily</div>
         </div>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
@@ -238,7 +238,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
               ? dashboardData.snapshot.subscriber_checkins
               : Math.max(0, dashboardData.snapshot.subscriber_checkins - (dashboardData.recent_checkins || []).filter(c => c.type === 'b2b').length)}
           </div>
-          <div style={{ color: 'var(--text-secondary)' }}>Subscribers</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Abonment Monthly</div>
         </div>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
@@ -246,7 +246,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
               ? dashboardData.snapshot.partner_checkins 
               : (dashboardData.recent_checkins || []).filter(c => c.type === 'b2b').length}
           </div>
-          <div style={{ color: 'var(--text-secondary)' }}>Partners Subscribers</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Partners Subscribers (VIP)</div>
         </div>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
@@ -274,7 +274,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--warning-color)' }}>
             {(dashboardData.snapshot.walk_in_revenue || 0).toLocaleString()} RWF
           </div>
-          <div style={{ color: 'var(--text-secondary)' }}>Walk-in Cash (At Door)</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Daily Cash (At Door)</div>
         </div>
         <div className="card" style={{ borderLeft: '4px solid var(--primary-color)' }}>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary-color)' }}>
@@ -354,9 +354,9 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
                 style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}
               >
                 <option value="all">All Types</option>
-                <option value="walkins">Walk-ins</option>
-                <option value="subscribers">Subscribers</option>
-                <option value="partners">Partners</option>
+                <option value="walkins">Daily Users</option>
+                <option value="subscribers">Monthly User</option>
+                <option value="partners">Partners (VIP)</option>
               </select>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <button 
