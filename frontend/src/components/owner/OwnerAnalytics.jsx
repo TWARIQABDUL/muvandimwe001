@@ -75,7 +75,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
       render: (text) => <span style={{ textTransform: 'capitalize', fontWeight: '600' }}>{text}</span>,
     },
     {
-      title: 'Daily Users',
+      title: 'Per day',
       key: 'walk_in',
       width: 120,
       render: (_, record) => (
@@ -97,13 +97,24 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
       ),
     },
     {
-      title: 'Subscription',
+      title: 'Monthly users',
       key: 'subscription',
       width: 150,
       render: (_, record) => (
         <div>
           <div>{(record.subscription || 0).toLocaleString()}</div>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{record.subscription_count || 0} paid</div>
+        </div>
+      ),
+    },
+    {
+      title: 'Partners (VIP)',
+      key: 'b2b',
+      width: 130,
+      render: (_, record) => (
+        <div>
+          <div>{(record.b2b || 0).toLocaleString()}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{record.b2b_count || 0} visits</div>
         </div>
       ),
     },
