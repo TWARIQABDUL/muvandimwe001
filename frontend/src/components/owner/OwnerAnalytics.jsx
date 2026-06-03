@@ -219,7 +219,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
     <div className="analytics-tab">
       <div className="card">
         <div className="flex-between">
-          <h2 className="card-title" style={{ margin: 0 }}>Snapshot Period</h2>
+          <h2 className="card-title" style={{ margin: 0 }}>Report yumunsi</h2>
           <div className="timeframe-buttons">
             {['today', 'week', 'month', 'year'].map(tf => (
               <button
