@@ -249,7 +249,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
               ? dashboardData.snapshot.subscriber_checkins
               : Math.max(0, dashboardData.snapshot.subscriber_checkins - (dashboardData.recent_checkins || []).filter(c => c.type === 'b2b').length)}
           </div>
-          <div style={{ color: 'var(--text-secondary)' }}>Abonment Monthly</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Old Abonment</div>
         </div>
         <div className="card">
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
