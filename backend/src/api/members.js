@@ -14,7 +14,7 @@ router.post(
   gymIsolationMiddleware,
   async (req, res) => {
     try {
-      const { name, email, phone, subscription_id, services, is_card, taps, coupon, employer_id, qr_code_id } = req.body;
+      const { name, email, phone, subscription_id, services, is_card, taps, coupon, employer_id, qr_code_id, payment_method } = req.body;
       const { gym_id } = req.user;
 
       if (!name) {
@@ -195,9 +195,9 @@ router.post(
       // Log payment transaction
       const paymentId = uuidv4();
       await db.run(
-        `INSERT INTO payments (id, gym_id, member_id, amount, type, service, timestamp)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [paymentId, gym_id, memberId, finalFee, 'subscription_signup', servicesStr, new Date().toISOString()]
+        `INSERT INTO payments (id, gym_id, member_id, amount, type, service, payment_method, timestamp)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [paymentId, gym_id, memberId, finalFee, 'subscription_signup', servicesStr, payment_method || 'Cash', new Date().toISOString()]
       );
 
       res.status(201).json({

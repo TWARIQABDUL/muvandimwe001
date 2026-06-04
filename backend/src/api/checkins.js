@@ -14,7 +14,7 @@ router.post(
   gymIsolationMiddleware,
   async (req, res) => {
     try {
-      const { member_id, member_name, type, service, amount } = req.body;
+      const { member_id, member_name, type, service, amount, payment_method } = req.body;
       const { gym_id } = req.user;
 
       if (!type || !service) {
@@ -93,9 +93,9 @@ router.post(
       if (type === 'walk_in' || type === 'daily') {
         const paymentId = uuidv4();
         await db.run(
-          `INSERT INTO payments (id, gym_id, member_id, amount, type, service, timestamp)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [paymentId, gym_id, member_id || null, amount || 0, type, service, now]
+          `INSERT INTO payments (id, gym_id, member_id, amount, type, service, payment_method, timestamp)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [paymentId, gym_id, member_id || null, amount || 0, type, service, payment_method || 'Cash', now]
         );
       }
 

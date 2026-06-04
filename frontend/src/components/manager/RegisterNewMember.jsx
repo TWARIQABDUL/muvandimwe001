@@ -19,6 +19,8 @@ export default function RegisterNewMember({
   couponMessage,
   pricing,
   handleCreateMember,
+  paymentMethod,
+  setPaymentMethod,
   loading,
   newMemberQr
 }) {
@@ -340,6 +342,31 @@ export default function RegisterNewMember({
               </div>
             </div>
           )}
+              <div className="form-group" style={{ marginTop: '20px', background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>Step 4: Payment Method</label>
+                <div style={{ display: 'flex', gap: '20px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input 
+                      type="radio" 
+                      name="registerPaymentMethod" 
+                      value="Cash" 
+                      checked={paymentMethod === 'Cash'} 
+                      onChange={(e) => setPaymentMethod(e.target.value)} 
+                    />
+                    Cash
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input 
+                      type="radio" 
+                      name="registerPaymentMethod" 
+                      value="MOMO" 
+                      checked={paymentMethod === 'MOMO'} 
+                      onChange={(e) => setPaymentMethod(e.target.value)} 
+                    />
+                    MOMO
+                  </label>
+                </div>
+              </div>
           </>
           )}
 

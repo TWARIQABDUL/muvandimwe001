@@ -25,6 +25,8 @@ export default function ManagerCheckinFlow({
   setWalkInServices,
   walkInAmount,
   setWalkInAmount,
+  paymentMethod,
+  setPaymentMethod,
   loading
 }) {
   const [checkinType, setCheckinType] = useState('subscriber');
@@ -81,8 +83,8 @@ export default function ManagerCheckinFlow({
           <div style={{ opacity: 0.9, marginBottom: '5px' }}>Total Cash Collected</div>
           <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '15px' }}>{(dashboardData?.summary?.revenue_today ?? 0).toLocaleString()} RWF</div>
           <div style={{ fontSize: '14px', borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
-            <span>Walk-in (At Door): {(dashboardData?.summary?.walk_in_revenue_today ?? 0).toLocaleString()} RWF</span>
-            <span>New Abonnements: {(dashboardData?.summary?.subscription_revenue_today ?? 0).toLocaleString()} RWF</span>
+            <span>Cash: {(dashboardData?.summary?.cash_revenue_today ?? 0).toLocaleString()} RWF</span>
+            <span>MOMO: {(dashboardData?.summary?.momo_revenue_today ?? 0).toLocaleString()} RWF</span>
           </div>
         </div>
       </div>
@@ -268,6 +270,34 @@ export default function ManagerCheckinFlow({
                     </select>
                   </div>
 
+                  {memberLookup.type !== 'b2b' && (!memberLookup.allowed_services?.length || !memberLookup.allowed_services.includes(memberService)) && (
+                    <div className="form-group" style={{ background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>Payment Method (Extra Service)</label>
+                      <div style={{ display: 'flex', gap: '20px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                          <input 
+                            type="radio" 
+                            name="memberPaymentMethod" 
+                            value="Cash" 
+                            checked={paymentMethod === 'Cash'} 
+                            onChange={(e) => setPaymentMethod(e.target.value)} 
+                          />
+                          Cash
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                          <input 
+                            type="radio" 
+                            name="memberPaymentMethod" 
+                            value="MOMO" 
+                            checked={paymentMethod === 'MOMO'} 
+                            onChange={(e) => setPaymentMethod(e.target.value)} 
+                          />
+                          MOMO
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
                   <button
                     className="btn-primary"
                     onClick={handleCheckinMember}
@@ -323,6 +353,32 @@ export default function ManagerCheckinFlow({
               <div style={{ marginTop: '20px', padding: '15px', background: '#eff6ff', border: '1px dashed #bfdbfe', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: '#1e40af', fontWeight: '500' }}>Total Due:</span>
                 <span style={{ fontSize: '20px', fontWeight: '700', color: '#1d4ed8' }}>{Number(walkInAmount).toLocaleString()} RWF</span>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '20px', background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>Payment Method</label>
+                <div style={{ display: 'flex', gap: '20px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input 
+                      type="radio" 
+                      name="walkInPaymentMethod" 
+                      value="Cash" 
+                      checked={paymentMethod === 'Cash'} 
+                      onChange={(e) => setPaymentMethod(e.target.value)} 
+                    />
+                    Cash
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input 
+                      type="radio" 
+                      name="walkInPaymentMethod" 
+                      value="MOMO" 
+                      checked={paymentMethod === 'MOMO'} 
+                      onChange={(e) => setPaymentMethod(e.target.value)} 
+                    />
+                    MOMO
+                  </label>
+                </div>
               </div>
 
               <button className="btn-primary" type="submit" disabled={loading} style={{ width: '100%', padding: '15px', fontSize: '16px', marginTop: '20px' }}>

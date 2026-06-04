@@ -280,24 +280,30 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
         </div>
       </div>
 
-      <div className="grid grid-3" style={{ marginBottom: '20px' }}>
+      <div className="grid grid-4" style={{ marginBottom: '20px' }}>
         <div className="card" style={{ borderLeft: '4px solid var(--warning-color)' }}>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--warning-color)' }}>
-            {(dashboardData.snapshot.walk_in_revenue || 0).toLocaleString()} RWF
+            {(dashboardData.snapshot.cash_revenue || 0).toLocaleString()} RWF
           </div>
-          <div style={{ color: 'var(--text-secondary)' }}>Cash</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Total Cash Collected</div>
+        </div>
+        <div className="card" style={{ borderLeft: '4px solid #3b82f6' }}>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3b82f6' }}>
+            {(dashboardData.snapshot.momo_revenue || 0).toLocaleString()} RWF
+          </div>
+          <div style={{ color: 'var(--text-secondary)' }}>Total MOMO Collected</div>
         </div>
         <div className="card" style={{ borderLeft: '4px solid var(--primary-color)' }}>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary-color)' }}>
             {(dashboardData.snapshot.subscription_revenue || 0).toLocaleString()} RWF
           </div>
-          <div style={{ color: 'var(--text-secondary)' }}>New Abonment</div>
+          <div style={{ color: 'var(--text-secondary)' }}>New Abonment Revenue</div>
         </div>
         <div className="card" style={{ borderLeft: '4px solid var(--success-color)' }}>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--success-color)' }}>
             {(dashboardData.snapshot.total_revenue || 0).toLocaleString()} RWF
           </div>
-          <div style={{ color: 'var(--text-secondary)' }}></div>
+          <div style={{ color: 'var(--text-secondary)' }}>Grand Total</div>
         </div>
       </div>
 

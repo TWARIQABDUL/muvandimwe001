@@ -137,6 +137,8 @@ router.get(
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
+      const cashRevenue = payments.filter(p => !p.payment_method || p.payment_method === 'Cash').reduce((sum, p) => sum + Number(p.amount), 0);
+      const momoRevenue = payments.filter(p => p.payment_method === 'MOMO').reduce((sum, p) => sum + Number(p.amount), 0);
       const totalCheckins = checkins.length;
       const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
       const subscriberCheckins = checkins.filter(c => c.type === 'subscription').length;
@@ -190,6 +192,8 @@ router.get(
           subscriber_checkins: subscriberCheckins,
           partner_checkins: partnerCheckins,
           total_revenue: totalRevenue,
+          cash_revenue: cashRevenue,
+          momo_revenue: momoRevenue,
           walk_in_revenue: walkInRevenue,
           subscription_revenue: subscriptionRevenue,
           active_subscriptions: activeSubs.count,
@@ -221,6 +225,8 @@ async function getManagerTodayDashboard(req, res) {
     const pendingRenewals = await getPendingRenewals(gym_id);
 
     const totalRevenue = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+      const cashRevenue = payments.filter(p => !p.payment_method || p.payment_method === 'Cash').reduce((sum, p) => sum + Number(p.amount), 0);
+      const momoRevenue = payments.filter(p => p.payment_method === 'MOMO').reduce((sum, p) => sum + Number(p.amount), 0);
     const walkInRevenue = payments
       .filter(p => p.type === 'walk_in' || p.type === 'daily')
       .reduce((sum, p) => sum + Number(p.amount), 0);
@@ -259,6 +265,8 @@ async function getManagerTodayDashboard(req, res) {
         subscriber_checkins: subscriberCheckins,
         partner_checkins: partnerCheckins,
         revenue_today: totalRevenue,
+        cash_revenue_today: cashRevenue,
+        momo_revenue_today: momoRevenue,
         walk_in_revenue_today: walkInRevenue,
         subscription_revenue_today: subscriptionRevenue,
         renewals_done: payments.filter(p => p.type === 'subscription_renewal').length,
@@ -291,6 +299,8 @@ router.get(
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
+      const cashRevenue = payments.filter(p => !p.payment_method || p.payment_method === 'Cash').reduce((sum, p) => sum + Number(p.amount), 0);
+      const momoRevenue = payments.filter(p => p.payment_method === 'MOMO').reduce((sum, p) => sum + Number(p.amount), 0);
       const totalCheckins = checkins.length;
       const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
       const subscriberCheckins = checkins.filter(c => c.type === 'subscription').length;
@@ -340,6 +350,8 @@ router.get(
           subscriber_checkins: subscriberCheckins,
           partner_checkins: partnerCheckins,
           total_revenue: totalRevenue,
+          cash_revenue: cashRevenue,
+          momo_revenue: momoRevenue,
           walk_in_revenue: walkInRevenue,
           subscription_revenue: subscriptionRevenue,
           active_subscriptions: activeSubs.count,
@@ -374,6 +386,8 @@ router.get(
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
+      const cashRevenue = payments.filter(p => !p.payment_method || p.payment_method === 'Cash').reduce((sum, p) => sum + Number(p.amount), 0);
+      const momoRevenue = payments.filter(p => p.payment_method === 'MOMO').reduce((sum, p) => sum + Number(p.amount), 0);
       const totalCheckins = checkins.length;
       const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
       const subscriberCheckins = checkins.filter(c => c.type === 'subscription').length;
@@ -423,6 +437,8 @@ router.get(
           subscriber_checkins: subscriberCheckins,
           partner_checkins: partnerCheckins,
           total_revenue: totalRevenue,
+          cash_revenue: cashRevenue,
+          momo_revenue: momoRevenue,
           walk_in_revenue: walkInRevenue,
           subscription_revenue: subscriptionRevenue,
           active_subscriptions: activeSubs.count,
@@ -457,6 +473,8 @@ router.get(
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
+      const cashRevenue = payments.filter(p => !p.payment_method || p.payment_method === 'Cash').reduce((sum, p) => sum + Number(p.amount), 0);
+      const momoRevenue = payments.filter(p => p.payment_method === 'MOMO').reduce((sum, p) => sum + Number(p.amount), 0);
       const totalCheckins = checkins.length;
       const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
       const subscriberCheckins = checkins.filter(c => c.type === 'subscription').length;
@@ -506,6 +524,8 @@ router.get(
           subscriber_checkins: subscriberCheckins,
           partner_checkins: partnerCheckins,
           total_revenue: totalRevenue,
+          cash_revenue: cashRevenue,
+          momo_revenue: momoRevenue,
           walk_in_revenue: walkInRevenue,
           subscription_revenue: subscriptionRevenue,
           active_subscriptions: activeSubs.count,

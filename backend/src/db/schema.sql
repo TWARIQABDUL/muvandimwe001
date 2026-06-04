@@ -122,6 +122,7 @@ CREATE TABLE IF NOT EXISTS payments (
   amount DECIMAL(10, 2) NOT NULL,
   type TEXT NOT NULL CHECK (type IN ('subscription_signup', 'subscription_renewal', 'walk_in', 'daily')),
   service TEXT NOT NULL, -- e.g. "gym", "sauna,pool"
+  payment_method VARCHAR(50) DEFAULT 'Cash',
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (gym_id) REFERENCES gyms(id),
   FOREIGN KEY (member_id) REFERENCES members(id)

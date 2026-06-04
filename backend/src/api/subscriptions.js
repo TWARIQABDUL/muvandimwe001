@@ -40,6 +40,7 @@ router.post(
   async (req, res) => {
     try {
       const memberId = req.params.id;
+      const { payment_method } = req.body;
       const { gym_id } = req.user;
 
       // Get current subscription
@@ -76,8 +77,8 @@ router.post(
       // Log subscription renewal payment
       const paymentId = uuidv4();
       await db.run(
-        `INSERT INTO payments (id, gym_id, member_id, amount, type, service, timestamp)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO payments (id, gym_id, member_id, amount, type, service, payment_method, timestamp)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           paymentId,
           gym_id,
@@ -85,6 +86,7 @@ router.post(
           member.monthly_fee || 0,
           'subscription_renewal',
           member.included_services || 'gym',
+          payment_method || 'Cash',
           new Date().toISOString()
         ]
       );

@@ -31,6 +31,7 @@ export default function ManagerDashboard() {
   const [walkInName, setWalkInName] = useState('');
   const [walkInServices, setWalkInServices] = useState(['gym']);
   const [walkInAmount, setWalkInAmount] = useState('15000');
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
 
   // Registration state
   const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', employer_id: '', qr_code_id: '' });
@@ -189,9 +190,10 @@ export default function ManagerDashboard() {
         member_id: memberLookup.id,
         type,
         service: memberService,
-        amount
+        amount,
+        payment_method: paymentMethod
       });
-      setMessage(`${memberLookup.name} checked in to ${memberService}${type === 'daily' ? ` (Paid ${amount.toLocaleString()} RWF)` : ''}`);
+      setMessage(`${memberLookup.name} checked in to ${memberService}${type === 'daily' ? ` (Paid ${amount.toLocaleString()} RWF via ${paymentMethod})` : ''}`);
       setMemberLookup(null);
       setQrCode('');
       fetchDashboard();
@@ -231,9 +233,10 @@ export default function ManagerDashboard() {
         member_name: walkInName.trim(),
         type: 'walk_in',
         service: walkInServices.join(', '),
-        amount: amountValue
+        amount: amountValue,
+        payment_method: paymentMethod
       });
-      setMessage(`${walkInName.trim()} checked in as walk-in for ${walkInServices.join(', ')}`);
+      setMessage(`${walkInName.trim()} checked in as walk-in for ${walkInServices.join(', ')} via ${paymentMethod}`);
       setWalkInName('');
       setWalkInServices(['gym']);
       const selected = services.find(s => s.name === 'gym');
@@ -275,7 +278,8 @@ export default function ManagerDashboard() {
         services: selectedServices,
         is_card: isCard ? 1 : 0,
         taps: isCard ? Number(taps) : null,
-        coupon: appliedCoupon ? appliedCoupon.code : null
+        coupon: appliedCoupon ? appliedCoupon.code : null,
+        payment_method: paymentMethod
       });
 
       setMessage(`${response.data.name} registered successfully`);
@@ -303,7 +307,9 @@ export default function ManagerDashboard() {
     setMessage(null);
     try {
       setLoading(true);
-      const response = await api.post(`/members/${memberId}/subscriptions/renew`);
+      const response = await api.post(`/members/${memberId}/subscriptions/renew`, {
+        payment_method: paymentMethod
+      });
       setMessage(response.data.message || 'Subscription renewed');
       fetchDashboard();
       setTimeout(() => setMessage(null), 4000);
@@ -408,6 +414,8 @@ export default function ManagerDashboard() {
                 setWalkInServices={setWalkInServices}
                 walkInAmount={walkInAmount}
                 setWalkInAmount={setWalkInAmount}
+                paymentMethod={paymentMethod}
+                setPaymentMethod={setPaymentMethod}
                 loading={loading}
               />
             )}
@@ -430,6 +438,8 @@ export default function ManagerDashboard() {
                 couponMessage={couponMessage}
                 pricing={pricing}
                 handleCreateMember={handleCreateMember}
+                paymentMethod={paymentMethod}
+                setPaymentMethod={setPaymentMethod}
                 loading={loading}
                 newMemberQr={newMemberQr}
               />
@@ -439,6 +449,8 @@ export default function ManagerDashboard() {
               <PendingRenewals
                 dashboardData={dashboardData}
                 handleRenewal={handleRenewal}
+                paymentMethod={paymentMethod}
+                setPaymentMethod={setPaymentMethod}
                 loading={loading}
               />
             )}
