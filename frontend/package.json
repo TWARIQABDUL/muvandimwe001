@@ -12,6 +12,7 @@
     "@capacitor/core": "^8.3.4",
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/share": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
     "@yudiel/react-qr-scanner": "^2.6.0",
     "antd": "^6.4.3",
     "axios": "^1.4.0",
