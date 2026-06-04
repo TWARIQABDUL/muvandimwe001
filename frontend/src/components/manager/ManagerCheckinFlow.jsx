@@ -160,9 +160,9 @@ export default function ManagerCheckinFlow({
                   placeholder="Enter full name"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ flex: '1 1 200px', padding: '12px' }}
+                  style={{ flex: '3 1 200px', padding: '12px' }}
                 />
-                <button className="btn-primary" type="submit" disabled={loading} style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                <button className="btn-primary" type="submit" disabled={loading} style={{ flex: '1 1 120px', padding: '12px 16px', whiteSpace: 'nowrap' }}>
                   Search
                 </button>
               </form>
