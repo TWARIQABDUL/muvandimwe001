@@ -269,6 +269,7 @@ async function getManagerTodayDashboard(req, res) {
         momo_revenue_today: momoRevenue,
         walk_in_revenue_today: walkInRevenue,
         subscription_revenue_today: subscriptionRevenue,
+        new_subscriptions: payments.filter(p => p.type === 'subscription_signup').length,
         renewals_done: payments.filter(p => p.type === 'subscription_renewal').length,
         renewals_pending: pendingRenewals.length
       },
