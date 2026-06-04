@@ -11,7 +11,6 @@ export default function ManagerCheckinFlow({
   handleSearchName,
   handleSelectSearchResult,
   handleCheckinMember,
-  handleRenewal,
   qrCode,
   setQrCode,
   searchQuery,
@@ -272,9 +271,9 @@ export default function ManagerCheckinFlow({
                     </select>
                   </div>
 
-                  {memberLookup.type !== 'b2b' && (memberLookup.subscription_status !== 'active' || !memberLookup.allowed_services?.length || !memberLookup.allowed_services.includes(memberService)) && (
+                  {memberLookup.type !== 'b2b' && (!memberLookup.allowed_services?.length || !memberLookup.allowed_services.includes(memberService)) && (
                     <div className="form-group" style={{ background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                      <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>Payment Method {memberLookup.subscription_status !== 'active' ? '(Renewal)' : '(Extra Service)'}</label>
+                      <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>Payment Method (Extra Service)</label>
                       <div style={{ display: 'flex', gap: '20px' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                           <input 
@@ -309,20 +308,6 @@ export default function ManagerCheckinFlow({
                     >
                       Confirm Check-in
                     </button>
-                    
-                    {memberLookup.type !== 'b2b' && (
-                      <button
-                        className="btn-secondary"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleRenewal(memberLookup.id);
-                        }}
-                        disabled={loading}
-                        style={{ flex: '1 1 200px', padding: '15px', fontSize: '16px', background: '#e2e8f0', color: '#0f172a', border: '1px solid #cbd5e1' }}
-                      >
-                        Renew Subscription
-                      </button>
-                    )}
                   </div>
                 </div>
               )}

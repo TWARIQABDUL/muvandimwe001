@@ -5,7 +5,7 @@ import PasswordChangeModal from '../components/PasswordChangeModal.jsx';
 import DashboardLayout from '../components/DashboardLayout.jsx';
 
 import ManagerCheckinFlow from '../components/manager/ManagerCheckinFlow.jsx';
-import PendingRenewals from '../components/manager/PendingRenewals.jsx';
+import RenewMembership from '../components/manager/RenewMembership.jsx';
 import SubscriberActivity from '../components/manager/SubscriberActivity.jsx';
 import RegisterNewMember from '../components/manager/RegisterNewMember.jsx';
 
@@ -42,6 +42,14 @@ export default function ManagerDashboard() {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponMessage, setCouponMessage] = useState(null);
   const [newMemberQr, setNewMemberQr] = useState(null);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSearchQuery('');
+    setSearchResults([]);
+    setMemberLookup(null);
+    setQrCode('');
+  };
 
   useEffect(() => {
     if (user?.first_login === 1) setShowPasswordModal(true);
@@ -380,7 +388,7 @@ export default function ManagerDashboard() {
       {showPasswordModal && (
         <PasswordChangeModal onClose={() => setShowPasswordModal(false)} />
       )}
-      <DashboardLayout tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab}>
+      <DashboardLayout tabs={tabs} activeTab={activeTab} setActiveTab={handleTabChange}>
         {message && <div className="alert alert-success" style={{ marginBottom: '20px' }}>{message}</div>}
         {error && <div className="alert alert-error" style={{ marginBottom: '20px' }}>{error}</div>}
 
@@ -447,9 +455,16 @@ export default function ManagerDashboard() {
             )}
 
             {activeTab === 'renewals' && (
-              <PendingRenewals
+              <RenewMembership
                 dashboardData={dashboardData}
                 handleRenewal={handleRenewal}
+                handleSearchName={handleSearchName}
+                handleLookupQr={handleLookupQr}
+                handleSelectSearchResult={handleSelectSearchResult}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                searchResults={searchResults}
+                memberLookup={memberLookup}
                 paymentMethod={paymentMethod}
                 setPaymentMethod={setPaymentMethod}
                 loading={loading}
