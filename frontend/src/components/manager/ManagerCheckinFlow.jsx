@@ -154,16 +154,16 @@ export default function ManagerCheckinFlow({
               )}
 
               <h3 style={{ marginBottom: '15px', color: 'var(--text-primary)', marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>Or Search by Name</h3>
-              <form onSubmit={handleSearchName} className="flex gap-10">
+              <form onSubmit={handleSearchName} style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
                 <input
                   type="text"
                   placeholder="Enter full name"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ flex: 1, padding: '12px' }}
+                  style={{ flex: 1, padding: '12px', minWidth: 0 }}
                 />
-                <button className="btn-primary" type="submit" disabled={loading} style={{ padding: '12px 24px' }}>
-                  Search Name
+                <button className="btn-primary" type="submit" disabled={loading} style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                  Search
                 </button>
               </form>
 
