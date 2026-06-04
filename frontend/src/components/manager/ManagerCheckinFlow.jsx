@@ -73,9 +73,9 @@ export default function ManagerCheckinFlow({
           <div style={{ opacity: 0.9, marginBottom: '5px' }}>Daily Passes</div>
           <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '15px' }}>{dashboardData?.summary?.checkins_today ?? 0}</div>
           <div style={{ fontSize: '14px', borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
-            <span>Walkins: {dashboardData?.summary?.walkin_checkins ?? 0}</span>
-            <span>Subscribers: {dashboardData?.summary?.subscriber_checkins ?? 0}</span>
-            <span>Partners: {dashboardData?.summary?.partner_checkins ?? 0}</span>
+            <span>Per day: {dashboardData?.summary?.walkin_checkins ?? 0}</span>
+            <span>Abonment: {dashboardData?.summary?.subscriber_checkins ?? 0}</span>
+            <span>VIP: {dashboardData?.summary?.partner_checkins ?? 0}</span>
           </div>
         </div>
         
