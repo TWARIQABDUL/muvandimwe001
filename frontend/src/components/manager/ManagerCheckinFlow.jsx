@@ -80,7 +80,7 @@ export default function ManagerCheckinFlow({
         </div>
         
         <div className="card" style={{ background: 'var(--success-color)', color: 'white' }}>
-          <div style={{ opacity: 0.9, marginBottom: '5px' }}>Total Cash Collected</div>
+          <div style={{ opacity: 0.9, marginBottom: '5px' }}>Total Cash</div>
           <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '15px' }}>{(dashboardData?.summary?.revenue_today ?? 0).toLocaleString()} RWF</div>
           <div style={{ fontSize: '14px', borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
             <span>Cash: {(dashboardData?.summary?.cash_revenue_today ?? 0).toLocaleString()} RWF</span>

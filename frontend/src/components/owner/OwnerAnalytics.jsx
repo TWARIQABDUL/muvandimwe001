@@ -285,13 +285,13 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--warning-color)' }}>
             {(dashboardData.snapshot.cash_revenue || 0).toLocaleString()} RWF
           </div>
-          <div style={{ color: 'var(--text-secondary)' }}>Total Cash Collected</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Total Cash</div>
         </div>
         <div className="card" style={{ borderLeft: '4px solid #3b82f6' }}>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3b82f6' }}>
             {(dashboardData.snapshot.momo_revenue || 0).toLocaleString()} RWF
           </div>
-          <div style={{ color: 'var(--text-secondary)' }}>Total MOMO Collected</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Total MOMO</div>
         </div>
         <div className="card" style={{ borderLeft: '4px solid var(--primary-color)' }}>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary-color)' }}>
