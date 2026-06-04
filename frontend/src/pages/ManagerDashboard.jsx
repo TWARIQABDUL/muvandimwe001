@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { api } from '../store/authStore.js';
 import PasswordChangeModal from '../components/PasswordChangeModal.jsx';
@@ -11,7 +12,8 @@ import RegisterNewMember from '../components/manager/RegisterNewMember.jsx';
 
 export default function ManagerDashboard() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('checkin');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'checkin';
   const [showPasswordModal, setShowPasswordModal] = useState(user?.first_login === 1);
   const [dashboardData, setDashboardData] = useState(null);
   const [services, setServices] = useState([]);
@@ -44,7 +46,7 @@ export default function ManagerDashboard() {
   const [newMemberQr, setNewMemberQr] = useState(null);
 
   const handleTabChange = (tab) => {
-    setActiveTab(tab);
+    setSearchParams({ tab });
     setSearchQuery('');
     setSearchResults([]);
     setMemberLookup(null);

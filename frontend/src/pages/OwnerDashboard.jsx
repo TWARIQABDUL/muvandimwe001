@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { useOwnerAnalytics } from '../hooks/useOwnerAnalytics.js';
 import { api } from '../store/authStore.js';
@@ -17,7 +18,8 @@ import OwnerCards from '../components/owner/OwnerCards.jsx';
 
 export default function OwnerDashboard() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('analytics');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'analytics';
   const [timeframe, setTimeframe] = useState('today');
   const [showPasswordModal, setShowPasswordModal] = useState(user?.first_login === 1);
   const { data, loading, error, setError } = useOwnerAnalytics(timeframe);
@@ -134,7 +136,7 @@ export default function OwnerDashboard() {
       {showPasswordModal && (
         <PasswordChangeModal onClose={() => setShowPasswordModal(false)} />
       )}
-      <DashboardLayout tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab}>
+      <DashboardLayout tabs={tabs} activeTab={activeTab} setActiveTab={(tab) => setSearchParams({ tab })}>
         {message && <div className="alert alert-success" style={{ marginBottom: '20px' }}>{message}</div>}
         {error && <div className="alert alert-error" style={{ marginBottom: '20px' }}>{error}</div>}
 
