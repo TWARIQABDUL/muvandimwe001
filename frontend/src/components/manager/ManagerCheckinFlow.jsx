@@ -135,7 +135,7 @@ export default function ManagerCheckinFlow({
                     <Camera size={24} /> Open Scanner
                   </button>
                   
-                  <div style={{ textAlign: 'center', marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
+                  {/* <div style={{ textAlign: 'center', marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
                     <p style={{ fontSize: '13px', color: '#94a3b8' }}>Or enter ID manually if camera is unavailable:</p>
                     <form onSubmit={(e) => handleLookupQr(e)} style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '10px' }}>
                       <input
@@ -149,7 +149,7 @@ export default function ManagerCheckinFlow({
                         Lookup
                       </button>
                     </form>
-                  </div>
+                  </div> */}
                 </div>
               )}
 

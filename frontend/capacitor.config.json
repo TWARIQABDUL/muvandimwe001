@@ -1,6 +1,6 @@
 {
   "appId": "com.kazi.gymsaas",
-  "appName": "gym-saas-frontend",
+  "appName": "My Gym",
   "webDir": "dist",
   "plugins": {
     "SplashScreen": {
