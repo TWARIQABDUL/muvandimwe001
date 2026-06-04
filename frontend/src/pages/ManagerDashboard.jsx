@@ -400,6 +400,7 @@ export default function ManagerDashboard() {
                 handleSearchName={handleSearchName}
                 handleSelectSearchResult={handleSelectSearchResult}
                 handleCheckinMember={handleCheckinMember}
+                handleRenewal={handleRenewal}
                 qrCode={qrCode}
                 setQrCode={setQrCode}
                 searchQuery={searchQuery}
