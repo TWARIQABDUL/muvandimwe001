@@ -6,7 +6,7 @@ export function generateToken(user) {
   return jwt.sign(
     {
       id: user.id,
-      email: user.email,
+      username: user.username,
       gym_id: user.gym_id,
       role: user.role
     },

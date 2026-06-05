@@ -52,17 +52,17 @@ async function seed() {
         const ownerId = uuidv4();
 
         await client.query(
-            `INSERT INTO users (id, gym_id, email, password_hash, role, first_login)
+            `INSERT INTO users (id, gym_id, username, password_hash, role, first_login)
              VALUES ($1, $2, $3, $4, $5, $6)`,
-            [managerId, gymId, managerEmail, hashedPassword, 'manager', 1]
+            [managerId, gymId, 'manager', hashedPassword, 'manager', 1]
         );
 
         await client.query(
-            `INSERT INTO users (id, gym_id, email, password_hash, role, first_login)
+            `INSERT INTO users (id, gym_id, username, password_hash, role, first_login)
              VALUES ($1, $2, $3, $4, $5, $6)`,
-            [ownerId, gymId, ownerEmail, hashedPassword, 'owner', 1]
+            [ownerId, gymId, 'owner', hashedPassword, 'owner', 1]
         );
-        console.log(`✓ Created users: ${managerEmail}, ${ownerEmail}`);
+        console.log(`✓ Created users: manager, owner`);
 
         // 3. Create Services
         const services = [

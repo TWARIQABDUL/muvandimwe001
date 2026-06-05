@@ -5,7 +5,7 @@ import { Table } from 'antd';
 export default function OwnerStaff({ setError, setMessage }) {
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newStaffEmail, setNewStaffEmail] = useState('');
+  const [newStaffUsername, setNewStaffUsername] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [temporaryPassword, setTemporaryPassword] = useState(null);
 
@@ -27,18 +27,18 @@ export default function OwnerStaff({ setError, setMessage }) {
 
   const handleRegisterStaff = async (e) => {
     e.preventDefault();
-    if (!newStaffEmail.trim()) {
-      setError?.('Email is required');
+    if (!newStaffUsername.trim()) {
+      setError?.('Username is required');
       return;
     }
 
     try {
       setActionLoading(true);
       setTemporaryPassword(null);
-      const response = await api.post('/users', { email: newStaffEmail.trim() });
+      const response = await api.post('/users', { username: newStaffUsername.trim() });
       setMessage?.('Employee registered successfully!');
       setTemporaryPassword(response.data.temporaryPassword);
-      setNewStaffEmail('');
+      setNewStaffUsername('');
       fetchStaff();
     } catch (err) {
       setError?.(err.response?.data?.error || 'Failed to register employee');
@@ -80,10 +80,10 @@ export default function OwnerStaff({ setError, setMessage }) {
         <h3 style={{ marginBottom: '15px' }}>Register New Employee</h3>
         <form onSubmit={handleRegisterStaff} style={{ display: 'flex', gap: '10px' }}>
           <input
-            type="email"
-            value={newStaffEmail}
-            onChange={(e) => setNewStaffEmail(e.target.value)}
-            placeholder="employee@example.com"
+            type="text"
+            value={newStaffUsername}
+            onChange={(e) => setNewStaffUsername(e.target.value)}
+            placeholder="e.g. frontdesk_1"
             className="input"
             style={{ flex: 1 }}
             disabled={actionLoading}
@@ -108,7 +108,7 @@ export default function OwnerStaff({ setError, setMessage }) {
       <div style={{ maxHeight: '600px' }}>
         <Table 
           columns={[
-            { title: 'Email', dataIndex: 'email', key: 'email', fixed: 'left', width: 200 },
+            { title: 'Username', dataIndex: 'username', key: 'username', fixed: 'left', width: 200 },
             { title: 'Role', dataIndex: 'role', key: 'role', width: 120, render: text => <span className="badge">{text}</span> },
             { title: 'Date Added', dataIndex: 'created_at', key: 'created_at', width: 150, render: text => new Date(text).toLocaleDateString() },
             { title: 'Actions', key: 'actions', width: 150, render: (_, user) => (

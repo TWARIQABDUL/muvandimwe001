@@ -18,15 +18,15 @@ const db = {
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password required' });
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password required' });
     }
 
     const user = await db.get(
-      `SELECT * FROM users WHERE email = ?`,
-      [email]
+      `SELECT * FROM users WHERE username = ?`,
+      [username]
     );
 
     if (!user) {
@@ -44,7 +44,7 @@ router.post('/login', async (req, res) => {
       token,
       user: {
         id: user.id,
-        email: user.email,
+        username: user.username,
         role: user.role,
         gym_id: user.gym_id,
         first_login: user.first_login

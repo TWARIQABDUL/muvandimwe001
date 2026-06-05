@@ -17,7 +17,7 @@ router.get('/', authMiddleware, roleMiddleware(['owner']), gymIsolationMiddlewar
   try {
     const gymId = req.user.gym_id;
     const users = await db.all(
-      `SELECT id, email, role, created_at FROM users WHERE gym_id = ? ORDER BY created_at DESC`,
+      `SELECT id, username, role, created_at FROM users WHERE gym_id = ? ORDER BY created_at DESC`,
       [gymId]
     );
     res.json({ users });
@@ -30,17 +30,17 @@ router.get('/', authMiddleware, roleMiddleware(['owner']), gymIsolationMiddlewar
 // POST /api/users (Owners only)
 router.post('/', authMiddleware, roleMiddleware(['owner']), gymIsolationMiddleware, async (req, res) => {
   try {
-    const { email } = req.body;
+    const { username } = req.body;
     const gymId = req.user.gym_id;
 
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
+    if (!username) {
+      return res.status(400).json({ error: 'Username is required' });
     }
 
     // Check if user already exists
-    const existingUser = await db.get(`SELECT id FROM users WHERE email = ?`, [email]);
+    const existingUser = await db.get(`SELECT id FROM users WHERE username = ?`, [username]);
     if (existingUser) {
-      return res.status(400).json({ error: 'A user with this email already exists' });
+      return res.status(400).json({ error: 'A user with this username already exists' });
     }
 
     // Generate random password
@@ -49,13 +49,13 @@ router.post('/', authMiddleware, roleMiddleware(['owner']), gymIsolationMiddlewa
     const userId = uuidv4();
 
     await db.run(
-      `INSERT INTO users (id, gym_id, email, password_hash, role, first_login) VALUES (?, ?, ?, ?, ?, 1)`,
-      [userId, gymId, email, passwordHash, 'manager']
+      `INSERT INTO users (id, gym_id, username, password_hash, role, first_login) VALUES (?, ?, ?, ?, ?, 1)`,
+      [userId, gymId, username, passwordHash, 'manager']
     );
 
     res.status(201).json({ 
       message: 'Employee registered successfully', 
-      user: { id: userId, email, role: 'manager' },
+      user: { id: userId, username, role: 'manager' },
       temporaryPassword // Only return it once here so the owner can give it to the employee
     });
   } catch (err) {

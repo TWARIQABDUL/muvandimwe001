@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS gyms (
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   gym_id TEXT NOT NULL,
-  email TEXT NOT NULL UNIQUE,
+  username TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('manager', 'owner')),
   first_login INTEGER DEFAULT 1,

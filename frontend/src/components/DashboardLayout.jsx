@@ -46,7 +46,7 @@ export default function DashboardLayout({ tabs, activeTab, setActiveTab, childre
           </div>
           <div className="user-profile">
             <div className="user-details">
-              <div className="user-email">{user?.email || 'User'}</div>
+              <div className="user-email">{user?.username || 'User'}</div>
               <div className="user-role">{user?.role || 'Guest'}</div>
             </div>
             <div style={{
@@ -60,7 +60,7 @@ export default function DashboardLayout({ tabs, activeTab, setActiveTab, childre
               justifyContent: 'center',
               fontWeight: '600'
             }}>
-              {user?.email?.charAt(0).toUpperCase() || 'U'}
+              {user?.username?.charAt(0).toUpperCase() || 'U'}
             </div>
           </div>
         </header>

@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth.js';
 import '../styles/login.css';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,7 +30,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const user = await login(email, password);
+      const user = await login(username, password);
       // User state will be set by useEffect redirect
     } catch (err) {
       setError(err.message);
@@ -49,12 +49,12 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
-            <label>Email</label>
+            <label>Username</label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
               required
               disabled={loading}
             />
