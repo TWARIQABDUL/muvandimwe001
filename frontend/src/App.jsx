@@ -37,7 +37,8 @@ function BackButtonHandler() {
 
     const handleBackButton = ({ canGoBack }) => {
       // If at root pages, let the OS handle back (exit app)
-      if (location.pathname === '/manager' || location.pathname === '/owner' || location.pathname === '/login') {
+      const rootPaths = ['/manager', '/manager/checkin', '/owner', '/owner/analytics', '/login'];
+      if (rootPaths.includes(location.pathname) || location.pathname === '/') {
         CapacitorApp.exitApp();
       } else if (canGoBack) {
         window.history.back();
@@ -70,7 +71,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         
         <Route
-          path="/manager"
+          path="/manager/*"
           element={
             <ProtectedRoute requiredRole="manager">
               <ManagerDashboard />
@@ -79,7 +80,7 @@ export default function App() {
         />
 
         <Route
-          path="/owner"
+          path="/owner/*"
           element={
             <ProtectedRoute requiredRole="owner">
               <OwnerDashboard />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { api } from '../store/authStore.js';
 import PasswordChangeModal from '../components/PasswordChangeModal.jsx';
@@ -12,8 +12,9 @@ import RegisterNewMember from '../components/manager/RegisterNewMember.jsx';
 
 export default function ManagerDashboard() {
   const { user } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'checkin';
+  const navigate = useNavigate();
+  const location = useLocation();
+  const activeTab = location.pathname.split('/')[2] || 'checkin';
   const [showPasswordModal, setShowPasswordModal] = useState(user?.first_login === 1);
   const [dashboardData, setDashboardData] = useState(null);
   const [services, setServices] = useState([]);
@@ -46,7 +47,7 @@ export default function ManagerDashboard() {
   const [newMemberQr, setNewMemberQr] = useState(null);
 
   const handleTabChange = (tab) => {
-    setSearchParams({ tab });
+    navigate(`/manager/${tab}`);
     setSearchQuery('');
     setSearchResults([]);
     setMemberLookup(null);
@@ -400,83 +401,85 @@ export default function ManagerDashboard() {
             <p style={{ marginTop: '10px' }}>Loading data...</p>
           </div>
         ) : (
-          <>
-            {activeTab === 'checkin' && (
-              <ManagerCheckinFlow
-                services={services}
-                dashboardData={dashboardData}
-                handleCheckinWalkIn={handleCheckinWalkIn}
-                handleLookupQr={handleLookupQr}
-                handleSearchName={handleSearchName}
-                handleSelectSearchResult={handleSelectSearchResult}
-                handleCheckinMember={handleCheckinMember}
-                handleRenewal={handleRenewal}
-                qrCode={qrCode}
-                setQrCode={setQrCode}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                searchResults={searchResults}
-                memberLookup={memberLookup}
-                memberService={memberService}
-                setMemberService={setMemberService}
-                walkInName={walkInName}
-                setWalkInName={setWalkInName}
-                walkInServices={walkInServices}
-                setWalkInServices={setWalkInServices}
-                walkInAmount={walkInAmount}
-                setWalkInAmount={setWalkInAmount}
-                paymentMethod={paymentMethod}
-                setPaymentMethod={setPaymentMethod}
-                loading={loading}
-              />
-            )}
+            <Routes>
+              <Route path="/" element={<Navigate to="checkin" replace />} />
+              <Route path="checkin" element={
+                <ManagerCheckinFlow
+                  services={services}
+                  dashboardData={dashboardData}
+                  handleCheckinWalkIn={handleCheckinWalkIn}
+                  handleLookupQr={handleLookupQr}
+                  handleSearchName={handleSearchName}
+                  handleSelectSearchResult={handleSelectSearchResult}
+                  handleCheckinMember={handleCheckinMember}
+                  qrCode={qrCode}
+                  setQrCode={setQrCode}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  searchResults={searchResults}
+                  memberLookup={memberLookup}
+                  memberService={memberService}
+                  setMemberService={setMemberService}
+                  walkInName={walkInName}
+                  setWalkInName={setWalkInName}
+                  walkInServices={walkInServices}
+                  setWalkInServices={setWalkInServices}
+                  walkInAmount={walkInAmount}
+                  setWalkInAmount={setWalkInAmount}
+                  paymentMethod={paymentMethod}
+                  setPaymentMethod={setPaymentMethod}
+                  loading={loading}
+                />
+              } />
 
-            {activeTab === 'register' && (
-              <RegisterNewMember
-                services={services}
-                employers={employers}
-                newMember={newMember}
-                setNewMember={setNewMember}
-                selectedServices={selectedServices}
-                setSelectedServices={setSelectedServices}
-                isCard={isCard}
-                setIsCard={setIsCard}
-                taps={taps}
-                setTaps={setTaps}
-                couponCode={couponCode}
-                setCouponCode={setCouponCode}
-                handleValidateCoupon={handleValidateCoupon}
-                couponMessage={couponMessage}
-                pricing={pricing}
-                handleCreateMember={handleCreateMember}
-                paymentMethod={paymentMethod}
-                setPaymentMethod={setPaymentMethod}
-                loading={loading}
-                newMemberQr={newMemberQr}
-              />
-            )}
+              <Route path="register" element={
+                <RegisterNewMember
+                  services={services}
+                  employers={employers}
+                  newMember={newMember}
+                  setNewMember={setNewMember}
+                  selectedServices={selectedServices}
+                  setSelectedServices={setSelectedServices}
+                  isCard={isCard}
+                  setIsCard={setIsCard}
+                  taps={taps}
+                  setTaps={setTaps}
+                  couponCode={couponCode}
+                  setCouponCode={setCouponCode}
+                  handleValidateCoupon={handleValidateCoupon}
+                  couponMessage={couponMessage}
+                  pricing={pricing}
+                  handleCreateMember={handleCreateMember}
+                  paymentMethod={paymentMethod}
+                  setPaymentMethod={setPaymentMethod}
+                  loading={loading}
+                  newMemberQr={newMemberQr}
+                />
+              } />
 
-            {activeTab === 'renewals' && (
-              <RenewMembership
-                dashboardData={dashboardData}
-                handleRenewal={handleRenewal}
-                handleSearchName={handleSearchName}
-                handleLookupQr={handleLookupQr}
-                handleSelectSearchResult={handleSelectSearchResult}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                searchResults={searchResults}
-                memberLookup={memberLookup}
-                paymentMethod={paymentMethod}
-                setPaymentMethod={setPaymentMethod}
-                loading={loading}
-              />
-            )}
+              <Route path="renewals" element={
+                <RenewMembership
+                  dashboardData={dashboardData}
+                  handleRenewal={handleRenewal}
+                  handleSearchName={handleSearchName}
+                  handleLookupQr={handleLookupQr}
+                  handleSelectSearchResult={handleSelectSearchResult}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  searchResults={searchResults}
+                  memberLookup={memberLookup}
+                  paymentMethod={paymentMethod}
+                  setPaymentMethod={setPaymentMethod}
+                  loading={loading}
+                />
+              } />
 
-            {activeTab === 'activity' && (
-              <SubscriberActivity dashboardData={dashboardData} />
-            )}
-          </>
+              <Route path="activity" element={
+                <SubscriberActivity dashboardData={dashboardData} />
+              } />
+              
+              <Route path="*" element={<Navigate to="checkin" replace />} />
+            </Routes>
         )}
       </DashboardLayout>
     </>

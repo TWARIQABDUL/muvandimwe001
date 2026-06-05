@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { useOwnerAnalytics } from '../hooks/useOwnerAnalytics.js';
 import { api } from '../store/authStore.js';
@@ -18,8 +18,9 @@ import OwnerCards from '../components/owner/OwnerCards.jsx';
 
 export default function OwnerDashboard() {
   const { user } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'analytics';
+  const navigate = useNavigate();
+  const location = useLocation();
+  const activeTab = location.pathname.split('/')[2] || 'analytics';
   const [timeframe, setTimeframe] = useState('today');
   const [showPasswordModal, setShowPasswordModal] = useState(user?.first_login === 1);
   const { data, loading, error, setError } = useOwnerAnalytics(timeframe);
@@ -136,7 +137,7 @@ export default function OwnerDashboard() {
       {showPasswordModal && (
         <PasswordChangeModal onClose={() => setShowPasswordModal(false)} />
       )}
-      <DashboardLayout tabs={tabs} activeTab={activeTab} setActiveTab={(tab) => setSearchParams({ tab })}>
+      <DashboardLayout tabs={tabs} activeTab={activeTab} setActiveTab={(tab) => navigate(`/owner/${tab}`)}>
         {message && <div className="alert alert-success" style={{ marginBottom: '20px' }}>{message}</div>}
         {error && <div className="alert alert-error" style={{ marginBottom: '20px' }}>{error}</div>}
 
@@ -146,29 +147,31 @@ export default function OwnerDashboard() {
             <p style={{ marginTop: '10px' }}>Analyzing business metrics...</p>
           </div>
         ) : (
-          <>
-            {activeTab === 'analytics' && (
+          <Routes>
+            <Route path="/" element={<Navigate to="analytics" replace />} />
+            
+            <Route path="analytics" element={
               <OwnerAnalytics 
                 data={data} 
                 timeframe={timeframe} 
                 setTimeframe={setTimeframe} 
                 trendData={data?.trend?.data || []} 
               />
-            )}
+            } />
             
-            {activeTab === 'checkins' && (
+            <Route path="checkins" element={
               <OwnerCheckins data={data} />
-            )}
+            } />
             
-            {activeTab === 'members' && (
+            <Route path="members" element={
               <OwnerMembers activeMembers={data?.activeMembers} />
-            )}
+            } />
             
-            {activeTab === 'packages' && (
+            <Route path="packages" element={
               <OwnerPlans services={services} />
-            )}
+            } />
             
-            {activeTab === 'services' && (
+            <Route path="services" element={
               <OwnerServices 
                 services={services}
                 newService={newService}
@@ -178,24 +181,26 @@ export default function OwnerDashboard() {
                 handleDeleteService={handleDeleteService}
                 actionLoading={actionLoading}
               />
-            )}
+            } />
 
-            {activeTab === 'coupons' && (
+            <Route path="coupons" element={
               <OwnerCoupons setError={setError} setMessage={setMessage} />
-            )}
+            } />
             
-            {activeTab === 'staff' && (
+            <Route path="staff" element={
               <OwnerStaff setError={setError} setMessage={setMessage} />
-            )}
+            } />
             
-            { activeTab === 'partners' && (
+            <Route path="partners" element={
               <OwnerPartners setError={setError} setMessage={setMessage} />
-            )}
+            } />
 
-            { activeTab === 'cards' && (
+            <Route path="cards" element={
               <OwnerCards setError={setError} setMessage={setMessage} />
-            )}
-          </>
+            } />
+            
+            <Route path="*" element={<Navigate to="analytics" replace />} />
+          </Routes>
         )}
       </DashboardLayout>
     </>
