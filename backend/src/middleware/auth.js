@@ -1,6 +1,7 @@
 import { verifyToken } from '../utils/jwt.js';
+import { getDatabase } from '../db/init.js';
 
-export function authMiddleware(req, res, next) {
+export async function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -12,6 +13,19 @@ export function authMiddleware(req, res, next) {
 
   if (!decoded) {
     return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+
+  try {
+    const db = getDatabase();
+    // Verify that the user actually still exists in the database
+    const userExists = await db.get('SELECT id FROM users WHERE id = ?', [decoded.id]);
+    
+    if (!userExists) {
+      return res.status(401).json({ error: 'User no longer exists. Please log in again.' });
+    }
+  } catch (err) {
+    console.error('Auth middleware DB check failed:', err.message);
+    return res.status(500).json({ error: 'Authentication service error' });
   }
 
   // Attach user to request
