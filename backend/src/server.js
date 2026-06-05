@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { initializeDatabase } from './db/init.js';
+import { initializeDatabase, closeDatabase } from './db/init.js';
 
 console.log('🚀 Starting Gym Management SaaS Backend...');
 
@@ -98,6 +98,16 @@ if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
     console.log('   GET /api/members/active (owner only)');
   });
 }
+
+// Graceful shutdown
+const shutdown = async () => {
+  console.log('Shutting down gracefully...');
+  await closeDatabase();
+  process.exit(0);
+};
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
 // Export for serverless
 export default app;

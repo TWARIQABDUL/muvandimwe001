@@ -30,7 +30,9 @@ export async function initializeDatabase() {
     
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: isProd ? { rejectUnauthorized: false } : false
+      ssl: isProd ? { rejectUnauthorized: false } : false,
+      max: isProd ? 1 : 3, // Limit connections to prevent exhausting Aiven slots
+      idleTimeoutMillis: 10000, // Close idle connections after 10 seconds
     });
 
     // Test connection
