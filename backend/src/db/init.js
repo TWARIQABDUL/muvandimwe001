@@ -24,6 +24,10 @@ function convertSql(sql) {
 }
 
 export async function initializeDatabase() {
+  if (pool) {
+    console.log('✓ Using existing database pool');
+    return pool;
+  }
   try {
     console.log('Connecting to:', process.env.DATABASE_URL);
     const isProd = process.env.NODE_ENV === 'production' || process.env.VERCEL;
