@@ -13,6 +13,7 @@ import OwnerDashboard from './pages/OwnerDashboard.jsx';
 
 // Styles
 import './styles/app.css';
+import './styles/dashboard.css';
 
 function ProtectedRoute({ children, requiredRole = null }) {
   const { isAuthenticated, user } = useAuth();
