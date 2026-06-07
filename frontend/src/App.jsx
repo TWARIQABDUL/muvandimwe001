@@ -1,7 +1,10 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
+import { Modal, Typography } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import { useAuth } from './hooks/useAuth.js';
+import { useAppUpdate } from './hooks/useAppUpdate.js';
 
 // Pages
 import Login from './pages/Login.jsx';
@@ -59,6 +62,7 @@ function BackButtonHandler() {
 
 export default function App() {
   const { init } = useAuth();
+  const { updateAvailable, updateInfo, downloadUpdate, ignoreUpdate } = useAppUpdate();
 
   useEffect(() => {
     init();
@@ -90,6 +94,38 @@ export default function App() {
 
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
+
+      {/* OTA / APK Updater Modal */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <DownloadOutlined style={{ color: '#1890ff' }} />
+            <span>Update Available!</span>
+          </div>
+        }
+        open={updateAvailable}
+        onOk={downloadUpdate}
+        onCancel={ignoreUpdate}
+        okText="Download Update"
+        cancelText="Remind me later"
+        centered
+        maskClosable={false}
+      >
+        <Typography.Paragraph>
+          A new version of the app (v{updateInfo?.version}) is available. 
+        </Typography.Paragraph>
+        {updateInfo?.releaseNotes && (
+          <div style={{ background: '#f5f5f5', padding: '12px', borderRadius: '6px', marginBottom: '16px' }}>
+            <Typography.Text type="secondary" strong>What's new:</Typography.Text>
+            <br />
+            <Typography.Text>{updateInfo.releaseNotes}</Typography.Text>
+          </div>
+        )}
+        <Typography.Paragraph type="secondary">
+          Clicking download will open your browser to save the update file (.apk). Once downloaded, simply tap the file to install the latest version!
+        </Typography.Paragraph>
+      </Modal>
+
     </Router>
   );
 }
