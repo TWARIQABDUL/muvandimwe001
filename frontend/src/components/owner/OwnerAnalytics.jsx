@@ -224,7 +224,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
             {['today', 'week', 'month', 'year'].map(tf => (
               <button
                 key={tf}
-                className={`btn-timeframe ${timeframe === tf ? 'btn-primary' : 'btn-secondary'}`}
+                className={`btn-timeframe ${timeframe === tf ? 'active' : ''}`}
                 onClick={() => setTimeframe(tf)}
               >
                 {tf.charAt(0).toUpperCase() + tf.slice(1)}
