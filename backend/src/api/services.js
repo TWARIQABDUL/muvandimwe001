@@ -14,13 +14,13 @@ router.get(
   gymIsolationMiddleware,
   async (req, res) => {
     try {
-      const { gym_id } = req.user;
+      const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
       const services = await db.all(
         `SELECT id, name, price_daily, price_monthly, allow_monthly
          FROM services
-         WHERE gym_id = ?
+         WHERE (gym_id = ? OR ? = 'all')
          ORDER BY name ASC`,
-        [gym_id]
+        [gym_id, gym_id]
       );
       res.json({ services });
     } catch (err) {

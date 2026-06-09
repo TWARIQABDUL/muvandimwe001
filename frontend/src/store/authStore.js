@@ -5,12 +5,18 @@ const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'https://muvandimwe001.vercel.app/api'
 });
 
-// Interceptor to attach token
+// Interceptor to attach token and selected gym
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  const state = useAuthStore.getState();
+  if (state.selectedGymId && state.user?.role === 'owner') {
+    config.headers['x-gym-id'] = state.selectedGymId;
+  }
+  
   return config;
 });
 
@@ -37,6 +43,9 @@ export const useAuthStore = create((set) => ({
   isAuthenticated: false,
   loading: false,
   error: null,
+  selectedGymId: 'all',
+  
+  setSelectedGymId: (gymId) => set({ selectedGymId: gymId }),
 
   // Load user from localStorage on init
   init: () => {

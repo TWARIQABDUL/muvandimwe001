@@ -10,11 +10,11 @@ const db = getDatabase();
 // Helper to retrieve payments for a period
 async function getPaymentsForPeriod(gymId, startDate, endDate) {
   const query = startDate === endDate
-    ? `SELECT * FROM payments WHERE gym_id = ? AND DATE(timestamp) = ?`
-    : `SELECT * FROM payments WHERE gym_id = ? AND DATE(timestamp) BETWEEN ? AND ?`;
+    ? `SELECT * FROM payments WHERE (gym_id = ? OR ? = 'all') AND DATE(timestamp) = ?`
+    : `SELECT * FROM payments WHERE (gym_id = ? OR ? = 'all') AND DATE(timestamp) BETWEEN ? AND ?`;
   const params = startDate === endDate
-    ? [gymId, startDate]
-    : [gymId, startDate, endDate];
+    ? [gymId, gymId, startDate]
+    : [gymId, gymId, startDate, endDate];
   return await db.all(query, params);
 }
 
@@ -120,7 +120,7 @@ router.get(
   roleMiddleware(['manager', 'owner']),
   async (req, res) => {
     try {
-      const { gym_id } = req.user;
+      const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
       const isOwner = req.user.role === 'owner';
 
       if (!isOwner) {
@@ -166,16 +166,16 @@ router.get(
       // Get active subscriptions count
       const activeSubs = await db.get(
         `SELECT COUNT(*) as count FROM member_subscriptions 
-         WHERE gym_id = ? AND status = 'active'`,
-        [gym_id]
+         WHERE (gym_id = ? OR ? = 'all') AND status = 'active'`,
+        [gym_id, gym_id]
       );
 
       // Calculate MRR
       const subsData = await db.all(
         `SELECT s.monthly_fee FROM member_subscriptions ms
          JOIN subscriptions s ON ms.subscription_id = s.id
-         WHERE ms.gym_id = ? AND ms.status = 'active'`,
-        [gym_id]
+         WHERE (ms.gym_id = ? OR ? = 'all') AND ms.status = 'active'`,
+        [gym_id, gym_id]
       );
 
       const estimatedMRR = subsData.reduce((sum, s) => sum + Number(s.monthly_fee), 0);
@@ -214,7 +214,7 @@ router.get(
 // Manager's simplified today dashboard
 async function getManagerTodayDashboard(req, res) {
   try {
-    const { gym_id } = req.user;
+    const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
     const today = new Date().toISOString().split('T')[0];
 
     // Get check-ins and payments for today
@@ -290,7 +290,7 @@ router.get(
   roleMiddleware(['owner']),
   async (req, res) => {
     try {
-      const { gym_id } = req.user;
+      const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
       const dateRange = getDateRange('week');
 
       const checkins = await getCheckinsForPeriod(gym_id, dateRange.start, dateRange.end);
@@ -328,15 +328,15 @@ router.get(
 
       const activeSubs = await db.get(
         `SELECT COUNT(*) as count FROM member_subscriptions 
-         WHERE gym_id = ? AND status = 'active'`,
-        [gym_id]
+         WHERE (gym_id = ? OR ? = 'all') AND status = 'active'`,
+        [gym_id, gym_id]
       );
 
       const subsData = await db.all(
         `SELECT s.monthly_fee FROM member_subscriptions ms
          JOIN subscriptions s ON ms.subscription_id = s.id
-         WHERE ms.gym_id = ? AND ms.status = 'active'`,
-        [gym_id]
+         WHERE (ms.gym_id = ? OR ? = 'all') AND ms.status = 'active'`,
+        [gym_id, gym_id]
       );
 
       const estimatedMRR = subsData.reduce((sum, s) => sum + Number(s.monthly_fee), 0);
@@ -377,7 +377,7 @@ router.get(
   roleMiddleware(['owner']),
   async (req, res) => {
     try {
-      const { gym_id } = req.user;
+      const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
       const dateRange = getDateRange('month');
 
       const checkins = await getCheckinsForPeriod(gym_id, dateRange.start, dateRange.end);
@@ -415,15 +415,15 @@ router.get(
 
       const activeSubs = await db.get(
         `SELECT COUNT(*) as count FROM member_subscriptions 
-         WHERE gym_id = ? AND status = 'active'`,
-        [gym_id]
+         WHERE (gym_id = ? OR ? = 'all') AND status = 'active'`,
+        [gym_id, gym_id]
       );
 
       const subsData = await db.all(
         `SELECT s.monthly_fee FROM member_subscriptions ms
          JOIN subscriptions s ON ms.subscription_id = s.id
-         WHERE ms.gym_id = ? AND ms.status = 'active'`,
-        [gym_id]
+         WHERE (ms.gym_id = ? OR ? = 'all') AND ms.status = 'active'`,
+        [gym_id, gym_id]
       );
 
       const estimatedMRR = subsData.reduce((sum, s) => sum + Number(s.monthly_fee), 0);
@@ -464,7 +464,7 @@ router.get(
   roleMiddleware(['owner']),
   async (req, res) => {
     try {
-      const { gym_id } = req.user;
+      const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
       const dateRange = getDateRange('year');
 
       const checkins = await getCheckinsForPeriod(gym_id, dateRange.start, dateRange.end);
@@ -502,15 +502,15 @@ router.get(
 
       const activeSubs = await db.get(
         `SELECT COUNT(*) as count FROM member_subscriptions 
-         WHERE gym_id = ? AND status = 'active'`,
-        [gym_id]
+         WHERE (gym_id = ? OR ? = 'all') AND status = 'active'`,
+        [gym_id, gym_id]
       );
 
       const subsData = await db.all(
         `SELECT s.monthly_fee FROM member_subscriptions ms
          JOIN subscriptions s ON ms.subscription_id = s.id
-         WHERE ms.gym_id = ? AND ms.status = 'active'`,
-        [gym_id]
+         WHERE (ms.gym_id = ? OR ? = 'all') AND ms.status = 'active'`,
+        [gym_id, gym_id]
       );
 
       const estimatedMRR = subsData.reduce((sum, s) => sum + Number(s.monthly_fee), 0);
@@ -553,9 +553,9 @@ async function getSubscriberReports(gymId, startDate, endDate) {
        FROM member_subscriptions ms
        JOIN members m ON ms.member_id = m.id
        JOIN subscriptions s ON ms.subscription_id = s.id
-       WHERE ms.gym_id = ? AND ms.start_date BETWEEN ? AND ?
+       WHERE (ms.gym_id = ? OR ? = 'all') AND ms.start_date BETWEEN ? AND ?
        ORDER BY ms.start_date DESC`,
-      [gymId, startDate, endDate]
+      [gymId, gymId, startDate, endDate]
     );
 
     // 2. Old checked in subscribers
@@ -565,11 +565,11 @@ async function getSubscriberReports(gymId, startDate, endDate) {
        JOIN members m ON c.member_id = m.id
        JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
        JOIN subscriptions s ON ms.subscription_id = s.id
-       WHERE c.gym_id = ? AND c.type = 'subscription'
+       WHERE (c.gym_id = ? OR ? = 'all') AND c.type = 'subscription'
          AND DATE(c.timestamp) BETWEEN ? AND ?
          AND ms.start_date < ?
        ORDER BY c.timestamp DESC`,
-      [gymId, startDate, endDate, startDate]
+      [gymId, gymId, startDate, endDate, startDate]
     );
 
     return {
@@ -589,7 +589,7 @@ router.get(
   roleMiddleware(['manager', 'owner']),
   async (req, res) => {
     try {
-      const { gym_id } = req.user;
+      const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
       const { date } = req.query;
 
       if (!date) {

@@ -13,7 +13,7 @@ router.get(
   gymIsolationMiddleware,
   async (req, res) => {
     try {
-      const { gym_id } = req.user;
+      const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
       const end = new Date();
       const start = new Date();
       start.setDate(end.getDate() - 7);
@@ -24,8 +24,8 @@ router.get(
       // Query payments for 7-day trend
       const payments = await db.all(
         `SELECT amount, timestamp FROM payments
-         WHERE gym_id = ? AND DATE(timestamp) BETWEEN ? AND ?`,
-        [gym_id, startStr, endStr]
+         WHERE (gym_id = ? OR ? = 'all') AND DATE(timestamp) BETWEEN ? AND ?`,
+        [gym_id, gym_id, startStr, endStr]
       );
 
       // Group by date and sum revenue
@@ -67,7 +67,7 @@ router.get(
   gymIsolationMiddleware,
   async (req, res) => {
     try {
-      const { gym_id } = req.user;
+      const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
       const { timeframe = 'today' } = req.query;
 
       let startDate, endDate;
@@ -97,8 +97,8 @@ router.get(
       // Query payments in timeframe
       const payments = await db.all(
         `SELECT * FROM payments
-         WHERE gym_id = ? AND DATE(timestamp) BETWEEN ? AND ?`,
-        [gym_id, startDate, endDate]
+         WHERE (gym_id = ? OR ? = 'all') AND DATE(timestamp) BETWEEN ? AND ?`,
+        [gym_id, gym_id, startDate, endDate]
       );
 
       // Calculate breakdown compatible with Recharts tables
@@ -154,7 +154,7 @@ router.get(
   gymIsolationMiddleware,
   async (req, res) => {
     try {
-      const { gym_id } = req.user;
+      const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
 
       // Get active members by tier
       const tierData = await db.all(
@@ -162,10 +162,10 @@ router.get(
          FROM member_subscriptions ms
          JOIN subscriptions s ON ms.subscription_id = s.id
          JOIN members m ON ms.member_id = m.id
-         WHERE ms.gym_id = ? AND ms.status = 'active'
+         WHERE (ms.gym_id = ? OR ? = 'all') AND ms.status = 'active'
          GROUP BY s.id
          ORDER BY s.monthly_fee DESC`,
-        [gym_id]
+        [gym_id, gym_id]
       );
 
       // Get all active members list
@@ -174,9 +174,9 @@ router.get(
          FROM member_subscriptions ms
          JOIN subscriptions s ON ms.subscription_id = s.id
          JOIN members m ON ms.member_id = m.id
-         WHERE ms.gym_id = ? AND ms.status = 'active'
+         WHERE (ms.gym_id = ? OR ? = 'all') AND ms.status = 'active'
          ORDER BY m.name ASC`,
-        [gym_id]
+        [gym_id, gym_id]
       );
 
       // Calculate totals

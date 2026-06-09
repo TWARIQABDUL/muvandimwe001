@@ -15,10 +15,10 @@ const db = {
 // GET /api/users (Owners only)
 router.get('/', authMiddleware, roleMiddleware(['owner']), gymIsolationMiddleware, async (req, res) => {
   try {
-    const gymId = req.user.gym_id;
+    const gymId = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
     const users = await db.all(
-      `SELECT id, username, role, created_at FROM users WHERE gym_id = ? ORDER BY created_at DESC`,
-      [gymId]
+      `SELECT id, username, role, created_at FROM users WHERE (gym_id = ? OR ? = 'all') ORDER BY created_at DESC`,
+      [gymId, gymId]
     );
     res.json({ users });
   } catch (err) {
@@ -31,7 +31,7 @@ router.get('/', authMiddleware, roleMiddleware(['owner']), gymIsolationMiddlewar
 router.post('/', authMiddleware, roleMiddleware(['owner']), gymIsolationMiddleware, async (req, res) => {
   try {
     const { username } = req.body;
-    const gymId = req.user.gym_id;
+    const gymId = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
 
     if (!username) {
       return res.status(400).json({ error: 'Username is required' });
@@ -68,7 +68,7 @@ router.post('/', authMiddleware, roleMiddleware(['owner']), gymIsolationMiddlewa
 router.delete('/:id', authMiddleware, roleMiddleware(['owner']), gymIsolationMiddleware, async (req, res) => {
   try {
     const userId = req.params.id;
-    const gymId = req.user.gym_id;
+    const gymId = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
 
     if (userId === req.user.id) {
         return res.status(400).json({ error: 'You cannot delete yourself' });

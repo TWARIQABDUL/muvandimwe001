@@ -15,7 +15,7 @@ router.post(
   async (req, res) => {
     try {
       const { member_id, member_name, type, service, amount, payment_method } = req.body;
-      const { gym_id } = req.user;
+      const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
 
       if (!type || !service) {
         return res.status(400).json({ error: 'Type and service required' });
@@ -130,15 +130,15 @@ router.get(
   roleMiddleware(['manager']),
   async (req, res) => {
     try {
-      const { gym_id } = req.user;
+      const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
       const today = new Date().toISOString().split('T')[0];
 
       const checkins = await db.all(
         `SELECT member_name, service, type, amount, timestamp
          FROM checkins
-         WHERE gym_id = ? AND DATE(timestamp) = ?
+         WHERE (gym_id = ? OR ? = 'all') AND DATE(timestamp) = ?
          ORDER BY timestamp DESC`,
-        [gym_id, today]
+        [gym_id, gym_id, today]
       );
 
       // Format timestamps
@@ -176,9 +176,9 @@ export async function getCheckinsForPeriod(gymId, startDate, endDate) {
     return await db.all(
       `SELECT member_name, service, type, amount, timestamp
        FROM checkins
-       WHERE gym_id = ? AND DATE(timestamp) BETWEEN ? AND ?
+       WHERE (gym_id = ? OR ? = 'all') AND DATE(timestamp) BETWEEN ? AND ?
        ORDER BY timestamp DESC`,
-      [gymId, startDate, endDate]
+      [gymId, gymId, startDate, endDate]
     );
   } catch (err) {
     console.error('Get analytics checkins error:', err.message);

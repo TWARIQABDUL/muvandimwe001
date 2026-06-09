@@ -12,13 +12,13 @@ router.use(authMiddleware, roleMiddleware(['owner']), gymIsolationMiddleware);
 // GET /api/plans - Get all plans (active and inactive)
 router.get('/', async (req, res) => {
   try {
-    const { gym_id } = req.user;
+    const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
     const plans = await db.all(
       `SELECT id, name, monthly_fee, included_services, active
        FROM subscriptions
-       WHERE gym_id = ?
+       WHERE (gym_id = ? OR ? = 'all')
        ORDER BY monthly_fee ASC`,
-      [gym_id]
+      [gym_id, gym_id]
     );
     res.json({ plans });
   } catch (err) {

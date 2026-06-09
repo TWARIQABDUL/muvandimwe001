@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { useOwnerAnalytics } from '../hooks/useOwnerAnalytics.js';
-import { api } from '../store/authStore.js';
+import { useAuthStore, api } from '../store/authStore.js';
 import PasswordChangeModal from '../components/PasswordChangeModal.jsx';
 import DashboardLayout from '../components/DashboardLayout.jsx';
 
@@ -15,9 +15,11 @@ import OwnerPlans from '../components/owner/OwnerPlans.jsx';
 import OwnerStaff from '../components/owner/OwnerStaff.jsx';
 import OwnerPartners from '../components/owner/OwnerPartners.jsx';
 import OwnerCards from '../components/owner/OwnerCards.jsx';
+import OwnerBranches from '../components/owner/OwnerBranches.jsx';
 
 export default function OwnerDashboard() {
   const { user } = useAuth();
+  const { selectedGymId } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const activeTab = location.pathname.split('/')[2] || 'analytics';
@@ -52,6 +54,11 @@ export default function OwnerDashboard() {
     e.preventDefault();
     setError(null);
     setMessage(null);
+
+    if (selectedGymId === 'all') {
+      setError('Please select a specific branch from the top menu to create a service.');
+      return;
+    }
 
     if (!newService.name.trim()) {
       setError('Service name is required');
@@ -129,8 +136,15 @@ export default function OwnerDashboard() {
     { id: 'coupons', label: 'Manage Coupons' },
     { id: 'staff', label: 'Manage Staff' },
     { id: 'partners', label: 'Manage Partners (B2B)' },
-    { id: 'cards', label: 'Manage Cards' }
+    { id: 'cards', label: 'Manage Cards' },
+    { id: 'branches', label: 'Manage Branches' }
   ];
+
+  const branchWarning = selectedGymId === 'all' ? (
+    <div className="alert alert-warning" style={{ marginBottom: '20px' }}>
+      <strong>Note:</strong> You are viewing data across all branches. To create new items, please select a specific branch from the top menu.
+    </div>
+  ) : null;
 
   return (
     <>
@@ -168,35 +182,57 @@ export default function OwnerDashboard() {
             } />
             
             <Route path="packages" element={
-              <OwnerPlans services={services} />
+              <>
+                {activeTab === 'packages' && branchWarning}
+                <OwnerPlans services={services} />
+              </>
             } />
             
             <Route path="services" element={
-              <OwnerServices 
-                services={services}
-                newService={newService}
-                setNewService={setNewService}
-                handleCreateService={handleCreateService}
-                handleUpdateService={handleUpdateService}
-                handleDeleteService={handleDeleteService}
-                actionLoading={actionLoading}
-              />
+              <>
+                {activeTab === 'services' && branchWarning}
+                <OwnerServices 
+                  services={services}
+                  newService={newService}
+                  setNewService={setNewService}
+                  handleCreateService={handleCreateService}
+                  handleUpdateService={handleUpdateService}
+                  handleDeleteService={handleDeleteService}
+                  actionLoading={actionLoading}
+                />
+              </>
             } />
 
             <Route path="coupons" element={
-              <OwnerCoupons setError={setError} setMessage={setMessage} />
+              <>
+                {activeTab === 'coupons' && branchWarning}
+                <OwnerCoupons setError={setError} setMessage={setMessage} />
+              </>
             } />
             
             <Route path="staff" element={
-              <OwnerStaff setError={setError} setMessage={setMessage} />
+              <>
+                {activeTab === 'staff' && branchWarning}
+                <OwnerStaff setError={setError} setMessage={setMessage} />
+              </>
             } />
             
             <Route path="partners" element={
-              <OwnerPartners setError={setError} setMessage={setMessage} />
+              <>
+                {activeTab === 'partners' && branchWarning}
+                <OwnerPartners setError={setError} setMessage={setMessage} />
+              </>
             } />
 
             <Route path="cards" element={
-              <OwnerCards setError={setError} setMessage={setMessage} />
+              <>
+                {activeTab === 'cards' && branchWarning}
+                <OwnerCards setError={setError} setMessage={setMessage} />
+              </>
+            } />
+
+            <Route path="branches" element={
+              <OwnerBranches />
             } />
             
             <Route path="*" element={<Navigate to="analytics" replace />} />

@@ -14,13 +14,13 @@ router.get(
   gymIsolationMiddleware,
   async (req, res) => {
     try {
-      const { gym_id } = req.user;
+      const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
       const coupons = await db.all(
         `SELECT id, code, discount_percent, active, created_at
          FROM coupons
-         WHERE gym_id = ?
+         WHERE (gym_id = ? OR ? = 'all')
          ORDER BY created_at DESC`,
-        [gym_id]
+        [gym_id, gym_id]
       );
       res.json({ coupons });
     } catch (err) {
