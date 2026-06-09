@@ -26,6 +26,7 @@ export default function OwnerDashboard() {
   const [timeframe, setTimeframe] = useState('today');
   const [showPasswordModal, setShowPasswordModal] = useState(user?.first_login === 1);
   const { data, loading, error, setError } = useOwnerAnalytics(timeframe);
+  const [gyms, setGyms] = useState([]);
   const [services, setServices] = useState([]);
   const [newService, setNewService] = useState({ name: '', price_daily: '', price_monthly: '', allow_monthly: true });
   const [message, setMessage] = useState(null);
@@ -39,7 +40,17 @@ export default function OwnerDashboard() {
 
   useEffect(() => {
     fetchServices();
+    fetchGyms();
   }, []);
+
+  const fetchGyms = async () => {
+    try {
+      const response = await api.get('/gyms');
+      setGyms(response.data.gyms || []);
+    } catch (err) {
+      console.warn('Failed to load branches:', err.message || err);
+    }
+  };
 
   const fetchServices = async () => {
     try {
@@ -152,6 +163,23 @@ export default function OwnerDashboard() {
         <PasswordChangeModal onClose={() => setShowPasswordModal(false)} />
       )}
       <DashboardLayout tabs={tabs} activeTab={activeTab} setActiveTab={(tab) => navigate(`/owner/${tab}`)}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px', padding: '16px', backgroundColor: 'var(--card-bg, white)', borderRadius: '12px', border: '1px solid var(--border-color, #e2e8f0)' }}>
+          <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary, #1e293b)' }}>Branch Context</h2>
+          <select 
+            value={selectedGymId} 
+            onChange={(e) => {
+              useAuthStore.getState().setSelectedGymId(e.target.value);
+              window.location.reload();
+            }}
+            style={{ padding: '10px 15px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'var(--bg-color, #f8fafc)', color: 'var(--text-primary, #1e293b)', fontSize: '1rem', width: '100%', maxWidth: '400px', cursor: 'pointer' }}
+          >
+            <option value="all">🏢 All Branches (Combined)</option>
+            {gyms.map(g => (
+              <option key={g.id} value={g.id}>{g.name}</option>
+            ))}
+          </select>
+        </div>
+
         {message && <div className="alert alert-success" style={{ marginBottom: '20px' }}>{message}</div>}
         {error && <div className="alert alert-error" style={{ marginBottom: '20px' }}>{error}</div>}
 
