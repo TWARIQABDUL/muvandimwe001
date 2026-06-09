@@ -128,6 +128,7 @@ router.get(
   '/today',
   authMiddleware,
   roleMiddleware(['manager']),
+  gymIsolationMiddleware,
   async (req, res) => {
     try {
       const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);

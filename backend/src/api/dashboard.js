@@ -118,6 +118,7 @@ router.get(
   '/today',
   authMiddleware,
   roleMiddleware(['manager', 'owner']),
+  gymIsolationMiddleware,
   async (req, res) => {
     try {
       const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
@@ -288,6 +289,7 @@ router.get(
   '/week',
   authMiddleware,
   roleMiddleware(['owner']),
+  gymIsolationMiddleware,
   async (req, res) => {
     try {
       const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
@@ -375,6 +377,7 @@ router.get(
   '/month',
   authMiddleware,
   roleMiddleware(['owner']),
+  gymIsolationMiddleware,
   async (req, res) => {
     try {
       const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
@@ -462,6 +465,7 @@ router.get(
   '/year',
   authMiddleware,
   roleMiddleware(['owner']),
+  gymIsolationMiddleware,
   async (req, res) => {
     try {
       const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
@@ -587,6 +591,7 @@ router.get(
   '/report',
   authMiddleware,
   roleMiddleware(['manager', 'owner']),
+  gymIsolationMiddleware,
   async (req, res) => {
     try {
       const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
