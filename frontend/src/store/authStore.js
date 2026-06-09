@@ -45,17 +45,22 @@ export const useAuthStore = create((set) => ({
   error: null,
   selectedGymId: 'all',
   
-  setSelectedGymId: (gymId) => set({ selectedGymId: gymId }),
+  setSelectedGymId: (gymId) => {
+    localStorage.setItem('selectedGymId', gymId);
+    set({ selectedGymId: gymId });
+  },
 
   // Load user from localStorage on init
   init: () => {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
+    const selectedGymId = localStorage.getItem('selectedGymId') || 'all';
     if (token && user) {
       set({
         token,
         user: JSON.parse(user),
-        isAuthenticated: true
+        isAuthenticated: true,
+        selectedGymId
       });
     }
   },
