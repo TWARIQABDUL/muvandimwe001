@@ -1,5 +1,5 @@
 {
-  "version": "0.1.5",
-  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.5.apk",
-  "releaseNotes": "Improved UI  selected branch"
+  "version": "0.1.6",
+  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.6.apk",
+  "releaseNotes": "Scanner bypass, custom start dates, and automatic card assignment"
 }

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Camera } from 'lucide-react';
 import { Table } from 'antd';
 import FullScreenScanner from '../FullScreenScanner.jsx';
+import { useAuthStore } from '../../store/authStore.js';
 
 export default function ManagerCheckinFlow({
   services,
@@ -31,6 +32,8 @@ export default function ManagerCheckinFlow({
 }) {
   const [checkinType, setCheckinType] = useState('subscriber');
   const [isScanning, setIsScanning] = useState(false);
+  const { user } = useAuthStore();
+  const scanEnabled = user?.scan_enabled !== 0;
 
   const handleToggleWalkInService = (serviceName) => {
     let newSelected;
@@ -114,7 +117,7 @@ export default function ManagerCheckinFlow({
           <div className="subscriber-flow" style={{ animation: 'fadeIn 0.3s' }}>
             <div style={{ background: 'var(--bg-light)', padding: '20px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
               
-              {!memberLookup && (
+              {!memberLookup && scanEnabled && (
                 <div style={{ marginBottom: '30px', textAlign: 'center', padding: '30px 20px', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                   <div style={{
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -154,7 +157,8 @@ export default function ManagerCheckinFlow({
                 </div>
               )}
 
-              <h3 style={{ marginBottom: '15px', color: 'var(--text-primary)', marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>Or Search by Name</h3>
+              {scanEnabled && <h3 style={{ marginBottom: '15px', color: 'var(--text-primary)', marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>Or Search by Name</h3>}
+              {!scanEnabled && <h3 style={{ marginBottom: '15px', color: 'var(--text-primary)' }}>Search Member by Name</h3>}
               <form onSubmit={handleSearchName} style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '10px' }}>
                 <input
                   type="text"

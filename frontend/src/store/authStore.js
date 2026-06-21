@@ -50,6 +50,15 @@ export const useAuthStore = create((set) => ({
     set({ selectedGymId: gymId });
   },
 
+  updateUserScanEnabled: (enabled) => {
+    set((state) => {
+      if (!state.user) return state;
+      const user = { ...state.user, scan_enabled: enabled };
+      localStorage.setItem('user', JSON.stringify(user));
+      return { user };
+    });
+  },
+
   // Load user from localStorage on init
   init: () => {
     const token = localStorage.getItem('token');

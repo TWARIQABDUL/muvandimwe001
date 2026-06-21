@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Modal, Form, Input, Button } from 'antd';
+import { Table, Modal, Form, Input, Button, Switch } from 'antd';
 import { api } from '../../store/authStore.js';
 
 export default function OwnerBranches() {
@@ -47,6 +47,18 @@ export default function OwnerBranches() {
     }
   };
 
+  const handleToggleScan = async (gymId, checked) => {
+    try {
+      await api.patch(`/gyms/${gymId}/settings`, { scan_enabled: checked ? 1 : 0 });
+      setMessage(`Scanning ${checked ? 'enabled' : 'disabled'} for branch`);
+      setGyms(gyms.map(g => g.id === gymId ? { ...g, scan_enabled: checked ? 1 : 0 } : g));
+      setTimeout(() => setMessage(null), 3000);
+    } catch (err) {
+      setError('Failed to update branch settings');
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
   const columns = [
     {
       title: 'Branch Name',
@@ -67,6 +79,19 @@ export default function OwnerBranches() {
       title: 'Manager Username',
       dataIndex: 'manager_email',
       key: 'manager_email',
+    },
+    {
+      title: 'Scanner',
+      dataIndex: 'scan_enabled',
+      key: 'scan_enabled',
+      render: (val, record) => (
+        <Switch 
+          checked={val === 1} 
+          onChange={(checked) => handleToggleScan(record.id, checked)} 
+          checkedChildren="ON" 
+          unCheckedChildren="OFF" 
+        />
+      ),
     },
     {
       title: 'Created At',

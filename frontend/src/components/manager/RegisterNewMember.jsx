@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Camera } from 'lucide-react';
 import FullScreenScanner from '../FullScreenScanner.jsx';
+import { useAuthStore } from '../../store/authStore.js';
 
 export default function RegisterNewMember({
   services,
@@ -28,6 +29,9 @@ export default function RegisterNewMember({
   const [showDropdown, setShowDropdown] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const dropdownRef = useRef(null);
+  
+  const { user } = useAuthStore();
+  const scanEnabled = user?.scan_enabled !== 0;
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -60,7 +64,7 @@ export default function RegisterNewMember({
       <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
         <h2 className="card-title">Register New Member</h2>
         <form onSubmit={handleCreateMember} className="form-stack">
-          {!newMember.qr_code_id ? (
+          {!newMember.qr_code_id && scanEnabled ? (
             <div style={{ padding: '40px 20px', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '12px', border: '2px dashed #cbd5e1', marginBottom: '30px' }}>
               <div style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -101,19 +105,21 @@ export default function RegisterNewMember({
             </div>
           ) : (
             <>
-              <div style={{ padding: '15px 20px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <strong style={{ color: '#166534', display: 'block', fontSize: '15px', marginBottom: '4px' }}>✓ Card Assigned</strong>
-                  <code style={{ color: '#15803d', fontSize: '14px', backgroundColor: '#dcfce3', padding: '2px 6px', borderRadius: '4px' }}>{newMember.qr_code_id}</code>
+              {scanEnabled && newMember.qr_code_id && (
+                <div style={{ padding: '15px 20px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <strong style={{ color: '#166534', display: 'block', fontSize: '15px', marginBottom: '4px' }}>✓ Card Assigned</strong>
+                    <code style={{ color: '#15803d', fontSize: '14px', backgroundColor: '#dcfce3', padding: '2px 6px', borderRadius: '4px' }}>{newMember.qr_code_id}</code>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => setNewMember({ ...newMember, qr_code_id: '' })}
+                    style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: '500', padding: '8px' }}
+                  >
+                    Scan Different Card
+                  </button>
                 </div>
-                <button 
-                  type="button" 
-                  onClick={() => setNewMember({ ...newMember, qr_code_id: '' })}
-                  style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: '500', padding: '8px' }}
-                >
-                  Scan Different Card
-                </button>
-              </div>
+              )}
 
               <div className="grid grid-2">
                 <div className="form-group">
@@ -137,6 +143,15 @@ export default function RegisterNewMember({
                 </div>
               </div>
           <div className="grid grid-2" style={{ marginTop: '15px' }}>
+            <div className="form-group">
+              <label>Start Date</label>
+              <input
+                type="date"
+                value={newMember.start_date || ''}
+                onChange={(e) => setNewMember({ ...newMember, start_date: e.target.value })}
+                required
+              />
+            </div>
             <div className="form-group">
               <label>Phone (Optional)</label>
               <input

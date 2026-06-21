@@ -41,6 +41,15 @@ export async function initializeDatabase() {
 
     // Test connection
     const client = await pool.connect();
+
+    // Add scan_enabled column to gyms table safely
+    try {
+      await client.query('ALTER TABLE gyms ADD COLUMN scan_enabled INTEGER DEFAULT 1');
+      console.log('✓ Added scan_enabled column to gyms table');
+    } catch (e) {
+      // Column probably already exists, safe to ignore
+    }
+
     client.release();
     console.log('✓ Database connected (PostgreSQL)');
 

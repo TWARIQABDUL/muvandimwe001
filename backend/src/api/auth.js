@@ -40,6 +40,8 @@ router.post('/login', async (req, res) => {
 
     const token = generateToken(user);
 
+    const gymInfo = await db.get(`SELECT scan_enabled FROM gyms WHERE id = ?`, [user.gym_id]);
+
     res.json({
       token,
       user: {
@@ -47,7 +49,8 @@ router.post('/login', async (req, res) => {
         username: user.username,
         role: user.role,
         gym_id: user.gym_id,
-        first_login: user.first_login
+        first_login: user.first_login,
+        scan_enabled: gymInfo ? gymInfo.scan_enabled : 1
       }
     });
   } catch (err) {

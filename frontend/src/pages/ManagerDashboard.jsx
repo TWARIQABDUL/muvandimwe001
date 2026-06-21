@@ -37,7 +37,7 @@ export default function ManagerDashboard() {
   const [paymentMethod, setPaymentMethod] = useState('Cash');
 
   // Registration state
-  const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', employer_id: '', qr_code_id: '' });
+  const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', employer_id: '', qr_code_id: '', start_date: new Date().toISOString().split('T')[0] });
   const [selectedServices, setSelectedServices] = useState(['gym']);
   const [isCard, setIsCard] = useState(false);
   const [taps, setTaps] = useState(20);
@@ -290,12 +290,13 @@ export default function ManagerDashboard() {
         is_card: isCard ? 1 : 0,
         taps: isCard ? Number(taps) : null,
         coupon: appliedCoupon ? appliedCoupon.code : null,
-        payment_method: paymentMethod
+        payment_method: paymentMethod,
+        start_date: newMember.start_date
       });
 
       setMessage(`${response.data.name} registered successfully`);
       setNewMemberQr(response.data.qr_code_id);
-      setNewMember({ name: '', email: '', phone: '', employer_id: '', qr_code_id: '' });
+      setNewMember({ name: '', email: '', phone: '', employer_id: '', qr_code_id: '', start_date: new Date().toISOString().split('T')[0] });
       setSelectedServices(['gym']);
       setIsCard(false);
       setTaps(20);

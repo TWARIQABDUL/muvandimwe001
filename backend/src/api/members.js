@@ -14,7 +14,8 @@ router.post(
   gymIsolationMiddleware,
   async (req, res) => {
     try {
-      const { name, email, phone, subscription_id, services, is_card, taps, coupon, employer_id, qr_code_id, payment_method } = req.body;
+      let { qr_code_id } = req.body;
+      const { name, email, phone, subscription_id, services, is_card, taps, coupon, employer_id, payment_method, start_date } = req.body;
       const { gym_id } = req.user;
 
       if (!name) {
@@ -34,6 +35,20 @@ router.post(
         if (validCard.status !== 'unassigned') {
           return res.status(409).json({ error: 'This QR card is already assigned to a member.' });
         }
+      } else {
+        const unassignedCard = await db.get(
+          `SELECT id FROM valid_qr_cards WHERE gym_id = ? AND status = 'unassigned' LIMIT 1`,
+          [gym_id]
+        );
+        if (unassignedCard) {
+          qr_code_id = unassignedCard.id;
+        } else {
+          qr_code_id = uuidv4();
+          await db.run(
+            `INSERT INTO valid_qr_cards (id, gym_id, status) VALUES (?, ?, 'unassigned')`,
+            [qr_code_id, gym_id]
+          );
+        }
       }
 
       // Check if email already exists
@@ -50,12 +65,11 @@ router.post(
       // If B2B member, skip subscription logic
       if (employer_id) {
         const memberId = uuidv4();
-        const finalQrCodeId = qr_code_id || uuidv4();
 
         await db.run(
           `INSERT INTO members (id, gym_id, name, email, phone, qr_code_id, type, employer_id, current_subscription_id)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [memberId, gym_id, name, email || null, phone || null, finalQrCodeId, 'b2b', employer_id, null]
+          [memberId, gym_id, name, email || null, phone || null, qr_code_id, 'b2b', employer_id, null]
         );
 
         if (qr_code_id) {
@@ -70,7 +84,6 @@ router.post(
           name,
           email,
           phone,
-          qr_code_id: finalQrCodeId,
           type: 'b2b',
           employer_id
         });
@@ -149,26 +162,30 @@ router.post(
       }
 
       // Expiration / renewal string
-      const todayStr = new Date().toISOString().split('T')[0];
+      let effectiveStartDate = new Date();
+      if (start_date) {
+        effectiveStartDate = new Date(start_date);
+      }
+      const startStr = effectiveStartDate.toISOString().split('T')[0];
+
       let nextRenewalStr;
       if (is_card) {
         // Bound by 1 year for card validity
-        const nextYear = new Date();
+        const nextYear = new Date(effectiveStartDate);
         nextYear.setFullYear(nextYear.getFullYear() + 1);
         nextRenewalStr = nextYear.toISOString().split('T')[0];
       } else {
-        const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        const nextMonth = new Date(effectiveStartDate.getTime() + 30 * 24 * 60 * 60 * 1000);
         nextRenewalStr = nextMonth.toISOString().split('T')[0];
       }
 
       const memberId = uuidv4();
-      const finalQrCodeId = qr_code_id || uuidv4();
 
       // Insert member
       await db.run(
         `INSERT INTO members (id, gym_id, name, email, phone, qr_code_id, type, current_subscription_id)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [memberId, gym_id, name, email || null, phone || null, finalQrCodeId, 'subscription', null]
+        [memberId, gym_id, name, email || null, phone || null, qr_code_id, 'subscription', null]
       );
 
       // Create subscription
@@ -176,7 +193,7 @@ router.post(
       await db.run(
         `INSERT INTO member_subscriptions (id, gym_id, member_id, subscription_id, start_date, next_renewal_date, status, is_card, remaining_taps)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [memberSubId, gym_id, memberId, finalSubId, todayStr, nextRenewalStr, 'active', is_card ? 1 : 0, is_card ? (Number(taps) || 20) : null]
+        [memberSubId, gym_id, memberId, finalSubId, startStr, nextRenewalStr, 'active', is_card ? 1 : 0, is_card ? (Number(taps) || 20) : null]
       );
 
       // Update member current subscription link
@@ -205,7 +222,6 @@ router.post(
         name,
         email,
         phone,
-        qr_code_id: finalQrCodeId,
         subscription: {
           name: dynamicSubName,
           next_renewal_date: nextRenewalStr,

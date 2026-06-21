@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS gyms (
   country TEXT,
   owner_email TEXT NOT NULL,
   manager_email TEXT,
+  scan_enabled INTEGER DEFAULT 1,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

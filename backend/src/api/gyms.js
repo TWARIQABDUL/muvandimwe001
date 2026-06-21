@@ -10,7 +10,7 @@ const db = getDatabase();
 // GET /api/gyms - Get all gyms (Owner only)
 router.get('/', authMiddleware, roleMiddleware(['owner']), async (req, res) => {
   try {
-    const gyms = await db.all(`SELECT id, name, location, country, manager_email, created_at FROM gyms ORDER BY created_at ASC`);
+    const gyms = await db.all(`SELECT id, name, location, country, manager_email, scan_enabled, created_at FROM gyms ORDER BY created_at ASC`);
     res.json({ gyms });
   } catch (err) {
     console.error('Fetch gyms error:', err.message);
@@ -83,6 +83,31 @@ router.post('/', authMiddleware, roleMiddleware(['owner']), async (req, res) => 
   } catch (err) {
     console.error('Create gym error:', err.message);
     res.status(500).json({ error: 'Failed to create gym branch' });
+  }
+});
+
+// PATCH /api/gyms/:id/settings - Update gym settings (Owner only)
+router.patch('/:id/settings', authMiddleware, roleMiddleware(['owner']), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { scan_enabled } = req.body;
+
+    if (scan_enabled === undefined) {
+      return res.status(400).json({ error: 'scan_enabled is required' });
+    }
+
+    const value = scan_enabled ? 1 : 0;
+    
+    const result = await db.run(`UPDATE gyms SET scan_enabled = ? WHERE id = ?`, [value, id]);
+
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Gym not found' });
+    }
+
+    res.json({ message: 'Settings updated successfully', scan_enabled: value });
+  } catch (err) {
+    console.error('Update gym settings error:', err.message);
+    res.status(500).json({ error: 'Failed to update gym settings' });
   }
 });
 
