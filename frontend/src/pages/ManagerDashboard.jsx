@@ -9,6 +9,7 @@ import ManagerCheckinFlow from '../components/manager/ManagerCheckinFlow.jsx';
 import RenewMembership from '../components/manager/RenewMembership.jsx';
 import SubscriberActivity from '../components/manager/SubscriberActivity.jsx';
 import RegisterNewMember from '../components/manager/RegisterNewMember.jsx';
+import ManagerDailyReport from '../components/manager/ManagerDailyReport.jsx';
 
 export default function ManagerDashboard() {
   const { user } = useAuth();
@@ -384,7 +385,8 @@ export default function ManagerDashboard() {
     { id: 'checkin', label: 'Check-in Portal' },
     { id: 'register', label: 'Register New Member' },
     { id: 'renewals', label: 'Pending Renewals' },
-    { id: 'activity', label: 'Subscriber Activity' }
+    { id: 'activity', label: 'Subscriber Activity' },
+    { id: 'report', label: 'Closing Note' }
   ];
 
   return (
@@ -479,6 +481,10 @@ export default function ManagerDashboard() {
                 <SubscriberActivity dashboardData={dashboardData} />
               } />
               
+              <Route path="report" element={
+                <ManagerDailyReport dashboardData={dashboardData} date={new Date().toISOString().split('T')[0]} />
+              } />
+
               <Route path="*" element={<Navigate to="checkin" replace />} />
             </Routes>
         )}

@@ -647,4 +647,69 @@ router.get(
   }
 );
 
+// GET /api/dashboard/closing-note - Get the closing note for a specific date
+router.get(
+  '/closing-note',
+  authMiddleware,
+  roleMiddleware(['manager', 'owner']),
+  gymIsolationMiddleware,
+  async (req, res) => {
+    try {
+      const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
+      const date = req.query.date || new Date().toISOString().split('T')[0];
+
+      const note = await db.get(
+        `SELECT * FROM closing_notes WHERE (gym_id = ? OR ? = 'all') AND report_date = ?`,
+        [gym_id, gym_id, date]
+      );
+
+      res.json({ note: note || null });
+    } catch (err) {
+      console.error('Get closing note error:', err.message);
+      res.status(500).json({ error: 'Failed to fetch closing note' });
+    }
+  }
+);
+
+// POST /api/dashboard/closing-note - Save the closing note for a specific date
+router.post(
+  '/closing-note',
+  authMiddleware,
+  roleMiddleware(['manager', 'owner']),
+  gymIsolationMiddleware,
+  async (req, res) => {
+    try {
+      const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
+      if (gym_id === 'all') {
+        return res.status(403).json({ error: 'Cannot save closing note for all gyms at once' });
+      }
+      
+      const { date, note, momo_balance, cash_balance } = req.body;
+      const reportDate = date || new Date().toISOString().split('T')[0];
+      const id = `${gym_id}-${reportDate}`;
+
+      const existing = await db.get(`SELECT id FROM closing_notes WHERE id = ?`, [id]);
+
+      if (existing) {
+        await db.run(
+          `UPDATE closing_notes SET note = ?, momo_balance = ?, cash_balance = ? WHERE id = ?`,
+          [note || '', momo_balance || 0, cash_balance || 0, id]
+        );
+      } else {
+        await db.run(
+          `INSERT INTO closing_notes (id, gym_id, report_date, note, momo_balance, cash_balance)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [id, gym_id, reportDate, note || '', momo_balance || 0, cash_balance || 0]
+        );
+      }
+
+      const updated = await db.get(`SELECT * FROM closing_notes WHERE id = ?`, [id]);
+      res.json({ note: updated, message: 'Closing note saved successfully' });
+    } catch (err) {
+      console.error('Save closing note error:', err.message);
+      res.status(500).json({ error: 'Failed to save closing note' });
+    }
+  }
+);
+
 export default router;

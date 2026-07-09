@@ -16,7 +16,7 @@ dotenv.config({
 const migrationsDir = path.resolve(__dirname, '../migrations');
 
 async function migrate() {
-    const dbUrl = process.env.DATABASE_URL?.split('?')[0];
+    const dbUrl = process.env.SUPABASE_URL?.split('?')[0];
     const isRemote = dbUrl && !dbUrl.includes('localhost') && !dbUrl.includes('127.0.0.1');
 
     const client = new Client({
