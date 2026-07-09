@@ -428,15 +428,21 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
                   {Array.isArray(reportData.closingNote) ? (
                     reportData.closingNote.map((note, idx) => (
                       <div key={idx} style={{ marginBottom: idx < reportData.closingNote.length - 1 ? '15px' : 0, paddingBottom: idx < reportData.closingNote.length - 1 ? '15px' : 0, borderBottom: idx < reportData.closingNote.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
-                        <div style={{ fontWeight: 'bold' }}>{note.gym_name}</div>
-                        <div><span style={{ color: 'var(--text-secondary)' }}>Reported Momo:</span> {note.momo_balance} RWF | <span style={{ color: 'var(--text-secondary)' }}>Reported Cash:</span> {note.cash_balance} RWF</div>
-                        {note.note && <div style={{ fontStyle: 'italic', marginTop: '5px' }}>"{note.note}"</div>}
+                        <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{note.gym_name}</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', fontSize: '14px' }}>
+                          <div><span style={{ color: 'var(--text-secondary)' }}>Momo:</span> {note.momo_balance} RWF</div>
+                          <div><span style={{ color: 'var(--text-secondary)' }}>Cash:</span> {note.cash_balance} RWF</div>
+                        </div>
+                        {note.note && <div style={{ fontStyle: 'italic', marginTop: '8px', fontSize: '14px', lineHeight: '1.4' }}>"{note.note}"</div>}
                       </div>
                     ))
                   ) : (
                     <div>
-                      <div><span style={{ color: 'var(--text-secondary)' }}>Reported Momo:</span> {reportData.closingNote.momo_balance} RWF | <span style={{ color: 'var(--text-secondary)' }}>Reported Cash:</span> {reportData.closingNote.cash_balance} RWF</div>
-                      {reportData.closingNote.note && <div style={{ fontStyle: 'italic', marginTop: '5px' }}>"{reportData.closingNote.note}"</div>}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', fontSize: '14px' }}>
+                        <div><span style={{ color: 'var(--text-secondary)' }}>Reported Momo:</span> {reportData.closingNote.momo_balance} RWF</div>
+                        <div><span style={{ color: 'var(--text-secondary)' }}>Reported Cash:</span> {reportData.closingNote.cash_balance} RWF</div>
+                      </div>
+                      {reportData.closingNote.note && <div style={{ fontStyle: 'italic', marginTop: '8px', fontSize: '14px', lineHeight: '1.4' }}>"{reportData.closingNote.note}"</div>}
                     </div>
                   )}
                 </div>
