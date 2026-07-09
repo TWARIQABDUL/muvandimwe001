@@ -219,8 +219,19 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
   return (
     <div className="analytics-tab">
       <div className="card">
-        <div className="flex-between">
-          <h2 className="card-title" style={{ margin: 0 }}>Report yumunsi</h2>
+        <div className="flex-between" style={{ flexWrap: 'wrap', gap: '15px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <h2 className="card-title" style={{ margin: 0 }}>Report yumunsi</h2>
+            {reportData && reportData.closingNote && (
+              <Button 
+                type="primary" 
+                onClick={() => setIsNoteModalVisible(true)}
+                style={{ width: 'fit-content', borderRadius: '6px' }}
+              >
+                View Closing Note ({reportDate})
+              </Button>
+            )}
+          </div>
           <div className="timeframe-buttons">
             {['today', 'week', 'month', 'year'].map(tf => (
               <button
@@ -404,15 +415,6 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
                   &gt;
                 </button>
               </div>
-              {reportData && reportData.closingNote && (
-                <Button 
-                  type="primary" 
-                  onClick={() => setIsNoteModalVisible(true)}
-                  style={{ borderRadius: '6px' }}
-                >
-                  View Closing Note
-                </Button>
-              )}
             </div>
           </div>
 
