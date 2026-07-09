@@ -46,21 +46,31 @@ function getDateRange(timeframe) {
   };
 }
 
-// Helper function to calculate revenue breakdown based on true payments
-function calculateRevenueBreakdown(payments) {
+// Helper function to calculate revenue breakdown based on true payments and checkins
+function calculateRevenueBreakdown(payments, checkins = []) {
   const breakdown = {};
 
+  const allRecords = [...payments, ...checkins];
+  allRecords.forEach(record => {
+    if (record.service) {
+      const services = record.service.split(',');
+      services.forEach(s => {
+        const cleanService = s.trim().toLowerCase();
+        if (!breakdown[cleanService]) {
+          breakdown[cleanService] = { walk_in: 0, walk_in_count: 0, daily: 0, daily_count: 0, subscription: 0, subscription_count: 0, b2b: 0, b2b_count: 0, total: 0, total_count: 0 };
+        }
+      });
+    }
+  });
+
   payments.forEach(p => {
+    if (!p.service) return;
     const services = p.service.split(',');
     const amount = Number(p.amount) || 0;
     const share = amount / services.length;
 
     services.forEach(s => {
       const cleanService = s.trim().toLowerCase();
-      if (!breakdown[cleanService]) {
-        breakdown[cleanService] = { walk_in: 0, walk_in_count: 0, daily: 0, daily_count: 0, subscription: 0, subscription_count: 0, b2b: 0, b2b_count: 0, total: 0, total_count: 0 };
-      }
-
       if (p.type === 'walk_in') {
         breakdown[cleanService].walk_in += share;
         breakdown[cleanService].walk_in_count += 1;
@@ -70,11 +80,20 @@ function calculateRevenueBreakdown(payments) {
       } else if (p.type === 'subscription_signup' || p.type === 'subscription_renewal') {
         breakdown[cleanService].subscription += share;
         breakdown[cleanService].subscription_count += 1;
-      } else if (p.type === 'b2b') {
-        breakdown[cleanService].b2b += share;
-        breakdown[cleanService].b2b_count += 1;
       }
     });
+  });
+
+  checkins.forEach(c => {
+    if (c.type === 'b2b' && c.service) {
+      const services = c.service.split(',');
+      services.forEach(s => {
+        const cleanService = s.trim().toLowerCase();
+        if (breakdown[cleanService]) {
+          breakdown[cleanService].b2b_count += 1;
+        }
+      });
+    }
   });
 
   // Calculate totals
@@ -136,7 +155,7 @@ router.get(
       const checkins = await getCheckinsForPeriod(gym_id, today, today);
       const payments = await getPaymentsForPeriod(gym_id, today, today);
 
-      const breakdown = calculateRevenueBreakdown(payments);
+      const breakdown = calculateRevenueBreakdown(payments, checkins);
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
@@ -300,7 +319,7 @@ router.get(
       const checkins = await getCheckinsForPeriod(gym_id, dateRange.start, dateRange.end);
       const payments = await getPaymentsForPeriod(gym_id, dateRange.start, dateRange.end);
 
-      const breakdown = calculateRevenueBreakdown(payments);
+      const breakdown = calculateRevenueBreakdown(payments, checkins);
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
@@ -388,7 +407,7 @@ router.get(
       const checkins = await getCheckinsForPeriod(gym_id, dateRange.start, dateRange.end);
       const payments = await getPaymentsForPeriod(gym_id, dateRange.start, dateRange.end);
 
-      const breakdown = calculateRevenueBreakdown(payments);
+      const breakdown = calculateRevenueBreakdown(payments, checkins);
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
@@ -476,7 +495,7 @@ router.get(
       const checkins = await getCheckinsForPeriod(gym_id, dateRange.start, dateRange.end);
       const payments = await getPaymentsForPeriod(gym_id, dateRange.start, dateRange.end);
 
-      const breakdown = calculateRevenueBreakdown(payments);
+      const breakdown = calculateRevenueBreakdown(payments, checkins);
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
