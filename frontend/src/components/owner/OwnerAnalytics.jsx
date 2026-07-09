@@ -421,6 +421,26 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
               ) : (
                 <p style={{ color: 'var(--text-secondary)' }}>No check-ins found for the selected filter.</p>
               )}
+              
+              {reportData.closingNote && (
+                <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '4px solid var(--primary-color)' }}>
+                  <h3 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>Manager's Closing Note</h3>
+                  {Array.isArray(reportData.closingNote) ? (
+                    reportData.closingNote.map((note, idx) => (
+                      <div key={idx} style={{ marginBottom: idx < reportData.closingNote.length - 1 ? '15px' : 0, paddingBottom: idx < reportData.closingNote.length - 1 ? '15px' : 0, borderBottom: idx < reportData.closingNote.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
+                        <div style={{ fontWeight: 'bold' }}>{note.gym_name}</div>
+                        <div><span style={{ color: 'var(--text-secondary)' }}>Reported Momo:</span> {note.momo_balance} RWF | <span style={{ color: 'var(--text-secondary)' }}>Reported Cash:</span> {note.cash_balance} RWF</div>
+                        {note.note && <div style={{ fontStyle: 'italic', marginTop: '5px' }}>"{note.note}"</div>}
+                      </div>
+                    ))
+                  ) : (
+                    <div>
+                      <div><span style={{ color: 'var(--text-secondary)' }}>Reported Momo:</span> {reportData.closingNote.momo_balance} RWF | <span style={{ color: 'var(--text-secondary)' }}>Reported Cash:</span> {reportData.closingNote.cash_balance} RWF</div>
+                      {reportData.closingNote.note && <div style={{ fontStyle: 'italic', marginTop: '5px' }}>"{reportData.closingNote.note}"</div>}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <p style={{ color: 'var(--text-secondary)' }}>Select a date to view report.</p>

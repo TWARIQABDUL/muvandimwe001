@@ -678,12 +678,29 @@ router.get(
         }
       });
 
+      let closingNote = null;
+      if (gym_id !== 'all') {
+        closingNote = await db.get(
+          'SELECT momo_balance, cash_balance, note FROM closing_notes WHERE gym_id = ? AND report_date = ?',
+          [gym_id, date]
+        );
+      } else {
+        closingNote = await db.all(
+          `SELECT c.momo_balance, c.cash_balance, c.note, g.name as gym_name 
+           FROM closing_notes c 
+           JOIN gyms g ON c.gym_id = g.id 
+           WHERE c.report_date = ?`,
+          [date]
+        );
+      }
+
       res.json({
         date,
         data: {
           walkins,
           subscribers,
-          partners
+          partners,
+          closingNote
         }
       });
     } catch (err) {
