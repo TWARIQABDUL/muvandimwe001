@@ -1,5 +1,5 @@
 {
-  "version": "0.1.10",
-  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.10.apk",
-  "releaseNotes": "Added Manager Closing Note feature to Owner Analytics Dashboard"
+  "version": "0.1.11",
+  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.11.apk",
+  "releaseNotes": "Moved Manager Closing Note to a popup modal for better UX"
 }

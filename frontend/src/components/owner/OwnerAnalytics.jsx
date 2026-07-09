@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Table } from 'antd';
+import { Table, Modal, Button } from 'antd';
 import { api } from '../../store/authStore.js';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
@@ -10,6 +10,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
   const [reportTypeFilter, setReportTypeFilter] = useState('all');
   const [reportData, setReportData] = useState(null);
   const [reportLoading, setReportLoading] = useState(false);
+  const [isNoteModalVisible, setIsNoteModalVisible] = useState(false);
 
   const handleDateChange = (days) => {
     const current = new Date(reportDate);
@@ -364,7 +365,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
         <div className="card">
           <div className="flex-between" style={{ marginBottom: '15px' }}>
             <h2 className="card-title" style={{ margin: 0 }}>Daily Check-ins Report</h2>
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <select
                 value={reportTypeFilter}
                 onChange={e => setReportTypeFilter(e.target.value)}
@@ -403,6 +404,15 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
                   &gt;
                 </button>
               </div>
+              {reportData && reportData.closingNote && (
+                <Button 
+                  type="primary" 
+                  onClick={() => setIsNoteModalVisible(true)}
+                  style={{ borderRadius: '6px' }}
+                >
+                  View Closing Note
+                </Button>
+              )}
             </div>
           </div>
 
@@ -421,32 +431,41 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
               ) : (
                 <p style={{ color: 'var(--text-secondary)' }}>No check-ins found for the selected filter.</p>
               )}
-              
-              {reportData.closingNote && (
-                <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '4px solid var(--primary-color)' }}>
-                  <h3 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>Manager's Closing Note</h3>
-                  {Array.isArray(reportData.closingNote) ? (
-                    reportData.closingNote.map((note, idx) => (
-                      <div key={idx} style={{ marginBottom: idx < reportData.closingNote.length - 1 ? '15px' : 0, paddingBottom: idx < reportData.closingNote.length - 1 ? '15px' : 0, borderBottom: idx < reportData.closingNote.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
-                        <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{note.gym_name}</div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', fontSize: '14px' }}>
-                          <div><span style={{ color: 'var(--text-secondary)' }}>Momo:</span> {note.momo_balance} RWF</div>
-                          <div><span style={{ color: 'var(--text-secondary)' }}>Cash:</span> {note.cash_balance} RWF</div>
+              <Modal
+                title="Manager's Closing Note"
+                open={isNoteModalVisible}
+                onCancel={() => setIsNoteModalVisible(false)}
+                footer={[
+                  <Button key="close" onClick={() => setIsNoteModalVisible(false)}>
+                    Close
+                  </Button>
+                ]}
+              >
+                {reportData && reportData.closingNote && (
+                  <div>
+                    {Array.isArray(reportData.closingNote) ? (
+                      reportData.closingNote.map((note, idx) => (
+                        <div key={idx} style={{ marginBottom: idx < reportData.closingNote.length - 1 ? '15px' : 0, paddingBottom: idx < reportData.closingNote.length - 1 ? '15px' : 0, borderBottom: idx < reportData.closingNote.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
+                          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{note.gym_name}</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', fontSize: '14px' }}>
+                            <div><span style={{ color: 'var(--text-secondary)' }}>Momo:</span> {note.momo_balance} RWF</div>
+                            <div><span style={{ color: 'var(--text-secondary)' }}>Cash:</span> {note.cash_balance} RWF</div>
+                          </div>
+                          {note.note && <div style={{ fontStyle: 'italic', marginTop: '8px', fontSize: '14px', lineHeight: '1.4' }}>"{note.note}"</div>}
                         </div>
-                        {note.note && <div style={{ fontStyle: 'italic', marginTop: '8px', fontSize: '14px', lineHeight: '1.4' }}>"{note.note}"</div>}
+                      ))
+                    ) : (
+                      <div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', fontSize: '14px' }}>
+                          <div><span style={{ color: 'var(--text-secondary)' }}>Reported Momo:</span> {reportData.closingNote.momo_balance} RWF</div>
+                          <div><span style={{ color: 'var(--text-secondary)' }}>Reported Cash:</span> {reportData.closingNote.cash_balance} RWF</div>
+                        </div>
+                        {reportData.closingNote.note && <div style={{ fontStyle: 'italic', marginTop: '8px', fontSize: '14px', lineHeight: '1.4' }}>"{reportData.closingNote.note}"</div>}
                       </div>
-                    ))
-                  ) : (
-                    <div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', fontSize: '14px' }}>
-                        <div><span style={{ color: 'var(--text-secondary)' }}>Reported Momo:</span> {reportData.closingNote.momo_balance} RWF</div>
-                        <div><span style={{ color: 'var(--text-secondary)' }}>Reported Cash:</span> {reportData.closingNote.cash_balance} RWF</div>
-                      </div>
-                      {reportData.closingNote.note && <div style={{ fontStyle: 'italic', marginTop: '8px', fontSize: '14px', lineHeight: '1.4' }}>"{reportData.closingNote.note}"</div>}
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                )}
+              </Modal>
             </div>
           ) : (
             <p style={{ color: 'var(--text-secondary)' }}>Select a date to view report.</p>

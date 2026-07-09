@@ -1,6 +1,6 @@
 {
   "name": "gym-saas-frontend",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "type": "module",
   "description": "Gym management SaaS frontend",
   "scripts": {
