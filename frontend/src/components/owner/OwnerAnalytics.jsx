@@ -431,80 +431,83 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
               ) : (
                 <p style={{ color: 'var(--text-secondary)' }}>No check-ins found for the selected filter.</p>
               )}
-              <Modal
-                title="Manager's Closing Note"
-                open={isNoteModalVisible}
-                onCancel={() => setIsNoteModalVisible(false)}
-                footer={[
-                  <Button key="close" onClick={() => setIsNoteModalVisible(false)}>
-                    Close
-                  </Button>
-                ]}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '20px' }}>
-                  <button
-                    onClick={() => handleDateChange(-1)}
-                    style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer' }}
-                  >
-                    &lt;
-                  </button>
-                  <input
-                    type="date"
-                    value={reportDate}
-                    max={new Date().toISOString().split('T')[0]}
-                    onChange={e => setReportDate(e.target.value)}
-                    style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0', flex: 1 }}
-                  />
-                  <button
-                    onClick={() => handleDateChange(1)}
-                    disabled={reportDate >= new Date().toISOString().split('T')[0]}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid #e2e8f0',
-                      background: reportDate >= new Date().toISOString().split('T')[0] ? '#f1f5f9' : 'white',
-                      cursor: reportDate >= new Date().toISOString().split('T')[0] ? 'not-allowed' : 'pointer'
-                    }}
-                  >
-                    &gt;
-                  </button>
-                </div>
-
-                {reportLoading ? (
-                  <p>Loading note...</p>
-                ) : reportData && reportData.closingNote ? (
-                  <div>
-                    {Array.isArray(reportData.closingNote) ? (
-                      reportData.closingNote.map((note, idx) => (
-                        <div key={idx} style={{ marginBottom: idx < reportData.closingNote.length - 1 ? '15px' : 0, paddingBottom: idx < reportData.closingNote.length - 1 ? '15px' : 0, borderBottom: idx < reportData.closingNote.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
-                          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{note.gym_name}</div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', fontSize: '14px' }}>
-                            <div><span style={{ color: 'var(--text-secondary)' }}>Momo:</span> {note.momo_balance} RWF</div>
-                            <div><span style={{ color: 'var(--text-secondary)' }}>Cash:</span> {note.cash_balance} RWF</div>
-                          </div>
-                          {note.note && <div style={{ fontStyle: 'italic', marginTop: '8px', fontSize: '14px', lineHeight: '1.4' }}>"{note.note}"</div>}
-                        </div>
-                      ))
-                    ) : (
-                      <div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', fontSize: '14px' }}>
-                          <div><span style={{ color: 'var(--text-secondary)' }}>Reported Momo:</span> {reportData.closingNote.momo_balance} RWF</div>
-                          <div><span style={{ color: 'var(--text-secondary)' }}>Reported Cash:</span> {reportData.closingNote.cash_balance} RWF</div>
-                        </div>
-                        {reportData.closingNote.note && <div style={{ fontStyle: 'italic', marginTop: '8px', fontSize: '14px', lineHeight: '1.4' }}>"{reportData.closingNote.note}"</div>}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p style={{ color: 'var(--text-secondary)' }}>No closing note found for this date.</p>
-                )}
-              </Modal>
             </div>
           ) : (
             <p style={{ color: 'var(--text-secondary)' }}>Select a date to view report.</p>
           )}
         </div>
       </div>
+
+      <Modal
+        title="Manager's Closing Note"
+        open={isNoteModalVisible}
+        onCancel={() => setIsNoteModalVisible(false)}
+        width="100%"
+        style={{ top: 10, maxWidth: '600px' }}
+        footer={[
+          <Button key="close" type="primary" block onClick={() => setIsNoteModalVisible(false)}>
+            Close
+          </Button>
+        ]}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '20px' }}>
+          <button
+            onClick={() => handleDateChange(-1)}
+            style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer' }}
+          >
+            &lt;
+          </button>
+          <input
+            type="date"
+            value={reportDate}
+            max={new Date().toISOString().split('T')[0]}
+            onChange={e => setReportDate(e.target.value)}
+            style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0', flex: 1 }}
+          />
+          <button
+            onClick={() => handleDateChange(1)}
+            disabled={reportDate >= new Date().toISOString().split('T')[0]}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '6px',
+              border: '1px solid #e2e8f0',
+              background: reportDate >= new Date().toISOString().split('T')[0] ? '#f1f5f9' : 'white',
+              cursor: reportDate >= new Date().toISOString().split('T')[0] ? 'not-allowed' : 'pointer'
+            }}
+          >
+            &gt;
+          </button>
+        </div>
+
+        {reportLoading ? (
+          <p>Loading note...</p>
+        ) : reportData && reportData.closingNote ? (
+          <div>
+            {Array.isArray(reportData.closingNote) ? (
+              reportData.closingNote.map((note, idx) => (
+                <div key={idx} style={{ marginBottom: idx < reportData.closingNote.length - 1 ? '15px' : 0, paddingBottom: idx < reportData.closingNote.length - 1 ? '15px' : 0, borderBottom: idx < reportData.closingNote.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
+                  <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{note.gym_name}</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', fontSize: '14px' }}>
+                    <div><span style={{ color: 'var(--text-secondary)' }}>Momo:</span> {note.momo_balance} RWF</div>
+                    <div><span style={{ color: 'var(--text-secondary)' }}>Cash:</span> {note.cash_balance} RWF</div>
+                  </div>
+                  {note.note && <div style={{ fontStyle: 'italic', marginTop: '8px', fontSize: '14px', lineHeight: '1.4' }}>"{note.note}"</div>}
+                </div>
+              ))
+            ) : (
+              <div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', fontSize: '14px' }}>
+                  <div><span style={{ color: 'var(--text-secondary)' }}>Reported Momo:</span> {reportData.closingNote.momo_balance} RWF</div>
+                  <div><span style={{ color: 'var(--text-secondary)' }}>Reported Cash:</span> {reportData.closingNote.cash_balance} RWF</div>
+                </div>
+                {reportData.closingNote.note && <div style={{ fontStyle: 'italic', marginTop: '8px', fontSize: '14px', lineHeight: '1.4' }}>"{reportData.closingNote.note}"</div>}
+              </div>
+            )}
+          </div>
+        ) : (
+          <p style={{ color: 'var(--text-secondary)' }}>No closing note found for this date.</p>
+        )}
+      </Modal>
     </div>
   );
 }
