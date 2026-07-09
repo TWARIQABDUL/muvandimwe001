@@ -1,5 +1,5 @@
 {
-  "version": "0.1.12",
-  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.12.apk",
-  "releaseNotes": "Moved View Closing Note button to the very top of the Owner Dashboard"
+  "version": "0.1.13",
+  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.13.apk",
+  "releaseNotes": "Added Date controls inside the Closing Note popup modal"
 }

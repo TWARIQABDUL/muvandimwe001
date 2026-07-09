@@ -222,15 +222,13 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
         <div className="flex-between" style={{ flexWrap: 'wrap', gap: '15px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <h2 className="card-title" style={{ margin: 0 }}>Report yumunsi</h2>
-            {reportData && reportData.closingNote && (
-              <Button 
-                type="primary" 
-                onClick={() => setIsNoteModalVisible(true)}
-                style={{ width: 'fit-content', borderRadius: '6px' }}
-              >
-                View Closing Note ({reportDate})
-              </Button>
-            )}
+            <Button 
+              type="default" 
+              onClick={() => setIsNoteModalVisible(true)}
+              style={{ width: 'fit-content', borderRadius: '6px' }}
+            >
+              Closing Notes ({reportDate})
+            </Button>
           </div>
           <div className="timeframe-buttons">
             {['today', 'week', 'month', 'year'].map(tf => (
@@ -443,7 +441,38 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
                   </Button>
                 ]}
               >
-                {reportData && reportData.closingNote && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '20px' }}>
+                  <button
+                    onClick={() => handleDateChange(-1)}
+                    style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer' }}
+                  >
+                    &lt;
+                  </button>
+                  <input
+                    type="date"
+                    value={reportDate}
+                    max={new Date().toISOString().split('T')[0]}
+                    onChange={e => setReportDate(e.target.value)}
+                    style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0', flex: 1 }}
+                  />
+                  <button
+                    onClick={() => handleDateChange(1)}
+                    disabled={reportDate >= new Date().toISOString().split('T')[0]}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid #e2e8f0',
+                      background: reportDate >= new Date().toISOString().split('T')[0] ? '#f1f5f9' : 'white',
+                      cursor: reportDate >= new Date().toISOString().split('T')[0] ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    &gt;
+                  </button>
+                </div>
+
+                {reportLoading ? (
+                  <p>Loading note...</p>
+                ) : reportData && reportData.closingNote ? (
                   <div>
                     {Array.isArray(reportData.closingNote) ? (
                       reportData.closingNote.map((note, idx) => (
@@ -466,6 +495,8 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
                       </div>
                     )}
                   </div>
+                ) : (
+                  <p style={{ color: 'var(--text-secondary)' }}>No closing note found for this date.</p>
                 )}
               </Modal>
             </div>
