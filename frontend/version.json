@@ -1,5 +1,5 @@
 {
-  "version": "0.1.9",
-  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.9.apk",
-  "releaseNotes": "Fix Revenue Breakdown to show services even with 0 revenue"
+  "version": "0.1.10",
+  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.10.apk",
+  "releaseNotes": "Added Manager Closing Note feature to Owner Analytics Dashboard"
 }
