@@ -48,11 +48,7 @@ function getDateRange(timeframe) {
 
 // Helper function to calculate revenue breakdown based on true payments
 function calculateRevenueBreakdown(payments) {
-  const breakdown = {
-    gym: { walk_in: 0, walk_in_count: 0, daily: 0, daily_count: 0, subscription: 0, subscription_count: 0, b2b: 0, b2b_count: 0, total: 0, total_count: 0 },
-    sauna: { walk_in: 0, walk_in_count: 0, daily: 0, daily_count: 0, subscription: 0, subscription_count: 0, b2b: 0, b2b_count: 0, total: 0, total_count: 0 },
-    pool: { walk_in: 0, walk_in_count: 0, daily: 0, daily_count: 0, subscription: 0, subscription_count: 0, b2b: 0, b2b_count: 0, total: 0, total_count: 0 }
-  };
+  const breakdown = {};
 
   payments.forEach(p => {
     const services = p.service.split(',');
@@ -61,20 +57,22 @@ function calculateRevenueBreakdown(payments) {
 
     services.forEach(s => {
       const cleanService = s.trim().toLowerCase();
-      if (breakdown[cleanService]) {
-        if (p.type === 'walk_in') {
-          breakdown[cleanService].walk_in += share;
-          breakdown[cleanService].walk_in_count += 1;
-        } else if (p.type === 'daily') {
-          breakdown[cleanService].daily += share;
-          breakdown[cleanService].daily_count += 1;
-        } else if (p.type === 'subscription_signup' || p.type === 'subscription_renewal') {
-          breakdown[cleanService].subscription += share;
-          breakdown[cleanService].subscription_count += 1;
-        } else if (p.type === 'b2b') {
-          breakdown[cleanService].b2b += share;
-          breakdown[cleanService].b2b_count += 1;
-        }
+      if (!breakdown[cleanService]) {
+        breakdown[cleanService] = { walk_in: 0, walk_in_count: 0, daily: 0, daily_count: 0, subscription: 0, subscription_count: 0, b2b: 0, b2b_count: 0, total: 0, total_count: 0 };
+      }
+
+      if (p.type === 'walk_in') {
+        breakdown[cleanService].walk_in += share;
+        breakdown[cleanService].walk_in_count += 1;
+      } else if (p.type === 'daily') {
+        breakdown[cleanService].daily += share;
+        breakdown[cleanService].daily_count += 1;
+      } else if (p.type === 'subscription_signup' || p.type === 'subscription_renewal') {
+        breakdown[cleanService].subscription += share;
+        breakdown[cleanService].subscription_count += 1;
+      } else if (p.type === 'b2b') {
+        breakdown[cleanService].b2b += share;
+        breakdown[cleanService].b2b_count += 1;
       }
     });
   });
@@ -98,19 +96,23 @@ function calculateRevenueBreakdown(payments) {
 
 // Helper function to calculate pie chart data
 function calculatePieChart(breakdown) {
-  const totals = {
-    gym: breakdown.gym.total,
-    sauna: breakdown.sauna.total,
-    pool: breakdown.pool.total
-  };
+  const totals = {};
+  let grandTotal = 0;
 
-  const grandTotal = Object.values(totals).reduce((sum, val) => sum + val, 0);
+  Object.keys(breakdown).forEach(service => {
+    totals[service] = breakdown[service].total;
+    grandTotal += breakdown[service].total;
+  });
 
-  return {
-    gym: { percentage: grandTotal > 0 ? Math.round((totals.gym / grandTotal) * 100) : 0, amount: totals.gym },
-    sauna: { percentage: grandTotal > 0 ? Math.round((totals.sauna / grandTotal) * 100) : 0, amount: totals.sauna },
-    pool: { percentage: grandTotal > 0 ? Math.round((totals.pool / grandTotal) * 100) : 0, amount: totals.pool }
-  };
+  const pieChart = {};
+  Object.keys(totals).forEach(service => {
+    pieChart[service] = {
+      percentage: grandTotal > 0 ? Math.round((totals[service] / grandTotal) * 100) : 0,
+      amount: totals[service]
+    };
+  });
+
+  return pieChart;
 }
 
 // GET /api/dashboard/today - Today's snapshot
