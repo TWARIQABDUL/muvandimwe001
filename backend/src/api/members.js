@@ -211,14 +211,21 @@ router.post(
         );
       }
 
-      // Log payment transaction
-      const paymentId = uuidv4();
-      const totalPaymentAmount = finalFee * months;
-      await db.run(
-        `INSERT INTO payments (id, gym_id, user_id, member_id, amount, type, service, payment_method, timestamp)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [paymentId, gym_id, req.user.id, memberId, totalPaymentAmount, 'subscription_signup', servicesStr, payment_method || 'Cash', new Date().toISOString()]
-      );
+      // Log payment transaction only if it's a new signup starting today.
+      // If it's a past start_date, they are an "old" member migrating in, 
+      // so we either log it on their actual start date, or we don't log a payment to avoid messing up revenue.
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isNew = startStr === todayStr;
+
+      if (isNew) {
+        const paymentId = uuidv4();
+        const totalPaymentAmount = finalFee * months;
+        await db.run(
+          `INSERT INTO payments (id, gym_id, user_id, member_id, amount, type, service, payment_method, timestamp)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [paymentId, gym_id, req.user.id, memberId, totalPaymentAmount, 'subscription_signup', servicesStr, payment_method || 'Cash', new Date().toISOString()]
+        );
+      }
 
       res.status(201).json({
         id: memberId,
