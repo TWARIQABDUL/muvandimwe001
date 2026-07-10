@@ -33,10 +33,17 @@ export default function RenewMembership({
     { title: 'Action', key: 'action', width: 150, render: (_, item) => (
         <button
           className="btn-primary btn-small"
-          onClick={() => handleRenewal(item.id)}
+          onClick={() => {
+            const formattedMember = {
+              ...item,
+              allowed_services: item.included_services ? item.included_services.split(',') : []
+            };
+            handleSelectSearchResult(formattedMember);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
           disabled={loading}
         >
-          Renew Subscription
+          Select for Renewal
         </button>
       )
     }
