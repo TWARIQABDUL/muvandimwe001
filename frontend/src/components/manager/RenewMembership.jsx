@@ -17,7 +17,12 @@ export default function RenewMembership({
   setPaymentMethod,
   loading,
   renewalMonths,
-  setRenewalMonths
+  setRenewalMonths,
+  couponCode,
+  setCouponCode,
+  handleValidateCoupon,
+  couponMessage,
+  appliedCoupon
 }) {
   const [isScanning, setIsScanning] = useState(false);
 
@@ -217,6 +222,33 @@ export default function RenewMembership({
                   </div>
                 </div>
 
+                <div className="form-group" style={{ background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '15px' }}>
+                  <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>Apply Coupon</label>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <input
+                      type="text"
+                      placeholder="Enter coupon code..."
+                      value={couponCode || ''}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      onBlur={handleValidateCoupon}
+                      style={{ textTransform: 'uppercase', flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                    />
+                    <button 
+                      type="button" 
+                      className="btn-secondary" 
+                      onClick={handleValidateCoupon} 
+                      style={{ padding: '0 20px', whiteSpace: 'nowrap' }}
+                    >
+                      Apply
+                    </button>
+                  </div>
+                  {couponMessage && (
+                    <div style={{ marginTop: '8px', fontSize: '13px', color: couponMessage.type === 'success' ? '#059669' : '#dc2626', fontWeight: '500' }}>
+                      {couponMessage.text}
+                    </div>
+                  )}
+                </div>
+
                 <button
                   className="btn-primary"
                   onClick={(e) => {
@@ -229,7 +261,12 @@ export default function RenewMembership({
                   <span>Renew Subscription</span>
                   {memberLookup.monthly_fee ? (
                     <span style={{ fontWeight: 'bold' }}>
-                      {(memberLookup.monthly_fee * renewalMonths).toLocaleString()} RWF
+                      {(() => {
+                        const baseAmt = memberLookup.monthly_fee * renewalMonths;
+                        const discountPct = appliedCoupon ? appliedCoupon.discount_percent : 0;
+                        const discountAmt = Math.round(baseAmt * (discountPct / 100));
+                        return (baseAmt - discountAmt).toLocaleString();
+                      })()} RWF
                     </span>
                   ) : null}
                 </button>

@@ -40,7 +40,7 @@ router.post(
   async (req, res) => {
     try {
       const memberId = req.params.id;
-      const { payment_method, months: reqMonths } = req.body;
+      const { payment_method, months: reqMonths, coupon } = req.body;
       const { gym_id } = req.user;
       
       const months = Number(reqMonths) || 1;
@@ -68,6 +68,25 @@ router.post(
       const newRenewalDate = new Date(currentRenewalDate.getTime() + (30 * months) * 24 * 60 * 60 * 1000);
       const newRenewalDateStr = newRenewalDate.toISOString().split('T')[0];
 
+      // Calculate discount if coupon provided
+      let discountPercent = 0;
+      if (coupon) {
+        const cleanCoupon = coupon.trim().toUpperCase();
+        const foundCoupon = await db.get(
+          `SELECT discount_percent FROM coupons WHERE gym_id = ? AND code = ? AND active = 1`,
+          [gym_id, cleanCoupon]
+        );
+        if (foundCoupon) {
+          discountPercent = foundCoupon.discount_percent;
+        } else {
+          return res.status(400).json({ error: 'Invalid or inactive coupon code' });
+        }
+      }
+
+      const baseAmount = (member.monthly_fee || 0) * months;
+      const discountAmount = Math.round(baseAmount * (discountPercent / 100));
+      const totalAmount = baseAmount - discountAmount;
+
       // Update subscription
       await db.run(
         `UPDATE member_subscriptions 
@@ -78,7 +97,6 @@ router.post(
 
       // Log subscription renewal payment
       const paymentId = uuidv4();
-      const totalAmount = (member.monthly_fee || 0) * months;
       
       await db.run(
         `INSERT INTO payments (id, gym_id, member_id, amount, type, service, payment_method, timestamp)

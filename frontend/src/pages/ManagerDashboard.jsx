@@ -48,6 +48,9 @@ export default function ManagerDashboard() {
   const [newMemberQr, setNewMemberQr] = useState(null);
   const [registerMonths, setRegisterMonths] = useState(1);
   const [renewalMonths, setRenewalMonths] = useState(1);
+  const [renewCouponCode, setRenewCouponCode] = useState('');
+  const [renewAppliedCoupon, setRenewAppliedCoupon] = useState(null);
+  const [renewCouponMessage, setRenewCouponMessage] = useState(null);
 
   const handleTabChange = (tab) => {
     navigate(`/manager/${tab}`);
@@ -327,11 +330,16 @@ export default function ManagerDashboard() {
       setLoading(true);
       const response = await api.post(`/members/${memberId}/subscriptions/renew`, {
         payment_method: paymentMethod,
-        months: renewalMonths
+        months: renewalMonths,
+        coupon: renewAppliedCoupon?.code || undefined
       });
       setMessage(response.data.message || 'Subscription renewed');
       fetchDashboard();
       setRenewalMonths(1);
+      setRenewCouponCode('');
+      setRenewAppliedCoupon(null);
+      setRenewCouponMessage(null);
+      setMemberLookup(null);
       setTimeout(() => setMessage(null), 4000);
     } catch (err) {
       setError(err.response?.data?.error || 'Renewal failed');
@@ -363,6 +371,31 @@ export default function ManagerDashboard() {
       }
     } catch (err) {
       setCouponMessage({ type: 'error', text: 'Failed to validate coupon.' });
+    }
+  };
+
+  const handleValidateRenewCoupon = async () => {
+    setRenewCouponMessage(null);
+    if (!renewCouponCode.trim()) {
+      setRenewAppliedCoupon(null);
+      return;
+    }
+    
+    try {
+      const cleanCode = renewCouponCode.trim().toUpperCase();
+      const response = await api.get('/coupons');
+      const allCoupons = response.data.coupons || [];
+      const matched = allCoupons.find(c => c.code === cleanCode && c.active === 1);
+      
+      if (matched) {
+        setRenewAppliedCoupon(matched);
+        setRenewCouponMessage({ type: 'success', text: `Coupon applied: ${matched.discount_percent}% off!` });
+      } else {
+        setRenewAppliedCoupon(null);
+        setRenewCouponMessage({ type: 'error', text: 'Invalid or inactive coupon code.' });
+      }
+    } catch (err) {
+      setRenewCouponMessage({ type: 'error', text: 'Failed to validate coupon.' });
     }
   };
 
@@ -485,6 +518,11 @@ export default function ManagerDashboard() {
                   loading={loading}
                   renewalMonths={renewalMonths}
                   setRenewalMonths={setRenewalMonths}
+                  couponCode={renewCouponCode}
+                  setCouponCode={setRenewCouponCode}
+                  handleValidateCoupon={handleValidateRenewCoupon}
+                  couponMessage={renewCouponMessage}
+                  appliedCoupon={renewAppliedCoupon}
                 />
               } />
 
