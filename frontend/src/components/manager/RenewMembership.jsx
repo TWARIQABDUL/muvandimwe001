@@ -184,18 +184,14 @@ export default function RenewMembership({
               <>
                 <div className="form-group" style={{ background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '15px' }}>
                   <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>Duration (Months)</label>
-                  <select 
+                  <input
+                    type="number"
                     className="form-control" 
                     value={renewalMonths} 
-                    onChange={(e) => setRenewalMonths(Number(e.target.value))}
+                    onChange={(e) => setRenewalMonths(Math.max(1, Number(e.target.value)))}
+                    min="1"
                     style={{ marginBottom: '15px', padding: '10px', width: '100%', borderRadius: '6px', border: '1px solid #cbd5e1' }}
-                  >
-                    <option value={1}>1 Month</option>
-                    <option value={2}>2 Months</option>
-                    <option value={3}>3 Months</option>
-                    <option value={6}>6 Months</option>
-                    <option value={12}>12 Months (1 Year)</option>
-                  </select>
+                  />
 
                   <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>Payment Method</label>
                   <div style={{ display: 'flex', gap: '20px' }}>

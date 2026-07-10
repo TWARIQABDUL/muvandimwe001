@@ -1,5 +1,5 @@
 {
-  "version": "0.1.16",
-  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.16.apk",
-  "releaseNotes": "Added full-screen check-in success modal to prevent double charging."
+  "version": "0.1.17",
+  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.17.apk",
+  "releaseNotes": "Changed subscription duration to allow any custom number of months and fixed past subscription statuses."
 }

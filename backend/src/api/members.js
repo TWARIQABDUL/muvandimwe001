@@ -190,12 +190,21 @@ router.post(
         [memberId, gym_id, name, email || null, phone || null, qr_code_id, 'subscription', null]
       );
 
+      // Calculate proper status based on dates
+      let subStatus = 'active';
+      if (!is_card) {
+        const todayStrForStatus = new Date().toISOString().split('T')[0];
+        if (nextRenewalStr < todayStrForStatus) {
+          subStatus = 'expired';
+        }
+      }
+
       // Create subscription
       const memberSubId = uuidv4();
       await db.run(
         `INSERT INTO member_subscriptions (id, gym_id, member_id, subscription_id, start_date, next_renewal_date, status, is_card, remaining_taps)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [memberSubId, gym_id, memberId, finalSubId, startStr, nextRenewalStr, 'active', is_card ? 1 : 0, is_card ? (Number(taps) || 20) : null]
+        [memberSubId, gym_id, memberId, finalSubId, startStr, nextRenewalStr, subStatus, is_card ? 1 : 0, is_card ? (Number(taps) || 20) : null]
       );
 
       // Update member current subscription link

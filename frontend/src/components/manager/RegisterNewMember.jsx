@@ -316,18 +316,14 @@ export default function RegisterNewMember({
           {!isCard && (
             <div className="form-group" style={{ marginLeft: '32px', marginTop: '10px' }}>
               <label>Duration (Months)</label>
-              <select
+              <input
+                type="number"
                 className="form-control"
                 value={registerMonths}
-                onChange={(e) => setRegisterMonths(Number(e.target.value))}
+                onChange={(e) => setRegisterMonths(Math.max(1, Number(e.target.value)))}
+                min="1"
                 style={{ maxWidth: '200px', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
-              >
-                <option value={1}>1 Month</option>
-                <option value={2}>2 Months</option>
-                <option value={3}>3 Months</option>
-                <option value={6}>6 Months</option>
-                <option value={12}>12 Months (1 Year)</option>
-              </select>
+              />
             </div>
           )}
 
