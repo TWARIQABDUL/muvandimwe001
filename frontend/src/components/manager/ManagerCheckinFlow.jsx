@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera } from 'lucide-react';
+import { Camera, CheckCircle } from 'lucide-react';
 import { Table } from 'antd';
 import FullScreenScanner from '../FullScreenScanner.jsx';
 import { useAuthStore } from '../../store/authStore.js';
@@ -28,7 +28,9 @@ export default function ManagerCheckinFlow({
   setWalkInAmount,
   paymentMethod,
   setPaymentMethod,
-  loading
+  loading,
+  checkinSuccess,
+  setCheckinSuccess
 }) {
   const [checkinType, setCheckinType] = useState('subscriber');
   const [isScanning, setIsScanning] = useState(false);
@@ -68,6 +70,44 @@ export default function ManagerCheckinFlow({
           onScan={onCameraScan}
           onClose={() => setIsScanning(false)}
         />
+      )}
+
+      {checkinSuccess && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999, background: 'var(--bg-color)',
+          display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+          padding: '20px', textAlign: 'center', animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <CheckCircle size={100} color="var(--success-color)" style={{ marginBottom: '20px' }} />
+          <h2 style={{ fontSize: '32px', marginBottom: '10px', color: 'var(--text-primary)' }}>Check-in Successful!</h2>
+          <p style={{ fontSize: '20px', color: 'var(--text-secondary)', marginBottom: '30px' }}>
+            <strong>{checkinSuccess.name}</strong> has been checked in for <strong style={{ textTransform: 'capitalize' }}>{checkinSuccess.service}</strong>.
+          </p>
+          
+          {checkinSuccess.type === 'daily' || checkinSuccess.type === 'walk_in' ? (
+            <div style={{ background: 'var(--bg-light)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '40px', minWidth: '300px' }}>
+              <div style={{ fontSize: '16px', color: 'var(--text-secondary)', marginBottom: '5px' }}>Amount Paid</div>
+              <div style={{ fontSize: '36px', fontWeight: 'bold', color: 'var(--primary-color)' }}>
+                {Number(checkinSuccess.amount).toLocaleString()} RWF
+              </div>
+              <div style={{ marginTop: '10px', fontSize: '14px', fontWeight: '600', color: '#64748b' }}>
+                Via {checkinSuccess.paymentMethod}
+              </div>
+            </div>
+          ) : (
+            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '15px 30px', borderRadius: '12px', color: '#166534', fontWeight: '600', marginBottom: '40px', fontSize: '18px' }}>
+              {checkinSuccess.type === 'b2b' ? 'Partner Check-in' : 'Subscription Check-in'}
+            </div>
+          )}
+
+          <button 
+            className="btn-primary"
+            onClick={() => setCheckinSuccess(null)}
+            style={{ padding: '20px 40px', fontSize: '20px', width: '100%', maxWidth: '400px', borderRadius: '12px' }}
+          >
+            Done
+          </button>
+        </div>
       )}
       
       {/* Overview Cards */}

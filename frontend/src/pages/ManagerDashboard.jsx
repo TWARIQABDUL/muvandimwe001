@@ -51,6 +51,7 @@ export default function ManagerDashboard() {
   const [renewCouponCode, setRenewCouponCode] = useState('');
   const [renewAppliedCoupon, setRenewAppliedCoupon] = useState(null);
   const [renewCouponMessage, setRenewCouponMessage] = useState(null);
+  const [checkinSuccess, setCheckinSuccess] = useState(null);
 
   const handleTabChange = (tab) => {
     navigate(`/manager/${tab}`);
@@ -211,11 +212,18 @@ export default function ManagerDashboard() {
         amount,
         payment_method: paymentMethod
       });
-      setMessage(`${memberLookup.name} checked in to ${memberService}${type === 'daily' ? ` (Paid ${amount.toLocaleString()} RWF via ${paymentMethod})` : ''}`);
+      
+      setCheckinSuccess({
+        name: memberLookup.name,
+        service: memberService,
+        type: type,
+        amount: amount,
+        paymentMethod: paymentMethod
+      });
+
       setMemberLookup(null);
       setQrCode('');
       fetchDashboard();
-      setTimeout(() => setMessage(null), 4000);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to check in member');
       setTimeout(() => setError(null), 4000);
@@ -254,13 +262,20 @@ export default function ManagerDashboard() {
         amount: amountValue,
         payment_method: paymentMethod
       });
-      setMessage(`${walkInName.trim()} checked in as walk-in for ${walkInServices.join(', ')} via ${paymentMethod}`);
+      
+      setCheckinSuccess({
+        name: walkInName.trim(),
+        service: walkInServices.join(', '),
+        type: 'walk_in',
+        amount: amountValue,
+        paymentMethod: paymentMethod
+      });
+
       setWalkInName('');
       setWalkInServices(['gym']);
       const selected = services.find(s => s.name === 'gym');
       setWalkInAmount(selected ? selected.price_daily.toString() : '15000');
       fetchDashboard();
-      setTimeout(() => setMessage(null), 4000);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to create walk-in check-in');
       setTimeout(() => setError(null), 4000);
@@ -463,6 +478,8 @@ export default function ManagerDashboard() {
                   memberLookup={memberLookup}
                   memberService={memberService}
                   setMemberService={setMemberService}
+                  checkinSuccess={checkinSuccess}
+                  setCheckinSuccess={setCheckinSuccess}
                   walkInName={walkInName}
                   setWalkInName={setWalkInName}
                   walkInServices={walkInServices}

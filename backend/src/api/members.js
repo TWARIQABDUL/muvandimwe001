@@ -259,7 +259,7 @@ router.get(
          LEFT JOIN employers e ON m.employer_id = e.id
          LEFT JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
          LEFT JOIN subscriptions s ON ms.subscription_id = s.id
-         WHERE m.gym_id = ? AND m.name LIKE ?
+         WHERE m.gym_id = ? AND LOWER(m.name) LIKE LOWER(?)
          LIMIT 20`,
         [gym_id, `%${q}%`]
       );
