@@ -84,18 +84,18 @@ router.post(
 
       // Insert check-in
       await db.run(
-        `INSERT INTO checkins (id, gym_id, member_id, member_name, type, service, amount, timestamp)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [checkInId, gym_id, member_id || null, finalMemberName, type, service, amount || null, now]
+        `INSERT INTO checkins (id, gym_id, user_id, member_id, member_name, type, service, amount, timestamp)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [checkInId, gym_id, req.user.id, member_id || null, finalMemberName, type, service, amount || null, now]
       );
 
       // Log payment transaction if it's cash walk-in or daily pass
       if (type === 'walk_in' || type === 'daily') {
         const paymentId = uuidv4();
         await db.run(
-          `INSERT INTO payments (id, gym_id, member_id, amount, type, service, payment_method, timestamp)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [paymentId, gym_id, member_id || null, amount || 0, type, service, payment_method || 'Cash', now]
+          `INSERT INTO payments (id, gym_id, user_id, member_id, amount, type, service, payment_method, timestamp)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [paymentId, gym_id, req.user.id, member_id || null, amount || 0, type, service, payment_method || 'Cash', now]
         );
       }
 
@@ -137,9 +137,9 @@ router.get(
       const checkins = await db.all(
         `SELECT member_name, service, type, amount, timestamp
          FROM checkins
-         WHERE (gym_id = ? OR ? = 'all') AND DATE(timestamp) = ?
+         WHERE (gym_id = ? OR ? = 'all') AND DATE(timestamp) = ? AND user_id = ?
          ORDER BY timestamp DESC`,
-        [gym_id, gym_id, today]
+        [gym_id, gym_id, today, req.user.id]
       );
 
       // Format timestamps
@@ -172,15 +172,21 @@ router.get(
 
 // GET /api/checkins/analytics - Get check-in data for analytics (helper endpoint)
 // Used internally by dashboard endpoints
-export async function getCheckinsForPeriod(gymId, startDate, endDate) {
+export async function getCheckinsForPeriod(gymId, startDate, endDate, userId = null) {
   try {
-    return await db.all(
-      `SELECT member_name, service, type, amount, timestamp
-       FROM checkins
-       WHERE (gym_id = ? OR ? = 'all') AND DATE(timestamp) BETWEEN ? AND ?
-       ORDER BY timestamp DESC`,
-      [gymId, gymId, startDate, endDate]
-    );
+    let query = `SELECT member_name, service, type, amount, timestamp
+                 FROM checkins
+                 WHERE (gym_id = ? OR ? = 'all') AND DATE(timestamp) BETWEEN ? AND ?`;
+    const params = [gymId, gymId, startDate, endDate];
+    
+    if (userId) {
+      query += ` AND user_id = ?`;
+      params.push(userId);
+    }
+    
+    query += ` ORDER BY timestamp DESC`;
+    
+    return await db.all(query, params);
   } catch (err) {
     console.error('Get analytics checkins error:', err.message);
     throw err;

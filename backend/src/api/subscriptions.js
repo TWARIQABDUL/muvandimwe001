@@ -99,11 +99,12 @@ router.post(
       const paymentId = uuidv4();
       
       await db.run(
-        `INSERT INTO payments (id, gym_id, member_id, amount, type, service, payment_method, timestamp)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO payments (id, gym_id, user_id, member_id, amount, type, service, payment_method, timestamp)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           paymentId,
           gym_id,
+          req.user.id,
           memberId,
           totalAmount,
           'subscription_renewal',

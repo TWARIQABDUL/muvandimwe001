@@ -8,13 +8,22 @@ const router = express.Router();
 const db = getDatabase();
 
 // Helper to retrieve payments for a period
-async function getPaymentsForPeriod(gymId, startDate, endDate) {
-  const query = startDate === endDate
-    ? `SELECT * FROM payments WHERE (gym_id = ? OR ? = 'all') AND DATE(timestamp) = ?`
-    : `SELECT * FROM payments WHERE (gym_id = ? OR ? = 'all') AND DATE(timestamp) BETWEEN ? AND ?`;
-  const params = startDate === endDate
-    ? [gymId, gymId, startDate]
-    : [gymId, gymId, startDate, endDate];
+async function getPaymentsForPeriod(gymId, startDate, endDate, userId = null) {
+  let query;
+  let params;
+  if (startDate === endDate) {
+    query = `SELECT * FROM payments WHERE (gym_id = ? OR ? = 'all') AND DATE(timestamp) = ?`;
+    params = [gymId, gymId, startDate];
+  } else {
+    query = `SELECT * FROM payments WHERE (gym_id = ? OR ? = 'all') AND DATE(timestamp) BETWEEN ? AND ?`;
+    params = [gymId, gymId, startDate, endDate];
+  }
+  
+  if (userId) {
+    query += ` AND user_id = ?`;
+    params.push(userId);
+  }
+  
   return await db.all(query, params);
 }
 
@@ -250,8 +259,8 @@ async function getManagerTodayDashboard(req, res) {
     const today = new Date().toISOString().split('T')[0];
 
     // Get check-ins and payments for today
-    const checkins = await getCheckinsForPeriod(gym_id, today, today);
-    const payments = await getPaymentsForPeriod(gym_id, today, today);
+    const checkins = await getCheckinsForPeriod(gym_id, today, today, req.user.id);
+    const payments = await getPaymentsForPeriod(gym_id, today, today, req.user.id);
 
     // Get pending renewals
     const pendingRenewals = await getPendingRenewals(gym_id);

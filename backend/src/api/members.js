@@ -215,9 +215,9 @@ router.post(
       const paymentId = uuidv4();
       const totalPaymentAmount = finalFee * months;
       await db.run(
-        `INSERT INTO payments (id, gym_id, member_id, amount, type, service, payment_method, timestamp)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [paymentId, gym_id, memberId, totalPaymentAmount, 'subscription_signup', servicesStr, payment_method || 'Cash', new Date().toISOString()]
+        `INSERT INTO payments (id, gym_id, user_id, member_id, amount, type, service, payment_method, timestamp)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [paymentId, gym_id, req.user.id, memberId, totalPaymentAmount, 'subscription_signup', servicesStr, payment_method || 'Cash', new Date().toISOString()]
       );
 
       res.status(201).json({
