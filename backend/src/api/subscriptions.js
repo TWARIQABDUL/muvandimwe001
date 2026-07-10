@@ -168,7 +168,7 @@ export async function getPendingRenewals(gymId) {
   try {
     const today = new Date().toISOString().split('T')[0];
     return await db.all(
-      `SELECT m.id, m.name, m.type, s.name as subscription, ms.next_renewal_date, ms.is_card, s.monthly_fee, s.included_services
+      `SELECT m.id, m.name, m.type, s.name as subscription, ms.next_renewal_date, ms.is_card, s.monthly_fee, s.included_services, ms.status as subscription_status
        FROM members m
        JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
        JOIN subscriptions s ON ms.subscription_id = s.id
