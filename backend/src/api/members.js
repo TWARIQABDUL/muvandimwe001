@@ -15,8 +15,10 @@ router.post(
   async (req, res) => {
     try {
       let { qr_code_id } = req.body;
-      const { name, email, phone, subscription_id, services, is_card, taps, coupon, employer_id, payment_method, start_date } = req.body;
+      const { name, email, phone, subscription_id, services, is_card, taps, coupon, employer_id, payment_method, start_date, subscription_months } = req.body;
       const { gym_id } = req.user;
+
+      const months = Number(subscription_months) || 1;
 
       if (!name) {
         return res.status(400).json({ error: 'Name is required' });
@@ -175,7 +177,7 @@ router.post(
         nextYear.setFullYear(nextYear.getFullYear() + 1);
         nextRenewalStr = nextYear.toISOString().split('T')[0];
       } else {
-        const nextMonth = new Date(effectiveStartDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const nextMonth = new Date(effectiveStartDate.getTime() + (30 * months) * 24 * 60 * 60 * 1000);
         nextRenewalStr = nextMonth.toISOString().split('T')[0];
       }
 
@@ -211,10 +213,11 @@ router.post(
 
       // Log payment transaction
       const paymentId = uuidv4();
+      const totalPaymentAmount = finalFee * months;
       await db.run(
         `INSERT INTO payments (id, gym_id, member_id, amount, type, service, payment_method, timestamp)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [paymentId, gym_id, memberId, finalFee, 'subscription_signup', servicesStr, payment_method || 'Cash', new Date().toISOString()]
+        [paymentId, gym_id, memberId, totalPaymentAmount, 'subscription_signup', servicesStr, payment_method || 'Cash', new Date().toISOString()]
       );
 
       res.status(201).json({
@@ -251,7 +254,7 @@ router.get(
       }
 
       const members = await db.all(
-        `SELECT m.id, m.name, m.type, m.employer_id, e.name as employer_name, ms.status as subscription_status, ms.next_renewal_date, ms.is_card, ms.remaining_taps, s.included_services
+        `SELECT m.id, m.name, m.type, m.employer_id, e.name as employer_name, ms.status as subscription_status, ms.next_renewal_date, ms.is_card, ms.remaining_taps, s.included_services, s.monthly_fee
          FROM members m
          LEFT JOIN employers e ON m.employer_id = e.id
          LEFT JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
@@ -292,7 +295,7 @@ router.post(
       }
 
       const member = await db.get(
-        `SELECT m.*, e.name as employer_name, ms.status, ms.is_card, ms.remaining_taps, ms.next_renewal_date, s.included_services
+        `SELECT m.*, e.name as employer_name, ms.status, ms.is_card, ms.remaining_taps, ms.next_renewal_date, s.included_services, s.monthly_fee
          FROM members m
          LEFT JOIN employers e ON m.employer_id = e.id
          LEFT JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
@@ -321,7 +324,8 @@ router.post(
           allowed_services: allowedServices,
           is_card: member.is_card || 0,
           remaining_taps: member.remaining_taps,
-          next_renewal_date: member.next_renewal_date
+          next_renewal_date: member.next_renewal_date,
+          monthly_fee: member.monthly_fee
         }
       });
     } catch (err) {

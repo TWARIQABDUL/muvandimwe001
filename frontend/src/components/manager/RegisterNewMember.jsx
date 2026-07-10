@@ -23,7 +23,9 @@ export default function RegisterNewMember({
   paymentMethod,
   setPaymentMethod,
   loading,
-  newMemberQr
+  newMemberQr,
+  registerMonths,
+  setRegisterMonths
 }) {
   const [partnerSearch, setPartnerSearch] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -311,6 +313,24 @@ export default function RegisterNewMember({
             </div>
           )}
 
+          {!isCard && (
+            <div className="form-group" style={{ marginLeft: '32px', marginTop: '10px' }}>
+              <label>Duration (Months)</label>
+              <select
+                className="form-control"
+                value={registerMonths}
+                onChange={(e) => setRegisterMonths(Number(e.target.value))}
+                style={{ maxWidth: '200px', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+              >
+                <option value={1}>1 Month</option>
+                <option value={2}>2 Months</option>
+                <option value={3}>3 Months</option>
+                <option value={6}>6 Months</option>
+                <option value={12}>12 Months (1 Year)</option>
+              </select>
+            </div>
+          )}
+
           <div className="form-group" style={{ marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
             <label style={{ fontSize: '16px', color: 'var(--primary-color)' }}>Step 3: Discounts</label>
             <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
@@ -351,9 +371,15 @@ export default function RegisterNewMember({
                   <span>-{pricing.discountAmt.toLocaleString()} RWF</span>
                 </div>
               )}
+              {registerMonths > 1 && !isCard && (
+                <div className="flex-between" style={{ marginBottom: '8px', fontSize: '14px', color: '#1e40af' }}>
+                  <span>Duration Multiplier:</span>
+                  <span>x{registerMonths} Months</span>
+                </div>
+              )}
               <div className="flex-between" style={{ borderTop: '1px solid #bfdbfe', paddingTop: '15px', marginTop: '15px', fontWeight: '700', fontSize: '18px', color: '#1e40af' }}>
                 <span>Total Package Fee:</span>
-                <span>{pricing.finalAmt.toLocaleString()} RWF</span>
+                <span>{((pricing.finalAmt || 0) * (isCard ? 1 : registerMonths)).toLocaleString()} RWF</span>
               </div>
             </div>
           )}

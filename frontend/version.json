@@ -1,5 +1,5 @@
 {
-  "version": "0.1.14",
-  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.14.apk",
-  "releaseNotes": "Prevent Modal from closing when switching dates and made it full-screen on mobile"
+  "version": "0.1.15",
+  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.15.apk",
+  "releaseNotes": "Added ability to subscribe and renew members for multiple months at a time"
 }

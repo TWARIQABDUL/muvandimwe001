@@ -15,7 +15,9 @@ export default function RenewMembership({
   memberLookup,
   paymentMethod,
   setPaymentMethod,
-  loading
+  loading,
+  renewalMonths,
+  setRenewalMonths
 }) {
   const [isScanning, setIsScanning] = useState(false);
 
@@ -168,7 +170,21 @@ export default function RenewMembership({
 
             {memberLookup.type !== 'b2b' && memberLookup.is_card !== 1 && (
               <>
-                <div className="form-group" style={{ background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <div className="form-group" style={{ background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '15px' }}>
+                  <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>Duration (Months)</label>
+                  <select 
+                    className="form-control" 
+                    value={renewalMonths} 
+                    onChange={(e) => setRenewalMonths(Number(e.target.value))}
+                    style={{ marginBottom: '15px', padding: '10px', width: '100%', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                  >
+                    <option value={1}>1 Month</option>
+                    <option value={2}>2 Months</option>
+                    <option value={3}>3 Months</option>
+                    <option value={6}>6 Months</option>
+                    <option value={12}>12 Months (1 Year)</option>
+                  </select>
+
                   <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>Payment Method</label>
                   <div style={{ display: 'flex', gap: '20px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
@@ -201,9 +217,14 @@ export default function RenewMembership({
                     handleRenewal(memberLookup.id);
                   }}
                   disabled={loading}
-                  style={{ width: '100%', padding: '15px', fontSize: '16px', marginTop: '10px' }}
+                  style={{ width: '100%', padding: '15px', fontSize: '16px', marginTop: '10px', display: 'flex', justifyContent: 'space-between' }}
                 >
-                  Renew Subscription
+                  <span>Renew Subscription</span>
+                  {memberLookup.monthly_fee ? (
+                    <span style={{ fontWeight: 'bold' }}>
+                      {(memberLookup.monthly_fee * renewalMonths).toLocaleString()} RWF
+                    </span>
+                  ) : null}
                 </button>
               </>
             )}

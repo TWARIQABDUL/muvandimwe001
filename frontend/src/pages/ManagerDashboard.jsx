@@ -46,6 +46,8 @@ export default function ManagerDashboard() {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponMessage, setCouponMessage] = useState(null);
   const [newMemberQr, setNewMemberQr] = useState(null);
+  const [registerMonths, setRegisterMonths] = useState(1);
+  const [renewalMonths, setRenewalMonths] = useState(1);
 
   const handleTabChange = (tab) => {
     navigate(`/manager/${tab}`);
@@ -177,6 +179,7 @@ export default function ManagerDashboard() {
     setMemberService(member.allowed_services?.[0] || 'gym');
     setSearchResults([]);
     setSearchQuery('');
+    setRenewalMonths(1); // Reset renewal months when a new member is selected
   };
 
   const handleCheckinMember = async (e) => {
@@ -292,7 +295,8 @@ export default function ManagerDashboard() {
         taps: isCard ? Number(taps) : null,
         coupon: appliedCoupon ? appliedCoupon.code : null,
         payment_method: paymentMethod,
-        start_date: newMember.start_date
+        start_date: newMember.start_date,
+        subscription_months: registerMonths
       });
 
       setMessage(`${response.data.name} registered successfully`);
@@ -304,6 +308,7 @@ export default function ManagerDashboard() {
       setCouponCode('');
       setAppliedCoupon(null);
       setCouponMessage(null);
+      setRegisterMonths(1);
       fetchDashboard();
       fetchCoupons(); // Refresh active coupons pool
       setTimeout(() => setMessage(null), 5000);
@@ -321,10 +326,12 @@ export default function ManagerDashboard() {
     try {
       setLoading(true);
       const response = await api.post(`/members/${memberId}/subscriptions/renew`, {
-        payment_method: paymentMethod
+        payment_method: paymentMethod,
+        months: renewalMonths
       });
       setMessage(response.data.message || 'Subscription renewed');
       fetchDashboard();
+      setRenewalMonths(1);
       setTimeout(() => setMessage(null), 4000);
     } catch (err) {
       setError(err.response?.data?.error || 'Renewal failed');
@@ -457,6 +464,8 @@ export default function ManagerDashboard() {
                   setPaymentMethod={setPaymentMethod}
                   loading={loading}
                   newMemberQr={newMemberQr}
+                  registerMonths={registerMonths}
+                  setRegisterMonths={setRegisterMonths}
                 />
               } />
 
@@ -474,6 +483,8 @@ export default function ManagerDashboard() {
                   paymentMethod={paymentMethod}
                   setPaymentMethod={setPaymentMethod}
                   loading={loading}
+                  renewalMonths={renewalMonths}
+                  setRenewalMonths={setRenewalMonths}
                 />
               } />
 
