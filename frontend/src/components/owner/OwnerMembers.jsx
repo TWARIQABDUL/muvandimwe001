@@ -1,6 +1,41 @@
 import React from 'react';
 import { Table } from 'antd';
 
+const formatDateWithDays = (dateString) => {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  if (isNaN(date)) return dateString;
+
+  const formattedDate = date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const targetDate = new Date(date);
+  targetDate.setHours(0, 0, 0, 0);
+
+  const diffTime = targetDate - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  let daysText = '';
+  if (diffDays === 0) {
+    daysText = '(Today)';
+  } else if (diffDays === 1) {
+    daysText = '(Tomorrow)';
+  } else if (diffDays === -1) {
+    daysText = '(Yesterday)';
+  } else if (diffDays > 1) {
+    daysText = `(in ${diffDays} days)`;
+  } else {
+    daysText = `(${Math.abs(diffDays)} days ago)`;
+  }
+
+  return `${formattedDate} ${daysText}`;
+};
+
 export default function OwnerMembers({ activeMembers }) {
   const columns = [
     {
@@ -34,11 +69,11 @@ export default function OwnerMembers({ activeMembers }) {
       width: 300,
       render: (_, member) => member.is_card === 1 ? (
         <span className="badge badge-success" style={{ backgroundColor: '#e0f2fe', color: '#0369a1' }}>
-          🎫 Session Card: {member.remaining_taps} Taps Left (Exp: {member.next_renewal_date})
+          🎫 Session Card: {member.remaining_taps} Taps Left (Exp: {formatDateWithDays(member.next_renewal_date)})
         </span>
       ) : (
         <span className="badge badge-success">
-          📅 Monthly (Renewal: {member.next_renewal_date})
+          📅 Monthly (Renewal: {formatDateWithDays(member.next_renewal_date)})
         </span>
       )
     }
