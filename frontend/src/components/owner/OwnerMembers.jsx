@@ -36,6 +36,18 @@ const formatDateWithDays = (dateString) => {
   return `${formattedDate} ${daysText}`;
 };
 
+const getDaysUntil = (dateString) => {
+  if (!dateString) return null;
+  const date = new Date(dateString);
+  if (isNaN(date)) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const targetDate = new Date(date);
+  targetDate.setHours(0, 0, 0, 0);
+  const diffTime = targetDate - today;
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
 export default function OwnerMembers({ activeMembers }) {
   const columns = [
     {
@@ -67,15 +79,39 @@ export default function OwnerMembers({ activeMembers }) {
       title: 'Subscription Status',
       key: 'status',
       width: 300,
-      render: (_, member) => member.is_card === 1 ? (
-        <span className="badge badge-success" style={{ backgroundColor: '#e0f2fe', color: '#0369a1' }}>
-          🎫 Session Card: {member.remaining_taps} Taps Left (Exp: {formatDateWithDays(member.next_renewal_date)})
-        </span>
-      ) : (
-        <span className="badge badge-success">
-          📅 Monthly (Renewal: {formatDateWithDays(member.next_renewal_date)})
-        </span>
-      )
+      render: (_, member) => {
+        const diffDays = getDaysUntil(member.next_renewal_date);
+        let customClass = "badge badge-success";
+        let customStyle = {};
+        
+        if (diffDays !== null) {
+          if (diffDays < 5) {
+            customClass = "badge";
+            customStyle = { backgroundColor: '#fee2e2', color: '#b91c1c' }; // Red
+          } else if (diffDays <= 10) {
+            customClass = "badge";
+            customStyle = { backgroundColor: '#ffedd5', color: '#c2410c' }; // Orange
+          }
+        }
+
+        if (member.is_card === 1) {
+          if (diffDays === null || diffDays > 10) {
+            customClass = "badge badge-success";
+            customStyle = { backgroundColor: '#e0f2fe', color: '#0369a1' };
+          }
+          return (
+            <span className={customClass} style={customStyle}>
+              🎫 Session Card: {member.remaining_taps} Taps Left (Exp: {formatDateWithDays(member.next_renewal_date)})
+            </span>
+          );
+        } else {
+          return (
+            <span className={customClass} style={customStyle}>
+              📅 Monthly (Renewal: {formatDateWithDays(member.next_renewal_date)})
+            </span>
+          );
+        }
+      }
     }
   ];
 
