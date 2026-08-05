@@ -52,6 +52,8 @@ export default function ManagerDashboard() {
   const [renewAppliedCoupon, setRenewAppliedCoupon] = useState(null);
   const [renewCouponMessage, setRenewCouponMessage] = useState(null);
   const [checkinSuccess, setCheckinSuccess] = useState(null);
+  const [renewalStartDate, setRenewalStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [renewalPaymentDate, setRenewalPaymentDate] = useState(new Date().toISOString().split('T')[0]);
 
   const handleTabChange = (tab) => {
     navigate(`/manager/${tab}`);
@@ -184,6 +186,17 @@ export default function ManagerDashboard() {
     setSearchResults([]);
     setSearchQuery('');
     setRenewalMonths(1); // Reset renewal months when a new member is selected
+    
+    // Set default dates
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (member.next_renewal_date && member.next_renewal_date < todayStr) {
+      setRenewalStartDate(todayStr);
+    } else if (member.next_renewal_date) {
+      setRenewalStartDate(member.next_renewal_date);
+    } else {
+      setRenewalStartDate(todayStr);
+    }
+    setRenewalPaymentDate(todayStr);
   };
 
   const handleCheckinMember = async (e) => {
@@ -346,7 +359,9 @@ export default function ManagerDashboard() {
       const response = await api.post(`/members/${memberId}/subscriptions/renew`, {
         payment_method: paymentMethod,
         months: renewalMonths,
-        coupon: renewAppliedCoupon?.code || undefined
+        coupon: renewAppliedCoupon?.code || undefined,
+        start_date: renewalStartDate,
+        payment_date: renewalPaymentDate
       });
       setMessage(response.data.message || 'Subscription renewed');
       fetchDashboard();
@@ -535,6 +550,10 @@ export default function ManagerDashboard() {
                   loading={loading}
                   renewalMonths={renewalMonths}
                   setRenewalMonths={setRenewalMonths}
+                  renewalStartDate={renewalStartDate}
+                  setRenewalStartDate={setRenewalStartDate}
+                  renewalPaymentDate={renewalPaymentDate}
+                  setRenewalPaymentDate={setRenewalPaymentDate}
                   couponCode={renewCouponCode}
                   setCouponCode={setRenewCouponCode}
                   handleValidateCoupon={handleValidateRenewCoupon}

@@ -40,7 +40,7 @@ router.post(
   async (req, res) => {
     try {
       const memberId = req.params.id;
-      const { payment_method, months: reqMonths, coupon } = req.body;
+      const { payment_method, months: reqMonths, coupon, start_date, payment_date } = req.body;
       const { gym_id } = req.user;
       
       const months = Number(reqMonths) || 1;
@@ -64,8 +64,11 @@ router.post(
       }
 
       // Calculate new renewal date
-      const currentRenewalDate = new Date(member.next_renewal_date);
-      const newRenewalDate = new Date(currentRenewalDate.getTime() + (30 * months) * 24 * 60 * 60 * 1000);
+      let effectiveStartDate = new Date(member.next_renewal_date);
+      if (start_date) {
+        effectiveStartDate = new Date(start_date);
+      }
+      const newRenewalDate = new Date(effectiveStartDate.getTime() + (30 * months) * 24 * 60 * 60 * 1000);
       const newRenewalDateStr = newRenewalDate.toISOString().split('T')[0];
 
       // Calculate discount if coupon provided
@@ -98,6 +101,11 @@ router.post(
       // Log subscription renewal payment
       const paymentId = uuidv4();
       
+      let paymentTimestamp = new Date().toISOString();
+      if (payment_date) {
+        paymentTimestamp = new Date(payment_date).toISOString();
+      }
+      
       await db.run(
         `INSERT INTO payments (id, gym_id, user_id, member_id, amount, type, service, payment_method, timestamp)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -110,7 +118,7 @@ router.post(
           'subscription_renewal',
           member.included_services || 'gym',
           payment_method || 'Cash',
-          new Date().toISOString()
+          paymentTimestamp
         ]
       );
 

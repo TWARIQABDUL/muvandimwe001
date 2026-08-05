@@ -18,6 +18,10 @@ export default function RenewMembership({
   loading,
   renewalMonths,
   setRenewalMonths,
+  renewalStartDate,
+  setRenewalStartDate,
+  renewalPaymentDate,
+  setRenewalPaymentDate,
   couponCode,
   setCouponCode,
   handleValidateCoupon,
@@ -192,6 +196,42 @@ export default function RenewMembership({
                     min="1"
                     style={{ marginBottom: '15px', padding: '10px', width: '100%', borderRadius: '6px', border: '1px solid #cbd5e1' }}
                   />
+
+                  <div style={{ display: 'flex', gap: '20px', marginBottom: '15px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: '1 1 200px' }}>
+                      <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>Subscription Start Date</label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={renewalStartDate}
+                        onChange={(e) => setRenewalStartDate(e.target.value)}
+                        style={{ padding: '10px', width: '100%', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                      />
+                    </div>
+                    <div style={{ flex: '1 1 200px' }}>
+                      <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>Payment Received Date</label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={renewalPaymentDate}
+                        onChange={(e) => setRenewalPaymentDate(e.target.value)}
+                        style={{ padding: '10px', width: '100%', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                      />
+                    </div>
+                  </div>
+
+                  {renewalStartDate && (
+                    <div style={{ fontSize: '13px', color: '#334155', marginBottom: '15px', padding: '10px', background: '#e2e8f0', borderRadius: '6px' }}>
+                      <strong>New Expiration Date:</strong> {
+                        (() => {
+                          const sd = new Date(renewalStartDate);
+                          // Calculate 30 days per month
+                          const newEnd = new Date(sd.getTime() + (30 * renewalMonths) * 24 * 60 * 60 * 1000);
+                          return newEnd.toISOString().split('T')[0];
+                        })()
+                      }
+                    </div>
+                  )}
 
                   <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>Payment Method</label>
                   <div style={{ display: 'flex', gap: '20px' }}>
