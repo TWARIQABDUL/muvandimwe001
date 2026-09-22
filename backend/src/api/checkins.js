@@ -70,14 +70,19 @@ router.post(
             }
           }
 
-          // **New Restriction**: Subscriber can only check in once a day
-          const today = new Date().toISOString().split('T')[0];
-          const existingCheckin = await db.get(
-            `SELECT id FROM checkins WHERE member_id = ? AND DATE(timestamp) = ?`,
-            [member_id, today]
-          );
-          if (existingCheckin) {
-            return res.status(400).json({ error: 'Member has already checked in today.' });
+          // Card holders sign for each service they use, several times a day if they
+          // want - the remaining taps are what limits them. Time-bound subscribers
+          // get one visit per service per day.
+          if (!member.is_card) {
+            const today = new Date().toISOString().split('T')[0];
+            const existingCheckin = await db.get(
+              `SELECT id FROM checkins
+               WHERE member_id = ? AND DATE(timestamp) = ? AND LOWER(service) = LOWER(?)`,
+              [member_id, today, service]
+            );
+            if (existingCheckin) {
+              return res.status(400).json({ error: `Member has already checked in for ${service} today.` });
+            }
           }
         }
       }

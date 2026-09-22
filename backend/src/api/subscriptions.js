@@ -107,8 +107,8 @@ router.post(
       }
       
       await db.run(
-        `INSERT INTO payments (id, gym_id, user_id, member_id, amount, type, service, payment_method, timestamp)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO payments (id, gym_id, user_id, member_id, amount, type, service, payment_method, months, timestamp)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           paymentId,
           gym_id,
@@ -118,6 +118,7 @@ router.post(
           'subscription_renewal',
           member.included_services || 'gym',
           payment_method || 'Cash',
+          months,
           paymentTimestamp
         ]
       );

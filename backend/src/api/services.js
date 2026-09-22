@@ -16,10 +16,10 @@ router.get(
     try {
       const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
       const services = await db.all(
-        `SELECT id, name, price_daily, price_monthly, allow_monthly
+        `SELECT id, name, price_daily, price_monthly, allow_monthly, category, sort_order
          FROM services
          WHERE (gym_id = ? OR ? = 'all')
-         ORDER BY name ASC`,
+         ORDER BY sort_order ASC, name ASC`,
         [gym_id, gym_id]
       );
       res.json({ services });
@@ -38,7 +38,7 @@ router.post(
   gymIsolationMiddleware,
   async (req, res) => {
     try {
-      const { name, price_daily, price_monthly, allow_monthly } = req.body;
+      const { name, price_daily, price_monthly, allow_monthly, category, sort_order } = req.body;
       const { gym_id } = req.user;
 
       if (!name) {
@@ -59,20 +59,26 @@ router.post(
       }
 
       const allowMonthlyVal = allow_monthly !== undefined ? (allow_monthly ? 1 : 0) : 1;
+      const cleanName = name.trim().toLowerCase();
+      // Services with no category of their own head up their own report section.
+      const categoryVal = category && category.trim() ? category.trim().toLowerCase() : cleanName;
+      const orderVal = Number(sort_order) || 100;
 
       const serviceId = uuidv4();
       await db.run(
-        `INSERT INTO services (id, gym_id, name, price_daily, price_monthly, allow_monthly)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [serviceId, gym_id, name.trim().toLowerCase(), dailyRate, monthlyRate, allowMonthlyVal]
+        `INSERT INTO services (id, gym_id, name, price_daily, price_monthly, allow_monthly, category, sort_order)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [serviceId, gym_id, cleanName, dailyRate, monthlyRate, allowMonthlyVal, categoryVal, orderVal]
       );
 
       res.status(201).json({
         id: serviceId,
-        name: name.trim().toLowerCase(),
+        name: cleanName,
         price_daily: dailyRate,
         price_monthly: monthlyRate,
-        allow_monthly: allowMonthlyVal
+        allow_monthly: allowMonthlyVal,
+        category: categoryVal,
+        sort_order: orderVal
       });
     } catch (err) {
       console.error('Create service error:', err.message);
@@ -90,7 +96,7 @@ router.patch(
   async (req, res) => {
     try {
       const serviceId = req.params.id;
-      const { name, price_daily, price_monthly, allow_monthly } = req.body;
+      const { name, price_daily, price_monthly, allow_monthly, category, sort_order } = req.body;
       const { gym_id } = req.user;
 
       const service = await db.get(
@@ -106,12 +112,17 @@ router.patch(
       const dailyRate = price_daily !== undefined ? Number(price_daily) : service.price_daily;
       const monthlyRate = price_monthly !== undefined ? Number(price_monthly) : service.price_monthly;
       const allowMonthlyVal = allow_monthly !== undefined ? (allow_monthly ? 1 : 0) : service.allow_monthly;
+      let categoryVal = service.category || updateName;
+      if (category !== undefined) {
+        categoryVal = category && category.trim() ? category.trim().toLowerCase() : updateName;
+      }
+      const orderVal = sort_order !== undefined ? (Number(sort_order) || 100) : (service.sort_order ?? 100);
 
       await db.run(
         `UPDATE services
-         SET name = ?, price_daily = ?, price_monthly = ?, allow_monthly = ?
+         SET name = ?, price_daily = ?, price_monthly = ?, allow_monthly = ?, category = ?, sort_order = ?
          WHERE id = ?`,
-        [updateName, dailyRate, monthlyRate, allowMonthlyVal, serviceId]
+        [updateName, dailyRate, monthlyRate, allowMonthlyVal, categoryVal, orderVal, serviceId]
       );
 
       res.json({
@@ -119,7 +130,9 @@ router.patch(
         name: updateName,
         price_daily: dailyRate,
         price_monthly: monthlyRate,
-        allow_monthly: allowMonthlyVal
+        allow_monthly: allowMonthlyVal,
+        category: categoryVal,
+        sort_order: orderVal
       });
     } catch (err) {
       console.error('Update service error:', err.message);

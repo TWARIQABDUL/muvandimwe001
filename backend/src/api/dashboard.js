@@ -3,6 +3,7 @@ import { getDatabase } from '../db/init.js';
 import { authMiddleware, roleMiddleware, gymIsolationMiddleware } from '../middleware/auth.js';
 import { getCheckinsForPeriod } from './checkins.js';
 import { getPendingRenewals } from './subscriptions.js';
+import { buildDailyReport, renderWhatsAppMessages } from '../utils/dailyReport.js';
 
 const router = express.Router();
 const db = getDatabase();
@@ -780,6 +781,32 @@ router.post(
     } catch (err) {
       console.error('Save closing note error:', err.message);
       res.status(500).json({ error: 'Failed to save closing note' });
+    }
+  }
+);
+
+// GET /api/dashboard/daily-report - The end-of-day report, ready to send on WhatsApp
+router.get(
+  '/daily-report',
+  authMiddleware,
+  roleMiddleware(['manager', 'owner']),
+  gymIsolationMiddleware,
+  async (req, res) => {
+    try {
+      const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
+      const date = req.query.date || new Date().toISOString().split('T')[0];
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ error: 'date must be in YYYY-MM-DD format' });
+      }
+
+      const report = await buildDailyReport(db, gym_id, date);
+      const messages = renderWhatsAppMessages(report);
+
+      res.json({ report, messages });
+    } catch (err) {
+      console.error('Get daily report error:', err.message);
+      res.status(500).json({ error: 'Failed to build daily report' });
     }
   }
 );

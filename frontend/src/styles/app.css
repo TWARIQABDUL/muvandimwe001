@@ -316,6 +316,12 @@ tbody:not(.ant-table tbody) tr:hover {
   border: 1px solid #a7f3d0;
 }
 
+.alert-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
 /* Loading Spinner */
 .spinner {
   display: inline-block;

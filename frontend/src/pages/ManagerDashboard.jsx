@@ -9,7 +9,8 @@ import ManagerCheckinFlow from '../components/manager/ManagerCheckinFlow.jsx';
 import RenewMembership from '../components/manager/RenewMembership.jsx';
 import SubscriberActivity from '../components/manager/SubscriberActivity.jsx';
 import RegisterNewMember from '../components/manager/RegisterNewMember.jsx';
-import ManagerDailyReport from '../components/manager/ManagerDailyReport.jsx';
+import DailyReport from '../components/DailyReport.jsx';
+import ManagerProductSales from '../components/manager/ManagerProductSales.jsx';
 
 export default function ManagerDashboard() {
   const { user } = useAuth();
@@ -456,7 +457,8 @@ export default function ManagerDashboard() {
     { id: 'register', label: 'Register New Member' },
     { id: 'renewals', label: 'Pending Renewals' },
     { id: 'activity', label: 'Subscriber Activity' },
-    { id: 'report', label: 'Closing Note' }
+    { id: 'shop', label: 'Shop Sales' },
+    { id: 'report', label: 'Daily Report' }
   ];
 
   return (
@@ -468,7 +470,7 @@ export default function ManagerDashboard() {
         {message && <div className="alert alert-success" style={{ marginBottom: '20px' }}>{message}</div>}
         {error && <div className="alert alert-error" style={{ marginBottom: '20px' }}>{error}</div>}
 
-        {loading && activeTab !== 'checkin' && activeTab !== 'register' ? (
+        {loading && activeTab !== 'checkin' && activeTab !== 'register' && activeTab !== 'shop' && activeTab !== 'report' ? (
           <div className="card text-center" style={{ padding: '60px 20px' }}>
             <div className="spinner"></div>
             <p style={{ marginTop: '10px' }}>Loading data...</p>
@@ -566,8 +568,12 @@ export default function ManagerDashboard() {
                 <SubscriberActivity dashboardData={dashboardData} />
               } />
               
+              <Route path="shop" element={
+                <ManagerProductSales />
+              } />
+
               <Route path="report" element={
-                <ManagerDailyReport dashboardData={dashboardData} date={new Date().toISOString().split('T')[0]} />
+                <DailyReport date={new Date().toISOString().split('T')[0]} />
               } />
 
               <Route path="*" element={<Navigate to="checkin" replace />} />

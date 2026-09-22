@@ -11,7 +11,7 @@ export default function OwnerServices({
   actionLoading
 }) {
   const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({ name: '', price_daily: '', price_monthly: '', allow_monthly: true });
+  const [editForm, setEditForm] = useState({ name: '', price_daily: '', price_monthly: '', allow_monthly: true, category: '', sort_order: 100 });
 
   const startEdit = (service) => {
     setEditingId(service.id);
@@ -19,7 +19,9 @@ export default function OwnerServices({
       name: service.name,
       price_daily: service.price_daily,
       price_monthly: service.price_monthly,
-      allow_monthly: service.allow_monthly === undefined ? true : !!service.allow_monthly
+      allow_monthly: service.allow_monthly === undefined ? true : !!service.allow_monthly,
+      category: service.category || service.name,
+      sort_order: service.sort_order ?? 100
     });
   };
 
@@ -32,7 +34,9 @@ export default function OwnerServices({
       name: editForm.name,
       price_daily: Number(editForm.price_daily),
       price_monthly: Number(editForm.price_monthly),
-      allow_monthly: editForm.allow_monthly
+      allow_monthly: editForm.allow_monthly,
+      category: editForm.category,
+      sort_order: Number(editForm.sort_order)
     });
     if (success) {
       setEditingId(null);
@@ -89,6 +93,26 @@ export default function OwnerServices({
                 ) : (
                   record.allow_monthly ? 'Yes' : 'No'
                 )
+              },
+              {
+                title: 'Report Section',
+                dataIndex: 'category',
+                key: 'category',
+                width: 140,
+                render: (text, record) => editingId === record.id ? (
+                  <input type="text" value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} style={{ padding: '6px', width: '110px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                ) : (
+                  <span style={{ textTransform: 'capitalize' }}>{text || record.name}</span>
+                )
+              },
+              {
+                title: 'Report Order',
+                dataIndex: 'sort_order',
+                key: 'sort_order',
+                width: 110,
+                render: (text, record) => editingId === record.id ? (
+                  <input type="number" value={editForm.sort_order} onChange={(e) => setEditForm({ ...editForm, sort_order: e.target.value })} style={{ padding: '6px', width: '70px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                ) : (text ?? 100)
               },
               {
                 title: 'Actions',
@@ -155,6 +179,28 @@ export default function OwnerServices({
                 />
               </div>
             )}
+            <div className="form-group">
+              <label>Report Section (optional)</label>
+              <input
+                type="text"
+                placeholder="e.g. massage — leave blank for its own section"
+                value={newService.category}
+                onChange={(e) => setNewService({ ...newService, category: e.target.value })}
+              />
+              <small style={{ color: 'var(--text-secondary)' }}>
+                Services sharing a section are listed item by item under one heading, the way Relax, Swedish and Deep tissue sit under Massage.
+              </small>
+            </div>
+            <div className="form-group">
+              <label>Report Order</label>
+              <input
+                type="number"
+                placeholder="100"
+                value={newService.sort_order}
+                onChange={(e) => setNewService({ ...newService, sort_order: e.target.value })}
+              />
+              <small style={{ color: 'var(--text-secondary)' }}>Lower numbers appear first in the daily report.</small>
+            </div>
             <button className="btn-primary" type="submit" disabled={actionLoading} style={{ width: '100%', marginTop: '10px' }}>
               {actionLoading ? 'Processing...' : 'Create Service Plan'}
             </button>
