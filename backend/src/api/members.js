@@ -281,10 +281,27 @@ router.get(
       );
 
       // format the results similarly to scan-qr
-      const formattedMembers = members.map(m => ({
-        ...m,
-        allowed_services: m.included_services ? m.included_services.split(',') : []
-      }));
+      const todayStr = new Date().toISOString().split('T')[0];
+      const formattedMembers = members.map(m => {
+        // Derive real subscription status from dates, not just the DB field
+        let realStatus = m.subscription_status;
+        if (m.type !== 'b2b' && m.subscription_status) {
+          if (m.is_card === 1) {
+            // Card-based: expired if no taps remaining
+            if (m.remaining_taps !== null && m.remaining_taps <= 0) {
+              realStatus = 'expired';
+            }
+          } else if (m.next_renewal_date && m.next_renewal_date < todayStr) {
+            // Time-bound: expired if past renewal date
+            realStatus = 'expired';
+          }
+        }
+        return {
+          ...m,
+          subscription_status: realStatus,
+          allowed_services: m.included_services ? m.included_services.split(',') : []
+        };
+      });
 
       res.json({ members: formattedMembers });
     } catch (err) {
@@ -329,6 +346,21 @@ router.post(
         ? member.included_services.split(',')
         : [];
 
+      // Derive real subscription status from dates
+      let realStatus = member.status;
+      if (member.type !== 'b2b' && member.status) {
+        if (member.is_card === 1) {
+          if (member.remaining_taps !== null && member.remaining_taps <= 0) {
+            realStatus = 'expired';
+          }
+        } else {
+          const todayStr = new Date().toISOString().split('T')[0];
+          if (member.next_renewal_date && member.next_renewal_date < todayStr) {
+            realStatus = 'expired';
+          }
+        }
+      }
+
       res.json({
         member: {
           id: member.id,
@@ -336,7 +368,7 @@ router.post(
           type: member.type,
           employer_id: member.employer_id,
           employer_name: member.employer_name,
-          subscription_status: member.status,
+          subscription_status: realStatus,
           allowed_services: allowedServices,
           is_card: member.is_card || 0,
           remaining_taps: member.remaining_taps,
