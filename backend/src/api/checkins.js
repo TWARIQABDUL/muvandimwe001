@@ -33,7 +33,7 @@ router.post(
       let finalMemberName = member_name;
       if (member_id) {
         const member = await db.get(
-          `SELECT m.name, ms.id as sub_id, ms.is_card, ms.remaining_taps, ms.next_renewal_date
+          `SELECT m.name, ms.id as sub_id, ms.status as sub_status, ms.is_card, ms.remaining_taps, ms.next_renewal_date
            FROM members m 
            LEFT JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
            WHERE m.id = ? AND m.gym_id = ?`,
@@ -48,6 +48,11 @@ router.post(
         if (type === 'subscription') {
           if (!member.sub_id) {
             return res.status(400).json({ error: 'Member has no active subscription' });
+          }
+
+          // Check DB status first (covers cards with 0 taps, manually expired, etc.)
+          if (member.sub_status === 'expired') {
+            return res.status(400).json({ error: 'Subscription has expired. Please renew.' });
           }
 
           if (member.is_card) {
@@ -94,8 +99,23 @@ router.post(
         [checkInId, gym_id, req.user.id, member_id || null, finalMemberName, type, service, amount || null, now]
       );
 
-      // Log payment transaction if it's cash walk-in or daily pass
+      // Validate walk-in/daily amount matches service prices
       if (type === 'walk_in' || type === 'daily') {
+        const serviceNames = service.split(',').map(s => s.trim().toLowerCase());
+        let expectedAmount = 0;
+        for (const sName of serviceNames) {
+          const svc = await db.get(
+            `SELECT price_daily FROM services WHERE (gym_id = ? OR ? = 'all') AND LOWER(name) = ?`,
+            [gym_id, gym_id, sName]
+          );
+          if (svc) {
+            expectedAmount += Number(svc.price_daily) || 0;
+          }
+        }
+        if (expectedAmount > 0 && Number(amount) !== expectedAmount) {
+          return res.status(400).json({ error: `Amount must be ${expectedAmount} RWF for the selected services` });
+        }
+
         const paymentId = uuidv4();
         await db.run(
           `INSERT INTO payments (id, gym_id, user_id, member_id, amount, type, service, payment_method, timestamp)

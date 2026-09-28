@@ -392,8 +392,8 @@ export default function ManagerCheckinFlow({
                 <input
                   type="number"
                   value={walkInAmount}
-                  onChange={(e) => setWalkInAmount(e.target.value)}
-                  style={{ padding: '12px', fontWeight: 'bold', color: 'var(--success-color)' }}
+                  readOnly
+                  style={{ padding: '12px', fontWeight: 'bold', color: 'var(--success-color)', backgroundColor: '#f8fafc', cursor: 'not-allowed' }}
                 />
               </div>
 
