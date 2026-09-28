@@ -101,32 +101,62 @@ router.get(
         [gym_id, gym_id, startDate, endDate]
       );
 
-      // Calculate breakdown compatible with Recharts tables
-      const breakdown = {
-        gym: { walk_in: 0, daily: 0, subscription: 0, b2b: 0, total: 0 },
-        sauna: { walk_in: 0, daily: 0, subscription: 0, b2b: 0, total: 0 },
-        pool: { walk_in: 0, daily: 0, subscription: 0, b2b: 0, total: 0 }
-      };
+      // Query checkins for B2B data (B2B check-ins don't create payment records)
+      const checkins = await db.all(
+        `SELECT service, type, amount, timestamp FROM checkins
+         WHERE (gym_id = ? OR ? = 'all') AND DATE(timestamp) BETWEEN ? AND ?`,
+        [gym_id, gym_id, startDate, endDate]
+      );
+
+      // Get services dynamically from DB instead of hardcoding
+      const servicesDb = gym_id === 'all'
+        ? await db.all('SELECT name FROM services')
+        : await db.all('SELECT name FROM services WHERE gym_id = ?', [gym_id]);
+
+      const breakdown = {};
+      servicesDb.forEach(s => {
+        const cleanService = s.name.trim().toLowerCase();
+        breakdown[cleanService] = { walk_in: 0, walk_in_count: 0, daily: 0, daily_count: 0, subscription: 0, subscription_count: 0, b2b: 0, b2b_count: 0, total: 0, total_count: 0 };
+      });
 
       payments.forEach(p => {
+        if (!p.service) return;
         const services = p.service.split(',');
         const amount = Number(p.amount) || 0;
         const share = amount / services.length;
 
         services.forEach(s => {
           const cleanService = s.trim().toLowerCase();
-          if (breakdown[cleanService]) {
-            if (p.type === 'walk_in') {
-              breakdown[cleanService].walk_in += share;
-            } else if (p.type === 'daily') {
-              breakdown[cleanService].daily += share;
-            } else if (p.type === 'subscription_signup' || p.type === 'subscription_renewal') {
-              breakdown[cleanService].subscription += share;
-            } else if (p.type === 'b2b') {
-              breakdown[cleanService].b2b += share;
-            }
+          if (!breakdown[cleanService]) {
+            breakdown[cleanService] = { walk_in: 0, walk_in_count: 0, daily: 0, daily_count: 0, subscription: 0, subscription_count: 0, b2b: 0, b2b_count: 0, total: 0, total_count: 0 };
+          }
+          if (p.type === 'walk_in') {
+            breakdown[cleanService].walk_in += share;
+            breakdown[cleanService].walk_in_count += 1;
+          } else if (p.type === 'daily') {
+            breakdown[cleanService].daily += share;
+            breakdown[cleanService].daily_count += 1;
+          } else if (p.type === 'subscription_signup' || p.type === 'subscription_renewal') {
+            breakdown[cleanService].subscription += share;
+            breakdown[cleanService].subscription_count += 1;
           }
         });
+      });
+
+      // Add B2B revenue from checkins (since B2B doesn't create payment records)
+      checkins.forEach(c => {
+        if (c.type === 'b2b' && c.service) {
+          const services = c.service.split(',');
+          const amount = Number(c.amount) || 0;
+          const share = amount / services.length;
+          services.forEach(s => {
+            const cleanService = s.trim().toLowerCase();
+            if (breakdown[cleanService]) {
+              breakdown[cleanService].b2b += share;
+              breakdown[cleanService].b2b_count += 1;
+            }
+          });
+        }
       });
 
       // Calculate totals
@@ -136,6 +166,11 @@ router.get(
           breakdown[service].daily +
           breakdown[service].subscription +
           breakdown[service].b2b;
+        breakdown[service].total_count =
+          breakdown[service].walk_in_count +
+          breakdown[service].daily_count +
+          breakdown[service].subscription_count +
+          breakdown[service].b2b_count;
       });
 
       res.json({ timeframe, breakdown });

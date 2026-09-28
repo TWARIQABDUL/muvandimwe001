@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Table, Modal, Button } from 'antd';
 import { api } from '../../store/authStore.js';
+import ReportMessages from '../ReportMessages.jsx';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+const money = (value) => `${Math.round(Number(value) || 0).toLocaleString()} RWF`;
 
 export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendData }) {
   const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
@@ -11,6 +14,8 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
   const [reportData, setReportData] = useState(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [isNoteModalVisible, setIsNoteModalVisible] = useState(false);
+  const [dailyReport, setDailyReport] = useState(null);
+  const [dailyMessages, setDailyMessages] = useState(null);
 
   const handleDateChange = (days) => {
     const current = new Date(reportDate);
@@ -26,8 +31,13 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
     const fetchReport = async () => {
       setReportLoading(true);
       try {
-        const response = await api.get(`/dashboard/report?date=${reportDate}`);
-        setReportData(response.data.data);
+        const [legacy, daily] = await Promise.all([
+          api.get(`/dashboard/report?date=${reportDate}`),
+          api.get(`/dashboard/daily-report?date=${reportDate}`)
+        ]);
+        setReportData(legacy.data.data);
+        setDailyReport(daily.data.report);
+        setDailyMessages(daily.data.messages);
       } catch (err) {
         console.error("Failed to fetch report:", err);
       } finally {
@@ -172,6 +182,61 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
     },
   ];
 
+  // Only the sections that saw someone; a gym with a dozen services would
+  // otherwise show a dozen rows of zeros.
+  const activeReportSections = (dailyReport?.sections || [])
+    .filter(section => section.active)
+    .map(section => ({
+      ...section,
+      key: section.category,
+      daily_amount: section.daily.reduce((sum, e) => sum + e.amount, 0),
+      new_amount: [...section.new_subscriptions, ...section.renewals].reduce((sum, e) => sum + e.amount, 0),
+      new_count: section.new_subscriptions.length + section.renewals.length
+    }));
+
+  const sectionColumns = [
+    {
+      title: 'Section',
+      dataIndex: 'category',
+      key: 'category',
+      fixed: 'left',
+      width: 150,
+      render: (text) => <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{text}</span>
+    },
+    {
+      title: 'Daily',
+      key: 'daily',
+      width: 130,
+      render: (_, r) => (
+        <div>
+          <div>{r.daily.length}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{money(r.daily_amount)}</div>
+        </div>
+      )
+    },
+    { title: 'Old', key: 'old', width: 70, render: (_, r) => r.old.length },
+    { title: 'Vip', key: 'vip', width: 70, render: (_, r) => r.vip.length },
+    {
+      title: 'New / Renewal',
+      key: 'new',
+      width: 140,
+      render: (_, r) => (
+        <div>
+          <div>{r.new_count}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{money(r.new_amount)}</div>
+        </div>
+      )
+    },
+    { title: 'Total number', dataIndex: 'total_number', key: 'total_number', width: 110 },
+    {
+      title: 'Total amount',
+      dataIndex: 'total_amount',
+      key: 'total_amount',
+      width: 130,
+      render: (v) => <strong style={{ color: 'var(--primary-color)' }}>{money(v)}</strong>
+    }
+  ];
+
   const recentCheckinsData = (dashboardData.recent_checkins || []).map((c, i) => ({ ...c, key: i }));
 
   const dailyCheckinColumns = [
@@ -314,6 +379,86 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
             {(dashboardData.snapshot.total_revenue || 0).toLocaleString()} RWF
           </div>
           <div style={{ color: 'var(--text-secondary)' }}>Grand Total</div>
+        </div>
+      </div>
+
+      <div style={{ marginBottom: '20px' }}>
+        <div className="card">
+          <div className="flex-between" style={{ flexWrap: 'wrap', gap: '10px', marginBottom: '15px' }}>
+            <h2 className="card-title" style={{ margin: 0 }}>
+              Daily Report {dailyReport ? `(${dailyReport.display_date})` : ''}
+            </h2>
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+              Follows the date selected below
+            </span>
+          </div>
+
+          {reportLoading ? (
+            <p>Loading report...</p>
+          ) : !dailyReport ? (
+            <p style={{ color: 'var(--text-secondary)' }}>No report for this date yet.</p>
+          ) : (
+            <>
+              {activeReportSections.length > 0 && (
+                <Table
+                  columns={sectionColumns}
+                  dataSource={activeReportSections}
+                  pagination={false}
+                  scroll={{ x: 640 }}
+                  size="small"
+                  style={{ marginBottom: '20px' }}
+                  summary={() => (
+                    <Table.Summary.Row style={{ fontWeight: 700, background: 'var(--bg-light)' }}>
+                      <Table.Summary.Cell index={0}>Total</Table.Summary.Cell>
+                      <Table.Summary.Cell index={1} />
+                      <Table.Summary.Cell index={2} />
+                      <Table.Summary.Cell index={3} />
+                      <Table.Summary.Cell index={4} />
+                      <Table.Summary.Cell index={5}>
+                        {activeReportSections.reduce((sum, r) => sum + r.total_number, 0)}
+                      </Table.Summary.Cell>
+                      <Table.Summary.Cell index={6}>
+                        {money(dailyReport.totals.services)}
+                      </Table.Summary.Cell>
+                    </Table.Summary.Row>
+                  )}
+                />
+              )}
+
+              <div className="grid grid-4" style={{ marginBottom: '20px' }}>
+                <div>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Services</div>
+                  <div style={{ fontWeight: 700 }}>{money(dailyReport.totals.services)}</div>
+                </div>
+                <div>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Shop sales</div>
+                  <div style={{ fontWeight: 700 }}>{money(dailyReport.totals.products)}</div>
+                </div>
+                <div>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Day total</div>
+                  <div style={{ fontWeight: 700, color: 'var(--success-color)' }}>{money(dailyReport.totals.grand_total)}</div>
+                </div>
+                <div>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Today's Momo</div>
+                  <div style={{ fontWeight: 700 }}>
+                    {dailyReport.balances.today_momo === null ? 'Not recorded' : money(dailyReport.balances.today_momo)}
+                  </div>
+                </div>
+              </div>
+
+              {dailyReport.products.length > 0 && (
+                <div style={{ marginBottom: '20px', fontSize: '14px' }}>
+                  {dailyReport.products.map(prod => (
+                    <span key={prod.name} style={{ marginRight: '18px', textTransform: 'capitalize' }}>
+                      {prod.name}: <strong>{prod.quantity}</strong> = {money(prod.amount)}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <ReportMessages messages={dailyMessages} />
+            </>
+          )}
         </div>
       </div>
 

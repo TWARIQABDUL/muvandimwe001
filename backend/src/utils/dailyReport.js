@@ -247,11 +247,18 @@ export async function buildDailyReport(db, gymId, date) {
     .map(section => {
       const revenue = [...section.daily, ...section.new_subscriptions, ...section.renewals]
         .reduce((sum, e) => sum + e.amount, 0);
+      const count =
+        section.daily.length +
+        section.old.length +
+        section.vip.length +
+        section.new_subscriptions.length +
+        section.renewals.length;
       return {
         ...section,
         // A section holding several services (relax / swedish / deep tissue) is
         // listed item by item; a single-service section is just counted.
         itemized: section.services.length > 1,
+        active: count > 0 || revenue > 0,
         total_number:
           section.daily.length +
           section.old.length +
@@ -390,7 +397,14 @@ function renderSection(section) {
 export function renderWhatsAppMessages(report) {
   const blocks = [`Hello,\nReport on ${report.display_date}`];
 
-  report.sections.forEach(section => blocks.push(renderSection(section)));
+  // A gym with a dozen services would otherwise send a dozen blocks of zeros,
+  // so only the sections that saw someone are listed.
+  const activeSections = report.sections.filter(section => section.active);
+  activeSections.forEach(section => blocks.push(renderSection(section)));
+
+  if (activeSections.length === 0 && report.products.length === 0) {
+    blocks.push('No activity recorded.');
+  }
 
   if (report.products.length > 0) {
     blocks.push(
@@ -418,7 +432,7 @@ export function renderWhatsAppMessages(report) {
   // Second message: who received what, for sections with several services.
   const detailBlocks = [];
   report.sections
-    .filter(section => section.itemized)
+    .filter(section => section.itemized && section.active)
     .forEach(section => {
       const entries = [
         ...section.daily.map(e => ({ ...e, vip: false })),

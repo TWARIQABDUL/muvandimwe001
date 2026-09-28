@@ -102,9 +102,12 @@ function calculateRevenueBreakdown(payments, checkins = [], activeServices = [])
   checkins.forEach(c => {
     if (c.type === 'b2b' && c.service) {
       const services = c.service.split(',');
+      const amount = Number(c.amount) || 0;
+      const share = amount / services.length;
       services.forEach(s => {
         const cleanService = s.trim().toLowerCase();
         if (breakdown[cleanService]) {
+          breakdown[cleanService].b2b += share;
           breakdown[cleanService].b2b_count += 1;
         }
       });
