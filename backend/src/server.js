@@ -29,6 +29,7 @@ import usersRoutes from './api/users.js';
 import employersRoutes from './api/employers.js';
 import cardsRoutes from './api/cards.js';
 import gymsRoutes from './api/gyms.js';
+import { startExpirationCron } from './cron/expireSubscriptions.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -100,6 +101,9 @@ if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
     console.log('   GET /api/trends/7day (owner only)');
     console.log('   GET /api/revenue/breakdown (owner only)');
     console.log('   GET /api/members/active (owner only)');
+
+    // Start cron jobs
+    startExpirationCron();
   });
 }
 
