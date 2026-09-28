@@ -34,6 +34,11 @@
   gap: 8px;
   overflow-y: auto;
   min-height: 0;
+  scrollbar-width: none;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-item {
