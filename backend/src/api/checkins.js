@@ -70,7 +70,8 @@ router.post(
           } else {
             // Standard time-bound subscription expiry check
             const todayStr = new Date().toISOString().split('T')[0];
-            if (member.next_renewal_date < todayStr) {
+            const renewalStr = new Date(member.next_renewal_date).toISOString().split('T')[0];
+            if (renewalStr < todayStr) {
               return res.status(400).json({ error: 'Subscription has expired. Please renew.' });
             }
           }

@@ -291,9 +291,12 @@ router.get(
             if (m.remaining_taps !== null && m.remaining_taps <= 0) {
               realStatus = 'expired';
             }
-          } else if (m.next_renewal_date && m.next_renewal_date < todayStr) {
-            // Time-bound: expired if past renewal date
-            realStatus = 'expired';
+          } else if (m.next_renewal_date) {
+            const renewalStr = new Date(m.next_renewal_date).toISOString().split('T')[0];
+            if (renewalStr < todayStr) {
+              // Time-bound: expired if past renewal date
+              realStatus = 'expired';
+            }
           }
         }
         return {
@@ -353,9 +356,10 @@ router.post(
           if (member.remaining_taps !== null && member.remaining_taps <= 0) {
             realStatus = 'expired';
           }
-        } else {
+        } else if (member.next_renewal_date) {
           const todayStr = new Date().toISOString().split('T')[0];
-          if (member.next_renewal_date && member.next_renewal_date < todayStr) {
+          const renewalStr = new Date(member.next_renewal_date).toISOString().split('T')[0];
+          if (renewalStr < todayStr) {
             realStatus = 'expired';
           }
         }
