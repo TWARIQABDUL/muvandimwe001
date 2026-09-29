@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../store/authStore';
-import { Edit2, Trash2, FileText, X, ArrowLeft, Download } from 'lucide-react';
+import { Edit2, Trash2, FileText, X, ArrowLeft, Download, Upload } from 'lucide-react';
 import { Table } from 'antd';
 
 export default function OwnerPartners({ setError, setMessage }) {
   const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Form State
   const [editingId, setEditingId] = useState(null);
@@ -55,6 +57,43 @@ export default function OwnerPartners({ setError, setMessage }) {
 
   const handleGenerateReport = (partner) => {
     setSelectedPartner(partner);
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (setError) setError(null);
+    if (setMessage) setMessage(null);
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await api.post('/employers/bulk-upload', formData);
+      const { created_count, duplicate_count, services_created } = response.data;
+
+      let msg = `Imported ${created_count} institution${created_count === 1 ? '' : 's'}.`;
+      if (duplicate_count > 0) {
+        msg += ` Skipped ${duplicate_count} already registered.`;
+      }
+      if (services_created && services_created.length > 0) {
+        msg += ` New services added (set their prices in Services): ${services_created.join(', ')}.`;
+      }
+      if (setMessage) setMessage(msg);
+      fetchPartners();
+      setTimeout(() => { if (setMessage) setMessage(null); }, 6000);
+    } catch (err) {
+      if (setError) setError(err.response?.data?.error || 'Failed to import institutions from file');
+      setTimeout(() => { if (setError) setError(null); }, 5000);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const exportToCSV = () => {
@@ -226,10 +265,31 @@ export default function OwnerPartners({ setError, setMessage }) {
   return (
     <div className="grid grid-2">
       <div className="card" style={{ overflowX: 'auto' }}>
-        <h2 className="card-title">Registered Partner Organizations</h2>
-        <Table 
+        <div className="flex-between" style={{ marginBottom: '10px', flexWrap: 'wrap', gap: '10px' }}>
+          <h2 className="card-title" style={{ margin: 0 }}>Registered Partner Organizations</h2>
+          <div>
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              ref={fileInputRef}
+              onChange={handleFileSelected}
+              style={{ display: 'none' }}
+            />
+            <button
+              onClick={handleUploadClick}
+              className="btn-secondary btn-small"
+              style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+              disabled={uploading}
+              title="Bulk-register institutions and their allowed services from an Excel file"
+            >
+              <Upload size={16} /> {uploading ? 'Importing...' : 'Upload Institutions (Excel)'}
+            </button>
+          </div>
+        </div>
+        <Table
           columns={[
             { title: 'Organization Name', dataIndex: 'name', key: 'name', fixed: 'left', width: 180, render: text => <span className="font-medium text-gray-900">{text}</span> },
+            { title: 'Allowed Services', dataIndex: 'allowed_services', key: 'allowed_services', width: 220, render: text => <span style={{ textTransform: 'capitalize' }}>{text || 'N/A'}</span> },
             { title: 'Phone Number', dataIndex: 'phone', key: 'phone', width: 150, render: text => <span className="text-gray-700">{text || 'N/A'}</span> },
             { title: 'Actions', key: 'actions', width: 150, align: 'right', render: (_, p) => (
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>

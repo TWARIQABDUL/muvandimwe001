@@ -1,5 +1,5 @@
 {
-  "version": "0.1.18",
-  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.18.apk",
-  "releaseNotes": "Added custom start and payment dates for subscription renewals."
+  "version": "0.1.20",
+  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.20.apk",
+  "releaseNotes": "Fixed expired subscription blocking, read-only walk-in checkin amounts, fixed sidebar scrolling bugs, and enabled automated expiration."
 }

@@ -1,10 +1,87 @@
 import express from 'express';
+import multer from 'multer';
+import ExcelJS from 'exceljs';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../db/init.js';
 import { authMiddleware, roleMiddleware, gymIsolationMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 const db = getDatabase();
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!/\.(xlsx|xls)$/i.test(file.originalname)) {
+      return cb(new Error('Only .xlsx or .xls files are supported'));
+    }
+    cb(null, true);
+  }
+});
+
+// Cell values from exceljs can be plain, rich text, or formula results
+function cellToString(value) {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'object') {
+    if (value.richText) return value.richText.map((r) => r.text).join('');
+    if (value.text !== undefined) return String(value.text);
+    if (value.result !== undefined) return String(value.result);
+    return '';
+  }
+  return String(value);
+}
+
+// Finds the "Institution" / "Services" header row and reads every row below it,
+// wherever it happens to sit (this file has a title + blank rows before the header).
+function parseInstitutionsWorksheet(worksheet) {
+  const rows = [];
+  worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+    const cells = [];
+    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      cells[colNumber] = cellToString(cell.value);
+    });
+    rows.push({ rowNumber, cells });
+  });
+
+  let nameCol = -1;
+  let servicesCol = -1;
+  let headerRowNumber = -1;
+
+  for (const { rowNumber, cells } of rows) {
+    for (let c = 1; c < cells.length; c++) {
+      const text = (cells[c] || '').trim().toUpperCase();
+      if (text.includes('INSTITUTION') || text.includes('ORGANIZATION') || text.includes('ORGANISATION')) {
+        nameCol = c;
+      }
+      if (text.includes('SERVICE')) {
+        servicesCol = c;
+      }
+    }
+    if (nameCol !== -1) {
+      headerRowNumber = rowNumber;
+      break;
+    }
+  }
+
+  if (nameCol === -1) {
+    throw new Error('Could not find a "Name of Institution" column in the uploaded file');
+  }
+  if (servicesCol === -1) {
+    servicesCol = nameCol + 1;
+  }
+
+  const records = [];
+  for (const { rowNumber, cells } of rows) {
+    if (rowNumber <= headerRowNumber) continue;
+    const name = (cells[nameCol] || '').trim();
+    if (!name) continue;
+    const servicesRaw = (cells[servicesCol] || '').trim();
+    const services = servicesRaw.split(',').map((s) => s.trim()).filter(Boolean);
+    records.push({ rowNumber, name, services });
+  }
+
+  return records;
+}
 
 // GET /api/employers - List all employers for the gym
 router.get(
@@ -16,10 +93,17 @@ router.get(
     try {
       const { gym_id } = req.user;
       const employers = await db.all(
-        `SELECT id, name, contact_email, phone, created_at
-         FROM employers
-         WHERE gym_id = ?
-         ORDER BY name ASC`,
+        `SELECT e.id, e.name, e.contact_email, e.phone, e.created_at,
+                COALESCE(
+                  (SELECT string_agg(s.name, ', ' ORDER BY s.name)
+                   FROM employer_services es
+                   JOIN services s ON s.id = es.service_id
+                   WHERE es.employer_id = e.id),
+                  ''
+                ) AS allowed_services
+         FROM employers e
+         WHERE e.gym_id = ?
+         ORDER BY e.name ASC`,
         [gym_id]
       );
       res.json({ employers });
@@ -164,6 +248,113 @@ router.delete(
     } catch (err) {
       console.error('Delete employer error:', err.message);
       res.status(500).json({ error: 'Failed to delete organization' });
+    }
+  }
+);
+
+// POST /api/employers/bulk-upload - Register institutions + their allowed services from an Excel file
+router.post(
+  '/bulk-upload',
+  authMiddleware,
+  roleMiddleware(['owner', 'manager']),
+  (req, res, next) => {
+    upload.single('file')(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ error: err.message || 'Failed to read uploaded file' });
+      }
+      next();
+    });
+  },
+  gymIsolationMiddleware,
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const { gym_id } = req.user;
+
+      let records;
+      try {
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(req.file.buffer);
+        const worksheet = workbook.worksheets[0];
+        if (!worksheet) {
+          return res.status(400).json({ error: 'The uploaded file has no sheets' });
+        }
+        records = parseInstitutionsWorksheet(worksheet);
+      } catch (parseErr) {
+        console.error('Parse institutions workbook error:', parseErr.message);
+        return res.status(400).json({ error: parseErr.message || 'Could not read the uploaded Excel file' });
+      }
+
+      if (records.length === 0) {
+        return res.status(400).json({ error: 'No institutions found in the uploaded file' });
+      }
+
+      // Existing institutions/services for this gym, keyed case-insensitively so
+      // "Supreme Court" and "SUPREME COURT" are treated as the same organization.
+      const existingEmployers = await db.all(`SELECT id, name FROM employers WHERE gym_id = ?`, [gym_id]);
+      const employersByName = new Map(existingEmployers.map((e) => [e.name.trim().toLowerCase(), e.id]));
+
+      const existingServices = await db.all(`SELECT id, name FROM services WHERE gym_id = ?`, [gym_id]);
+      const servicesByName = new Map(existingServices.map((s) => [s.name.trim().toLowerCase(), s.id]));
+
+      const created = [];
+      const duplicates = [];
+      const servicesCreated = new Set();
+
+      for (const record of records) {
+        const key = record.name.toLowerCase();
+
+        if (employersByName.has(key)) {
+          duplicates.push({ row: record.rowNumber, name: record.name });
+          continue;
+        }
+
+        const employerId = uuidv4();
+        await db.run(`INSERT INTO employers (id, gym_id, name) VALUES (?, ?, ?)`, [employerId, gym_id, record.name]);
+        employersByName.set(key, employerId);
+
+        const serviceIds = new Set();
+        for (const serviceName of record.services) {
+          const serviceKey = serviceName.toLowerCase();
+          let serviceId = servicesByName.get(serviceKey);
+
+          if (!serviceId) {
+            serviceId = uuidv4();
+            await db.run(
+              `INSERT INTO services (id, gym_id, name, price_daily, price_monthly, allow_monthly, category, sort_order)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+              [serviceId, gym_id, serviceKey, 0, 0, 1, serviceKey, 100]
+            );
+            servicesByName.set(serviceKey, serviceId);
+            servicesCreated.add(serviceKey);
+          }
+          serviceIds.add(serviceId);
+        }
+
+        for (const serviceId of serviceIds) {
+          await db.run(
+            `INSERT INTO employer_services (employer_id, service_id) VALUES (?, ?)
+             ON CONFLICT (employer_id, service_id) DO NOTHING`,
+            [employerId, serviceId]
+          );
+        }
+
+        created.push({ id: employerId, name: record.name, services: record.services });
+      }
+
+      res.status(201).json({
+        created_count: created.length,
+        duplicate_count: duplicates.length,
+        employers: created,
+        duplicates,
+        services_created: Array.from(servicesCreated)
+      });
+    } catch (err) {
+      console.error('Bulk upload employers error:', err.message);
+      res.status(500).json({ error: 'Failed to process uploaded file' });
     }
   }
 );
