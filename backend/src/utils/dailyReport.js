@@ -127,9 +127,12 @@ export async function buildDailyReport(db, gymId, date) {
 
   const payments = await db.all(
     `SELECT p.id, p.member_id, p.amount, p.type, p.service, p.months, p.payment_method, p.timestamp,
-            m.name AS member_name
+            m.name AS member_name,
+            s.name AS sub_name
      FROM payments p
      LEFT JOIN members m ON p.member_id = m.id
+     LEFT JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
+     LEFT JOIN subscriptions s ON ms.subscription_id = s.id
      WHERE (p.gym_id = ? OR ? = 'all') AND DATE(p.timestamp) = ?
      ORDER BY p.timestamp ASC`,
     [gymId, gymId, date]
@@ -243,6 +246,15 @@ export async function buildDailyReport(db, gymId, date) {
     const priceSum = serviceNames.reduce((sum, s) => sum + (servicePrices.get(s) || 0), 0);
     const months = p.months === null || p.months === undefined ? null : Number(p.months);
 
+    // Extract coupon if present in sub_name
+    let couponApplied = null;
+    if (p.sub_name) {
+      const match = p.sub_name.match(/- Coupon ([A-Z0-9_]+)/i);
+      if (match) {
+        couponApplied = match[1];
+      }
+    }
+
     serviceNames.forEach(serviceName => {
       let share;
       if (priceSum > 0 && servicePrices.get(serviceName)) {
@@ -257,7 +269,8 @@ export async function buildDailyReport(db, gymId, date) {
         name: p.member_name,
         service: serviceName,
         amount: share,
-        months
+        months,
+        coupon: couponApplied
       };
       if (p.type === 'subscription_signup') section.new_subscriptions.push(entry);
       else section.renewals.push(entry);
@@ -370,8 +383,10 @@ function renderItemLines(label, entries, renderEntry) {
 function renderSubscriptionLine(label, entries) {
   const parts = entries.map(e => {
     const amount = formatK(e.amount);
-    if (e.months) return `${amount}(for ${e.months} month)`;
-    return amount;
+    let part = amount;
+    if (e.months) part = `${amount}(for ${e.months} month)`;
+    if (e.coupon) part += `(Coupon: ${e.coupon})`;
+    return part;
   });
   return `${label}:${parts.join(', ')}`;
 }
