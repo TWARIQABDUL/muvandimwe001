@@ -57,7 +57,8 @@ function getDateRange(timeframe) {
 }
 
 // Helper function to calculate revenue breakdown based on true payments and checkins
-function calculateRevenueBreakdown(payments, checkins = [], activeServices = []) {
+// servicePrices is a map of { 'gym': 4000, 'sauna': 5000, ... } for accurate multi-service attribution
+function calculateRevenueBreakdown(payments, checkins = [], activeServices = [], servicePrices = {}) {
   const breakdown = {};
 
   activeServices.forEach(s => {
@@ -80,35 +81,55 @@ function calculateRevenueBreakdown(payments, checkins = [], activeServices = [])
 
   payments.forEach(p => {
     if (!p.service) return;
-    const services = p.service.split(',');
+    const services = p.service.split(',').map(s => s.trim().toLowerCase());
     const amount = Number(p.amount) || 0;
-    const share = amount / services.length;
+
+    // Use actual service prices for multi-service attribution instead of equal division
+    // e.g. gym=4000 + sauna=5000 → gym gets 4000, sauna gets 5000 (not 4500 each)
+    const priceSum = services.reduce((sum, s) => sum + (servicePrices[s] || 0), 0);
 
     services.forEach(s => {
-      const cleanService = s.trim().toLowerCase();
+      // If we have price data and total matches, attribute by actual price ratio
+      // Otherwise fall back to equal division
+      let share;
+      if (priceSum > 0 && servicePrices[s]) {
+        share = amount * (servicePrices[s] / priceSum);
+      } else {
+        share = amount / services.length;
+      }
+
+      if (!breakdown[s]) {
+        breakdown[s] = { walk_in: 0, walk_in_count: 0, daily: 0, daily_count: 0, subscription: 0, subscription_count: 0, b2b: 0, b2b_count: 0, total: 0, total_count: 0 };
+      }
       if (p.type === 'walk_in') {
-        breakdown[cleanService].walk_in += share;
-        breakdown[cleanService].walk_in_count += 1;
+        breakdown[s].walk_in += share;
+        breakdown[s].walk_in_count += 1;
       } else if (p.type === 'daily') {
-        breakdown[cleanService].daily += share;
-        breakdown[cleanService].daily_count += 1;
+        breakdown[s].daily += share;
+        breakdown[s].daily_count += 1;
       } else if (p.type === 'subscription_signup' || p.type === 'subscription_renewal') {
-        breakdown[cleanService].subscription += share;
-        breakdown[cleanService].subscription_count += 1;
+        breakdown[s].subscription += share;
+        breakdown[s].subscription_count += 1;
       }
     });
   });
 
   checkins.forEach(c => {
     if (c.type === 'b2b' && c.service) {
-      const services = c.service.split(',');
+      const services = c.service.split(',').map(s => s.trim().toLowerCase());
       const amount = Number(c.amount) || 0;
-      const share = amount / services.length;
+      const priceSum = services.reduce((sum, s) => sum + (servicePrices[s] || 0), 0);
+
       services.forEach(s => {
-        const cleanService = s.trim().toLowerCase();
-        if (breakdown[cleanService]) {
-          breakdown[cleanService].b2b += share;
-          breakdown[cleanService].b2b_count += 1;
+        let share;
+        if (priceSum > 0 && servicePrices[s]) {
+          share = amount * (servicePrices[s] / priceSum);
+        } else {
+          share = amount / services.length;
+        }
+        if (breakdown[s]) {
+          breakdown[s].b2b += share;
+          breakdown[s].b2b_count += 1;
         }
       });
     }
@@ -174,11 +195,13 @@ router.get(
       const payments = await getPaymentsForPeriod(gym_id, today, today);
 
       const servicesDb = gym_id === 'all' 
-        ? await db.all('SELECT name FROM services')
-        : await db.all('SELECT name FROM services WHERE gym_id = ?', [gym_id]);
+        ? await db.all('SELECT name, price_daily FROM services')
+        : await db.all('SELECT name, price_daily FROM services WHERE gym_id = ?', [gym_id]);
       const activeServices = servicesDb.map(s => s.name);
+      const servicePrices = {};
+      servicesDb.forEach(s => { servicePrices[s.name.trim().toLowerCase()] = Number(s.price_daily) || 0; });
 
-      const breakdown = calculateRevenueBreakdown(payments, checkins, activeServices);
+      const breakdown = calculateRevenueBreakdown(payments, checkins, activeServices, servicePrices);
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
@@ -343,11 +366,13 @@ router.get(
       const payments = await getPaymentsForPeriod(gym_id, dateRange.start, dateRange.end);
 
       const servicesDb = gym_id === 'all' 
-        ? await db.all('SELECT name FROM services')
-        : await db.all('SELECT name FROM services WHERE gym_id = ?', [gym_id]);
+        ? await db.all('SELECT name, price_daily FROM services')
+        : await db.all('SELECT name, price_daily FROM services WHERE gym_id = ?', [gym_id]);
       const activeServices = servicesDb.map(s => s.name);
+      const servicePrices = {};
+      servicesDb.forEach(s => { servicePrices[s.name.trim().toLowerCase()] = Number(s.price_daily) || 0; });
 
-      const breakdown = calculateRevenueBreakdown(payments, checkins, activeServices);
+      const breakdown = calculateRevenueBreakdown(payments, checkins, activeServices, servicePrices);
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
@@ -436,11 +461,13 @@ router.get(
       const payments = await getPaymentsForPeriod(gym_id, dateRange.start, dateRange.end);
 
       const servicesDb = gym_id === 'all' 
-        ? await db.all('SELECT name FROM services')
-        : await db.all('SELECT name FROM services WHERE gym_id = ?', [gym_id]);
+        ? await db.all('SELECT name, price_daily FROM services')
+        : await db.all('SELECT name, price_daily FROM services WHERE gym_id = ?', [gym_id]);
       const activeServices = servicesDb.map(s => s.name);
+      const servicePrices = {};
+      servicesDb.forEach(s => { servicePrices[s.name.trim().toLowerCase()] = Number(s.price_daily) || 0; });
 
-      const breakdown = calculateRevenueBreakdown(payments, checkins, activeServices);
+      const breakdown = calculateRevenueBreakdown(payments, checkins, activeServices, servicePrices);
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
@@ -529,11 +556,13 @@ router.get(
       const payments = await getPaymentsForPeriod(gym_id, dateRange.start, dateRange.end);
 
       const servicesDb = gym_id === 'all' 
-        ? await db.all('SELECT name FROM services')
-        : await db.all('SELECT name FROM services WHERE gym_id = ?', [gym_id]);
+        ? await db.all('SELECT name, price_daily FROM services')
+        : await db.all('SELECT name, price_daily FROM services WHERE gym_id = ?', [gym_id]);
       const activeServices = servicesDb.map(s => s.name);
+      const servicePrices = {};
+      servicesDb.forEach(s => { servicePrices[s.name.trim().toLowerCase()] = Number(s.price_daily) || 0; });
 
-      const breakdown = calculateRevenueBreakdown(payments, checkins, activeServices);
+      const breakdown = calculateRevenueBreakdown(payments, checkins, activeServices, servicePrices);
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
