@@ -84,7 +84,7 @@ function emptySection(category) {
  */
 export async function buildDailyReport(db, gymId, date) {
   const services = await db.all(
-    `SELECT name, category, sort_order FROM services WHERE (gym_id = ? OR ? = 'all')`,
+    `SELECT name, category, sort_order, price_daily FROM services WHERE (gym_id = ? OR ? = 'all')`,
     [gymId, gymId]
   );
 
@@ -93,12 +93,16 @@ export async function buildDailyReport(db, gymId, date) {
   const orderOfCategory = new Map();
   const servicesInCategory = new Map();
 
+  // Build a price lookup map for accurate multi-service revenue attribution
+  const servicePrices = new Map();
+
   services.forEach(s => {
     const name = String(s.name || '').trim().toLowerCase();
     if (!name) return;
     const category = String(s.category || name).trim().toLowerCase();
     const order = Number(s.sort_order);
     categoryOfService.set(name, category);
+    servicePrices.set(name, Number(s.price_daily) || 0);
     if (!servicesInCategory.has(category)) servicesInCategory.set(category, new Set());
     servicesInCategory.get(category).add(name);
     const current = orderOfCategory.get(category);
@@ -178,11 +182,20 @@ export async function buildDailyReport(db, gymId, date) {
     if (serviceNames.length === 0) return;
 
     const amount = Number(c.amount) || 0;
-    const share = amount / serviceNames.length;
+    // Use actual service prices for multi-service attribution
+    const priceSum = serviceNames.reduce((sum, s) => sum + (servicePrices.get(s) || 0), 0);
     const isVip = c.type === 'b2b' || Number(c.is_card) === 1;
     const alreadyCountedAsPaying = c.member_id ? paidTodayMembers.has(c.member_id) : false;
 
     serviceNames.forEach(serviceName => {
+      // Attribute by actual price ratio, fall back to equal division
+      let share;
+      if (priceSum > 0 && servicePrices.get(serviceName)) {
+        share = amount * (servicePrices.get(serviceName) / priceSum);
+      } else {
+        share = amount / serviceNames.length;
+      }
+
       const section = sectionFor(resolveCategory(serviceName));
       const entry = {
         member_id: c.member_id || null,
@@ -226,10 +239,18 @@ export async function buildDailyReport(db, gymId, date) {
     if (serviceNames.length === 0) return;
 
     const amount = Number(p.amount) || 0;
-    const share = amount / serviceNames.length;
+    // Use actual service prices for multi-service attribution
+    const priceSum = serviceNames.reduce((sum, s) => sum + (servicePrices.get(s) || 0), 0);
     const months = p.months === null || p.months === undefined ? null : Number(p.months);
 
     serviceNames.forEach(serviceName => {
+      let share;
+      if (priceSum > 0 && servicePrices.get(serviceName)) {
+        share = amount * (servicePrices.get(serviceName) / priceSum);
+      } else {
+        share = amount / serviceNames.length;
+      }
+
       const section = sectionFor(resolveCategory(serviceName));
       const entry = {
         member_id: p.member_id || null,
