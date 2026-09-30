@@ -385,7 +385,7 @@ function renderSubscriptionLine(label, entries) {
     const amount = formatK(e.amount);
     let part = amount;
     if (e.months) part = `${amount}(for ${e.months} month)`;
-    if (e.coupon) part += `(Coupon: ${e.coupon})`;
+    if (e.coupon) part += `(Coupon: **${e.coupon})**`;
     return part;
   });
   return `${label}:${parts.join(', ')}`;
