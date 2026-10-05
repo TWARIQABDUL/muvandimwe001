@@ -18,6 +18,7 @@ import OwnerStaff from '../components/owner/OwnerStaff.jsx';
 import OwnerPartners from '../components/owner/OwnerPartners.jsx';
 import OwnerCards from '../components/owner/OwnerCards.jsx';
 import OwnerBranches from '../components/owner/OwnerBranches.jsx';
+import { useRefresh } from '../hooks/useRefresh.jsx';
 
 export default function OwnerDashboard() {
   const { user } = useAuth();
@@ -25,6 +26,7 @@ export default function OwnerDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const activeTab = location.pathname.split('/')[2] || 'analytics';
+  const { refreshKey } = useRefresh();
   const [timeframe, setTimeframe] = useState('today');
   const [showPasswordModal, setShowPasswordModal] = useState(user?.first_login === 1);
   const { data, loading, error, setError } = useOwnerAnalytics(timeframe);
@@ -46,7 +48,7 @@ export default function OwnerDashboard() {
     fetchServices();
     fetchProducts();
     fetchGyms();
-  }, []);
+  }, [refreshKey]);
 
   const fetchGyms = async () => {
     try {

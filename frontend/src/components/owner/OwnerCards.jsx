@@ -5,8 +5,10 @@ import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { Table } from 'antd';
+import { useRefresh } from '../../hooks/useRefresh.jsx';
 
 export default function OwnerCards({ setError, setMessage }) {
+  const { refreshKey } = useRefresh();
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generateCount, setGenerateCount] = useState(100);
@@ -14,7 +16,7 @@ export default function OwnerCards({ setError, setMessage }) {
 
   useEffect(() => {
     fetchCards();
-  }, []);
+  }, [refreshKey]);
 
   const fetchCards = async () => {
     try {

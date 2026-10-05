@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar.jsx';
 import { useAuth } from '../hooks/useAuth.js';
 import { useAuthStore, api } from '../store/authStore.js';
+import { useRefresh } from '../hooks/useRefresh.jsx';
+import PullToRefresh from './PullToRefresh.jsx';
 import '../styles/layout.css';
 
 export default function DashboardLayout({ tabs, activeTab, setActiveTab, children }) {
   const { user } = useAuth();
+  const { refresh, isRefreshing } = useRefresh();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const activeTabLabel = tabs.find(t => t.id === activeTab)?.label || 'Dashboard';
@@ -48,6 +51,24 @@ export default function DashboardLayout({ tabs, activeTab, setActiveTab, childre
             <h1 className="page-title">{activeTabLabel}</h1>
           </div>
           <div className="user-profile" style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+            <button
+              type="button"
+              className="refresh-btn"
+              onClick={refresh}
+              disabled={isRefreshing}
+              title="Refresh this page"
+              aria-label="Refresh this page"
+            >
+              <svg
+                width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                style={{ animation: isRefreshing ? 'spin 900ms linear infinite' : 'none' }}
+              >
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+            </button>
 
             <div className="user-details">
               <div className="user-email">{user?.username || 'User'}</div>
@@ -69,9 +90,9 @@ export default function DashboardLayout({ tabs, activeTab, setActiveTab, childre
           </div>
         </header>
         
-        <main className="content-area">
+        <PullToRefresh>
           {children}
-        </main>
+        </PullToRefresh>
       </div>
     </div>
   );

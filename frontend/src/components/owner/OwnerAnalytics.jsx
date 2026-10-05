@@ -3,12 +3,14 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 import { Table, Modal, Button } from 'antd';
 import { api } from '../../store/authStore.js';
 import ReportMessages from '../ReportMessages.jsx';
+import { useRefresh } from '../../hooks/useRefresh.jsx';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 const money = (value) => `${Math.round(Number(value) || 0).toLocaleString()} RWF`;
 
 export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendData }) {
+  const { refreshKey } = useRefresh();
   const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
   const [reportTypeFilter, setReportTypeFilter] = useState('all');
   const [reportData, setReportData] = useState(null);
@@ -45,7 +47,7 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
       }
     };
     fetchReport();
-  }, [reportDate]);
+  }, [reportDate, refreshKey]);
 
   const dashboardData = data?.dashboard;
 

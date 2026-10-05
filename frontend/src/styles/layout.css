@@ -203,3 +203,28 @@
     display: none; /* Hide email on very small screens to save space */
   }
 }
+
+/* Header refresh control (the pull gesture covers touch screens) */
+.refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-white, #fff);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: var(--bg-light);
+  color: var(--primary-color);
+}
+
+.refresh-btn:disabled {
+  cursor: default;
+  color: var(--primary-color);
+}

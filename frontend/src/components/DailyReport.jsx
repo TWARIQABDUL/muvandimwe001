@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../store/authStore.js';
 import ReportMessages from './ReportMessages.jsx';
+import { useRefresh } from '../hooks/useRefresh.jsx';
 
 const rwf = (value) => `${Math.round(Number(value) || 0).toLocaleString()} RWF`;
 
 // `readOnly` is what the owner sees: the same report, without the balance entry form.
 export default function DailyReport({ date: initialDate, readOnly = false }) {
   const today = new Date().toISOString().split('T')[0];
+  const { refreshKey } = useRefresh();
   const [date, setDate] = useState(initialDate || today);
   const [report, setReport] = useState(null);
   const [messages, setMessages] = useState(null);
@@ -40,7 +42,7 @@ export default function DailyReport({ date: initialDate, readOnly = false }) {
     } finally {
       setLoading(false);
     }
-  }, [date]);
+  }, [date, refreshKey]);
 
   useEffect(() => {
     fetchReport();

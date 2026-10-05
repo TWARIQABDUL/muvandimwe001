@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../../store/authStore.js';
+import { useRefresh } from '../../hooks/useRefresh.jsx';
 
 const rwf = (value) => `${Math.round(Number(value) || 0).toLocaleString()} RWF`;
 
 export default function ManagerProductSales() {
+  const { refreshKey } = useRefresh();
   const today = new Date().toISOString().split('T')[0];
   const [date, setDate] = useState(today);
   const [products, setProducts] = useState([]);
@@ -26,7 +28,7 @@ export default function ManagerProductSales() {
     } finally {
       setLoading(false);
     }
-  }, [date]);
+  }, [date, refreshKey]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -42,7 +44,7 @@ export default function ManagerProductSales() {
       }
     };
     fetchProducts();
-  }, []);
+  }, [refreshKey]);
 
   useEffect(() => {
     fetchSales();

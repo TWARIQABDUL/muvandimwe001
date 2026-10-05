@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { api } from '../../store/authStore';
 import { Table } from 'antd';
 import { Plus, Edit2, Trash2, Check, X, ShieldAlert } from 'lucide-react';
+import { useRefresh } from '../../hooks/useRefresh.jsx';
 
 export default function OwnerPlans({ services }) {
+  const { refreshKey } = useRefresh();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -19,7 +21,7 @@ export default function OwnerPlans({ services }) {
 
   useEffect(() => {
     fetchPlans();
-  }, []);
+  }, [refreshKey]);
 
   const fetchPlans = async () => {
     try {

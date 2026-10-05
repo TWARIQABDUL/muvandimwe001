@@ -11,12 +11,14 @@ import SubscriberActivity from '../components/manager/SubscriberActivity.jsx';
 import RegisterNewMember from '../components/manager/RegisterNewMember.jsx';
 import DailyReport from '../components/DailyReport.jsx';
 import ManagerProductSales from '../components/manager/ManagerProductSales.jsx';
+import { useRefresh } from '../hooks/useRefresh.jsx';
 
 export default function ManagerDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const activeTab = location.pathname.split('/')[2] || 'checkin';
+  const { refreshKey } = useRefresh();
   const [showPasswordModal, setShowPasswordModal] = useState(user?.first_login === 1);
   const [dashboardData, setDashboardData] = useState(null);
   const [services, setServices] = useState([]);
@@ -73,7 +75,7 @@ export default function ManagerDashboard() {
     fetchServices();
     fetchCoupons();
     fetchEmployers();
-  }, []);
+  }, [refreshKey]);
 
   const fetchEmployers = async () => {
     try {

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { api } from '../store/authStore.js';
+import { useRefresh } from './useRefresh.jsx';
 
 export function useOwnerAnalytics(timeframe = 'today') {
+  const { refreshKey } = useRefresh();
   const [data, setData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,7 +48,7 @@ export function useOwnerAnalytics(timeframe = 'today') {
     return () => {
       canceled = true;
     };
-  }, [timeframe]);
+  }, [timeframe, refreshKey]);
 
   return { data, loading, error, setError };
 }

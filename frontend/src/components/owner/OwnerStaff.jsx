@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../store/authStore.js';
 import { Table } from 'antd';
+import { useRefresh } from '../../hooks/useRefresh.jsx';
 
 export default function OwnerStaff({ setError, setMessage }) {
+  const { refreshKey } = useRefresh();
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newStaffUsername, setNewStaffUsername] = useState('');
@@ -11,7 +13,7 @@ export default function OwnerStaff({ setError, setMessage }) {
 
   useEffect(() => {
     fetchStaff();
-  }, []);
+  }, [refreshKey]);
 
   const fetchStaff = async () => {
     try {

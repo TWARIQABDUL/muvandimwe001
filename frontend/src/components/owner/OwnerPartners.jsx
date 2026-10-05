@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../store/authStore';
 import { Edit2, Trash2, FileText, X, ArrowLeft, Download, Upload } from 'lucide-react';
 import { Table } from 'antd';
+import { useRefresh } from '../../hooks/useRefresh.jsx';
 
 export default function OwnerPartners({ setError, setMessage }) {
+  const { refreshKey } = useRefresh();
   const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -22,7 +24,7 @@ export default function OwnerPartners({ setError, setMessage }) {
 
   useEffect(() => {
     fetchPartners();
-  }, []);
+  }, [refreshKey]);
 
   const fetchPartners = async () => {
     try {

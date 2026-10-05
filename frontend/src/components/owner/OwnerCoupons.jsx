@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../store/authStore.js';
 import { Table } from 'antd';
+import { useRefresh } from '../../hooks/useRefresh.jsx';
 
 export default function OwnerCoupons({ setError, setMessage }) {
+  const { refreshKey } = useRefresh();
   const [coupons, setCoupons] = useState([]);
   const [newCoupon, setNewCoupon] = useState({ code: '', discount_percent: '' });
   const [loading, setLoading] = useState(true);
@@ -10,7 +12,7 @@ export default function OwnerCoupons({ setError, setMessage }) {
 
   useEffect(() => {
     fetchCoupons();
-  }, []);
+  }, [refreshKey]);
 
   const fetchCoupons = async () => {
     try {

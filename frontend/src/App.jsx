@@ -5,6 +5,7 @@ import { Modal, Typography } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import { useAuth } from './hooks/useAuth.js';
 import { useAppUpdate } from './hooks/useAppUpdate.js';
+import { RefreshProvider } from './hooks/useRefresh.jsx';
 
 // Pages
 import Login from './pages/Login.jsx';
@@ -71,6 +72,7 @@ export default function App() {
 
   return (
     <Router>
+      <RefreshProvider>
       <BackButtonHandler />
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -127,6 +129,7 @@ export default function App() {
         </Typography.Paragraph>
       </Modal>
 
+      </RefreshProvider>
     </Router>
   );
 }

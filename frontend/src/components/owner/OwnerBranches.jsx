@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Modal, Form, Input, Button, Switch } from 'antd';
 import { api } from '../../store/authStore.js';
+import { useRefresh } from '../../hooks/useRefresh.jsx';
 
 export default function OwnerBranches() {
+  const { refreshKey } = useRefresh();
   const [gyms, setGyms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -13,7 +15,7 @@ export default function OwnerBranches() {
 
   useEffect(() => {
     fetchGyms();
-  }, []);
+  }, [refreshKey]);
 
   const fetchGyms = async () => {
     setLoading(true);
