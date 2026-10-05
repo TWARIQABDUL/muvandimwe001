@@ -2,18 +2,27 @@
 //
 // Layout it reproduces:
 //
-//   Gym's Report            <- one section per service category
-//   Daily:4=16k             <- paying walk-ins / day passes
-//   Old:6                   <- existing subscribers who came in
-//   Vip:0                   <- card / partner signatures (no cash)
-//   New:60k(for 2 month)    <- sign-ups paid for today
-//   Total number:11
-//   Total amount:76k
+//   Gym's Report                      <- one section per service category
+//   Daily:4=16k                       <- paying walk-ins / day passes
+//   Old:16                            <- existing subscribers who came in
+//   Vip:4                             <- card / partner signatures
+//   New:60k(for 2 month)              <- sign-ups paid for today
+//   Total number:24                   <- counted sections only
+//   Total amount:16k
 //
-//   Amazi:4=6000rwf         <- point-of-sale items
-//   Total amount:143,000rwf
-//   Last Balance:...        <- yesterday's closing momo
-//   Today's Momo:...
+//   Massage's Report                  <- a category holding several services is
+//   Daily:_2Swedish 30k                  listed item by item, repeats collapsed
+//         _Relax 10k                     with a count prefix, and carries no
+//   Vip:_Deep tissue Vip (EDCL) 10k      "Total number" line
+//   Total amount:70k
+//
+//   Amazi:5=7500rwf                   <- point-of-sale items, written plainly
+//   Total's income=133,500rwf
+//   Last balance=412,675rwf           <- yesterday's closing momo
+//   Today's Momo=510,685rwf
+//   NB: ...                           <- the manager's closing note
+//
+// Lines that would read zero are left out, the way they are written by hand.
 
 const DAY_SUFFIX = (day) => {
   if (day > 3 && day < 21) return 'th';
@@ -36,19 +45,27 @@ export function formatRwf(value) {
   return `${Math.round(Number(value) || 0).toLocaleString('en-US')}rwf`;
 }
 
-// '2026-09-20' -> '20th/09/2026'
+// Shop lines are written plainly: "Amazi:5=7500rwf", no separator.
+export function formatPlainRwf(value) {
+  return `${Math.round(Number(value) || 0)}rwf`;
+}
+
+// The gym writes the month as a short name, with September as "Sept".
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+
+// '2026-09-25' -> '25th/Sept/2026'
 export function formatReportDate(dateStr) {
   const [year, month, day] = String(dateStr).split('-');
   const dayNum = Number(day);
-  return `${dayNum}${DAY_SUFFIX(dayNum)}/${month}/${year}`;
+  const monthName = MONTH_NAMES[Number(month) - 1] || month;
+  return `${dayNum}${DAY_SUFFIX(dayNum)}/${monthName}/${year}`;
 }
 
+// Service names are written sentence style - "Deep tissue", not "Deep Tissue".
 function titleCase(value) {
-  return String(value || '')
-    .split(' ')
-    .filter(Boolean)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  const text = String(value || '').trim();
+  if (!text) return text;
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 function previousDay(dateStr) {
@@ -279,7 +296,9 @@ export async function buildDailyReport(db, gymId, date) {
 
   const orderedSections = [...sections.values()]
     .map(section => {
-      const revenue = [...section.daily, ...section.new_subscriptions, ...section.renewals]
+      // A VIP signature is normally free, but when they are charged for a service
+      // outside their allowance that money belongs in the section total.
+      const revenue = [...section.daily, ...section.vip, ...section.new_subscriptions, ...section.renewals]
         .reduce((sum, e) => sum + e.amount, 0);
       const count =
         section.daily.length +
@@ -391,22 +410,45 @@ function renderSubscriptionLine(label, entries) {
   return `${label}:${parts.join(', ')}`;
 }
 
+// Two Swedish massages are written "_2Swedish 30k", not as two separate lines.
+function groupByService(entries) {
+  const groups = new Map();
+  entries.forEach(e => {
+    const key = `${e.service}|${e.employer || ''}`;
+    if (!groups.has(key)) {
+      groups.set(key, { service: e.service, employer: e.employer || null, count: 0, amount: 0 });
+    }
+    const group = groups.get(key);
+    group.count += 1;
+    group.amount += e.amount;
+  });
+  return [...groups.values()];
+}
+
 function renderSection(section) {
   const lines = [`${titleCase(section.category)}'s Report`];
 
   if (section.itemized && section.daily.length > 0) {
-    lines.push(...renderItemLines('Daily', section.daily, e => `_${titleCase(e.service)} ${formatK(e.amount)}`));
+    lines.push(...renderItemLines('Daily', groupByService(section.daily), g => {
+      const prefix = g.count > 1 ? g.count : '';
+      return `_${prefix}${titleCase(g.service)} ${formatK(g.amount)}`;
+    }));
   } else {
     const amount = section.daily.reduce((sum, e) => sum + e.amount, 0);
     lines.push(`Daily:${section.daily.length}${section.daily.length > 0 ? `=${formatK(amount)}` : ''}`);
   }
 
-  lines.push(`Old:${section.old.length}`);
+  // Lines that would read zero are left out, the way they are written by hand.
+  if (section.old.length > 0) {
+    lines.push(`Old:${section.old.length}`);
+  }
 
   if (section.itemized && section.vip.length > 0) {
-    lines.push(...renderItemLines('Vip', section.vip, e => {
-      const employer = e.employer ? `(${e.employer.toUpperCase()})` : '';
-      return `_${titleCase(e.service)} Vip${employer}`;
+    lines.push(...renderItemLines('Vip', groupByService(section.vip), g => {
+      const prefix = g.count > 1 ? g.count : '';
+      const employer = g.employer ? ` (${g.employer.toUpperCase()})` : '';
+      const charged = g.amount > 0 ? ` ${formatK(g.amount)}` : '';
+      return `_${prefix}${titleCase(g.service)} Vip${employer}${charged}`;
     }));
   } else {
     lines.push(`Vip:${section.vip.length}`);
@@ -419,7 +461,11 @@ function renderSection(section) {
     lines.push(renderSubscriptionLine('Renewal', section.renewals));
   }
 
-  lines.push(`Total number:${section.total_number}`);
+  // Itemised sections list each massage individually, so the headcount is already
+  // on the page; only counted sections carry a "Total number" line.
+  if (!section.itemized) {
+    lines.push(`Total number:${section.total_number}`);
+  }
   lines.push(`Total amount:${formatK(section.total_amount)}`);
 
   return lines.join('\n');
@@ -431,12 +477,17 @@ function renderSection(section) {
  * `details` and `vip` come back null when there is nothing to report.
  */
 export function renderWhatsAppMessages(report) {
-  const blocks = [`Hello,\nReport on ${report.display_date}`];
-
   // A gym with a dozen services would otherwise send a dozen blocks of zeros,
   // so only the sections that saw someone are listed.
   const activeSections = report.sections.filter(section => section.active);
-  activeSections.forEach(section => blocks.push(renderSection(section)));
+
+  // The heading runs straight into the first section, with no blank line between.
+  const heading = `Hello,\nReport on ${report.display_date}`;
+  const blocks = activeSections.length > 0
+    ? [`${heading}\n${renderSection(activeSections[0])}`]
+    : [heading];
+
+  activeSections.slice(1).forEach(section => blocks.push(renderSection(section)));
 
   if (activeSections.length === 0 && report.products.length === 0) {
     blocks.push('No activity recorded.');
@@ -447,21 +498,26 @@ export function renderWhatsAppMessages(report) {
       report.products
         .map(p => {
           const name = titleCase(p.name);
-          if (p.quantity > 1) return `${name}:${p.quantity}=${formatRwf(p.amount)}`;
-          return `${name}:${formatRwf(p.amount)}`;
+          if (p.quantity > 1) return `${name}:${p.quantity}=${formatPlainRwf(p.amount)}`;
+          return `${name}:${formatPlainRwf(p.amount)}`;
         })
         .join('\n')
     );
   }
 
-  const footer = [`Total amount:${formatRwf(report.totals.grand_total)}`];
+  const footer = [`Total's income=${formatRwf(report.totals.grand_total)}`];
   if (report.balances.last_balance !== null) {
-    footer.push(`Last Balance:${formatRwf(report.balances.last_balance)}`);
+    footer.push(`Last balance=${formatRwf(report.balances.last_balance)}`);
   }
   if (report.balances.today_momo !== null) {
-    footer.push(`Today's Momo:${formatRwf(report.balances.today_momo)}`);
+    footer.push(`Today's Momo=${formatRwf(report.balances.today_momo)}`);
   }
   blocks.push(footer.join('\n'));
+
+  // The manager's closing note is sent as the NB at the bottom.
+  if (report.note) {
+    blocks.push(`NB: ${report.note}`);
+  }
 
   const summary = blocks.join('\n\n');
 
