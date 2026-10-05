@@ -205,6 +205,49 @@ export default function OwnerDashboard() {
     }
   };
 
+  // Puts several services under one report heading in a single action, so a gym
+  // with a dozen massages does not have to be edited one row at a time.
+  const handleGroupServices = async (serviceIds, category, sortOrder) => {
+    setError(null);
+    setMessage(null);
+
+    if (!serviceIds?.length || !category) {
+      setError('Pick at least one service and a section name');
+      return false;
+    }
+
+    try {
+      setActionLoading(true);
+      const payload = { category };
+      if (sortOrder !== '' && sortOrder !== undefined && sortOrder !== null) {
+        payload.sort_order = Number(sortOrder);
+      }
+
+      const results = await Promise.allSettled(
+        serviceIds.map(id => api.patch(`/services/${id}`, payload))
+      );
+      const failed = results.filter(r => r.status === 'rejected').length;
+
+      fetchServices();
+
+      if (failed > 0) {
+        setError(`${serviceIds.length - failed} of ${serviceIds.length} services moved into "${category}"; ${failed} failed.`);
+        setTimeout(() => setError(null), 5000);
+        return false;
+      }
+
+      setMessage(`${serviceIds.length} service${serviceIds.length === 1 ? '' : 's'} grouped under "${category}".`);
+      setTimeout(() => setMessage(null), 4000);
+      return true;
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to group services');
+      setTimeout(() => setError(null), 4000);
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleDeleteService = async (serviceId) => {
     if (!window.confirm('Are you sure you want to delete this service?')) return;
     setError(null);
@@ -321,6 +364,7 @@ export default function OwnerDashboard() {
                   handleCreateService={handleCreateService}
                   handleUpdateService={handleUpdateService}
                   handleDeleteService={handleDeleteService}
+                  handleGroupServices={handleGroupServices}
                   actionLoading={actionLoading}
                 />
               </>

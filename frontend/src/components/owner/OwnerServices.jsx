@@ -8,9 +8,13 @@ export default function OwnerServices({
   handleCreateService,
   handleUpdateService,
   handleDeleteService,
+  handleGroupServices,
   actionLoading
 }) {
   const [editingId, setEditingId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [groupName, setGroupName] = useState('');
+  const [groupOrder, setGroupOrder] = useState('');
   const [editForm, setEditForm] = useState({ name: '', price_daily: '', price_monthly: '', allow_monthly: true, category: '', sort_order: 100 });
 
   const startEdit = (service) => {
@@ -48,7 +52,59 @@ export default function OwnerServices({
       <div className="grid grid-2">
         <div className="card" style={{ overflowX: 'auto' }}>
           <h2 className="card-title">Current Services & Pricing</h2>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '15px' }}>
+            Services sharing a report section are listed item by item under one heading.
+            Tick the ones that belong together - every massage, say - and give them a section name.
+          </p>
+
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', flexWrap: 'wrap', marginBottom: '15px', padding: '12px', background: 'var(--bg-light)', borderRadius: '8px' }}>
+            <div className="form-group" style={{ margin: 0, flex: 1, minWidth: '160px' }}>
+              <label>Report section</label>
+              <input
+                type="text"
+                placeholder="e.g. massage"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+              />
+            </div>
+            <div className="form-group" style={{ margin: 0, width: '110px' }}>
+              <label>Order</label>
+              <input
+                type="number"
+                placeholder="3"
+                value={groupOrder}
+                onChange={(e) => setGroupOrder(e.target.value)}
+              />
+            </div>
+            <button
+              type="button"
+              className="btn-primary"
+              disabled={actionLoading || selectedIds.length === 0 || !groupName.trim()}
+              onClick={async () => {
+                const ok = await handleGroupServices(selectedIds, groupName.trim(), groupOrder);
+                if (ok) {
+                  setSelectedIds([]);
+                  setGroupName('');
+                  setGroupOrder('');
+                }
+              }}
+            >
+              {actionLoading
+                ? 'Grouping...'
+                : `Group ${selectedIds.length || ''} selected`.replace('  ', ' ')}
+            </button>
+            {selectedIds.length > 0 && (
+              <button type="button" className="btn-secondary" onClick={() => setSelectedIds([])}>
+                Clear
+              </button>
+            )}
+          </div>
+
           <Table 
+            rowSelection={{
+              selectedRowKeys: selectedIds,
+              onChange: (keys) => setSelectedIds(keys)
+            }}
             columns={[
               {
                 title: 'Service Name',
@@ -131,7 +187,7 @@ export default function OwnerServices({
                 )
               }
             ]}
-            dataSource={services.map((s, i) => ({ ...s, key: s.id || i }))}
+            dataSource={services.map((s) => ({ ...s, key: s.id }))}
             pagination={{ pageSize: 10 }}
             scroll={{ x: 'max-content' }}
             size="middle"
