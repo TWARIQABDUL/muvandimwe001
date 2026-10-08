@@ -34,15 +34,15 @@ export default function ManagerDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [memberLookup, setMemberLookup] = useState(null);
-  const [memberService, setMemberService] = useState('gym');
+  const [memberService, setMemberService] = useState('');
   const [walkInName, setWalkInName] = useState('');
-  const [walkInServices, setWalkInServices] = useState(['gym']);
-  const [walkInAmount, setWalkInAmount] = useState('15000');
+  const [walkInServices, setWalkInServices] = useState([]);
+  const [walkInAmount, setWalkInAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
 
   // Registration state
   const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', employer_id: '', qr_code_id: '', start_date: new Date().toISOString().split('T')[0] });
-  const [selectedServices, setSelectedServices] = useState(['gym']);
+  const [selectedServices, setSelectedServices] = useState([]);
   const [isCard, setIsCard] = useState(false);
   const [taps, setTaps] = useState(20);
   const [couponCode, setCouponCode] = useState('');
@@ -102,16 +102,6 @@ export default function ManagerDashboard() {
       const data = response.data.services || [];
       console.log('Extracted services data:', data);
       setServices(data);
-      if (data.length > 0) {
-        const gymService = data.find(s => s.name === 'gym');
-        if (gymService) {
-          setWalkInServices(['gym']);
-          setWalkInAmount(gymService.price_daily.toString());
-        } else {
-          setWalkInServices([data[0].name]);
-          setWalkInAmount(data[0].price_daily.toString());
-        }
-      }
     } catch (err) {
       console.warn('Could not load services:', err.message || err);
     }
@@ -149,7 +139,7 @@ export default function ManagerDashboard() {
       setLoading(true);
       const response = await api.post('/members/scan-qr', { qr_code_id: queryId });
       setMemberLookup(response.data.member);
-      setMemberService(response.data.member.allowed_services?.[0] || 'gym');
+      setMemberService('');
     } catch (err) {
       setError(err.response?.data?.error || 'Member lookup failed');
     } finally {
@@ -185,7 +175,7 @@ export default function ManagerDashboard() {
 
   const handleSelectSearchResult = (member) => {
     setMemberLookup(member);
-    setMemberService(member.allowed_services?.[0] || 'gym');
+    setMemberService('');
     setSearchResults([]);
     setSearchQuery('');
     setRenewalMonths(1); // Reset renewal months when a new member is selected
@@ -205,6 +195,12 @@ export default function ManagerDashboard() {
   const handleCheckinMember = async (e) => {
     e.preventDefault();
     if (!memberLookup) return;
+
+    if (!memberService) {
+      setError('Please select a service');
+      setTimeout(() => setError(null), 4000);
+      return;
+    }
 
     const isB2B = memberLookup.type === 'b2b' || !!memberLookup.employer_id;
     const isIncluded = isB2B ? true : memberLookup.allowed_services?.includes(memberService);
@@ -288,9 +284,8 @@ export default function ManagerDashboard() {
       });
 
       setWalkInName('');
-      setWalkInServices(['gym']);
-      const selected = services.find(s => s.name === 'gym');
-      setWalkInAmount(selected ? selected.price_daily.toString() : '15000');
+      setWalkInServices([]);
+      setWalkInAmount('');
       fetchDashboard();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to create walk-in check-in');
@@ -336,7 +331,7 @@ export default function ManagerDashboard() {
       setMessage(`${response.data.name} registered successfully`);
       setNewMemberQr(response.data.qr_code_id);
       setNewMember({ name: '', email: '', phone: '', employer_id: '', qr_code_id: '', start_date: new Date().toISOString().split('T')[0] });
-      setSelectedServices(['gym']);
+      setSelectedServices([]);
       setIsCard(false);
       setTaps(20);
       setCouponCode('');

@@ -129,7 +129,7 @@ export default function RenewMembership({
               <div>
                 <h4 style={{ fontSize: '18px', color: '#0f172a', margin: '0 0 5px 0' }}>{memberLookup.name}</h4>
                 <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>
-                  {memberLookup.type === 'b2b' ? `Partner: ${memberLookup.employer_name || 'B2B'}` : `Allowed: ${memberLookup.allowed_services?.join(', ') || 'gym'}`}
+                  {memberLookup.type === 'b2b' ? `Partner: ${memberLookup.employer_name || 'B2B'}` : `Allowed: ${memberLookup.allowed_services?.join(', ') || 'none on file'}`}
                 </p>
               </div>
               <span className={`badge ${memberLookup.type === 'b2b' ? 'badge-success' : memberLookup.subscription_status === 'active' ? 'badge-success' : 'badge-danger'}`} style={{ padding: '6px 12px', fontSize: '14px' }}>

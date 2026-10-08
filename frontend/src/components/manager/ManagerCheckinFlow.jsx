@@ -241,7 +241,7 @@ export default function ManagerCheckinFlow({
                     <div>
                       <h4 style={{ fontSize: '18px', color: '#0f172a', margin: '0 0 5px 0' }}>{memberLookup.name}</h4>
                       <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>
-                        {memberLookup.type === 'b2b' ? `Partner: ${memberLookup.employer_name || 'B2B'}` : `Allowed: ${memberLookup.allowed_services?.join(', ') || 'gym'}`}
+                        {memberLookup.type === 'b2b' ? `Partner: ${memberLookup.employer_name || 'B2B'}` : `Allowed: ${memberLookup.allowed_services?.join(', ') || 'none on file'}`}
                       </p>
                     </div>
                     <span className={`badge ${memberLookup.type === 'b2b' ? 'badge-success' : memberLookup.subscription_status === 'active' ? 'badge-success' : 'badge-danger'}`} style={{ padding: '6px 12px', fontSize: '14px' }}>
@@ -303,6 +303,7 @@ export default function ManagerCheckinFlow({
                       onChange={(e) => setMemberService(e.target.value)}
                       style={{ padding: '12px', fontSize: '15px' }}
                     >
+                      <option value="">-- Select a service --</option>
                       {services.map((s) => {
                         const isIncluded = memberLookup.type === 'b2b' ? true : (memberLookup.allowed_services?.length ? memberLookup.allowed_services.includes(s.name) : false);
                         const labelSuffix = memberLookup.type === 'b2b' ? '(Partner Billing)' : isIncluded ? '(Included)' : `(Extra: ${Number(s.price_daily).toLocaleString()} RWF)`;
@@ -315,7 +316,7 @@ export default function ManagerCheckinFlow({
                     </select>
                   </div>
 
-                  {memberLookup.type !== 'b2b' && (!memberLookup.allowed_services?.length || !memberLookup.allowed_services.includes(memberService)) && (
+                  {memberService && memberLookup.type !== 'b2b' && (!memberLookup.allowed_services?.length || !memberLookup.allowed_services.includes(memberService)) && (
                     <div className="form-group" style={{ background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                       <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>Payment Method (Extra Service)</label>
                       <div style={{ display: 'flex', gap: '20px' }}>
