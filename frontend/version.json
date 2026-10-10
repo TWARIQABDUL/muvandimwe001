@@ -1,5 +1,5 @@
 {
-  "version": "0.1.21",
-  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.21.apk",
-  "releaseNotes": "Daily report now follows the WhatsApp format the team is used to: short month dates, repeated services collapsed onto one line, and the closing note sent as the NB. Services can be grouped into a single report section in bulk, so every massage reports under one heading. Pull down on any screen to refresh it."
+  "version": "0.1.22",
+  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.22.apk",
+  "releaseNotes": "Fixes scrolling, which 0.1.21 broke on every screen. Services are no longer pre-set to gym when checking someone in, so the right one has to be picked. Owners get a new Daily Report screen that filters the day by service and shows who came in, with the time."
 }
