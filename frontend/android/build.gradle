@@ -24,6 +24,20 @@ allprojects {
     }
 }
 
+// Capacitor 8's modules compile against Java 21. Without this, a machine whose
+// default JDK is older fails with "invalid source release: 21", which meant
+// every release build needed JAVA_HOME set by hand. Declaring a toolchain lets
+// Gradle find and use an installed JDK 21 whatever launched the build.
+subprojects {
+    plugins.withId('java-base') {
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(21)
+            }
+        }
+    }
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
