@@ -13,9 +13,16 @@ export default function PullToRefresh({ children }) {
   const startY = useRef(null);
   const scrollerRef = useRef(null);
 
+  // This layout lets the document scroll rather than the content container
+  // (.main-content is min-height:100vh, so .content-area never overflows and its
+  // scrollTop is always 0). Checking only the container would treat every drag as
+  // a pull and swallow normal scrolling, so both are checked.
   const atTop = () => {
     const el = scrollerRef.current;
-    return !el || el.scrollTop <= 0;
+    const containerAtTop = !el || el.scrollTop <= 0;
+    const documentAtTop =
+      (window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0) <= 0;
+    return containerAtTop && documentAtTop;
   };
 
   const handleTouchStart = (e) => {
@@ -53,7 +60,7 @@ export default function PullToRefresh({ children }) {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
-      style={{ position: 'relative', overscrollBehaviorY: 'contain' }}
+      style={{ position: 'relative' }}
     >
       <div
         aria-hidden={offset === 0}
