@@ -11,7 +11,7 @@ import OwnerCheckins from '../components/owner/OwnerCheckins.jsx';
 import OwnerMembers from '../components/owner/OwnerMembers.jsx';
 import OwnerServices from '../components/owner/OwnerServices.jsx';
 import OwnerProducts from '../components/owner/OwnerProducts.jsx';
-import DailyReport from '../components/DailyReport.jsx';
+import OwnerDailyReport from '../components/owner/OwnerDailyReport.jsx';
 import OwnerCoupons from '../components/owner/OwnerCoupons.jsx';
 import OwnerPlans from '../components/owner/OwnerPlans.jsx';
 import OwnerStaff from '../components/owner/OwnerStaff.jsx';
@@ -342,7 +342,7 @@ export default function OwnerDashboard() {
             } />
             
             <Route path="daily-report" element={
-              <DailyReport date={new Date().toISOString().split('T')[0]} readOnly />
+              <OwnerDailyReport />
             } />
 
             <Route path="members" element={

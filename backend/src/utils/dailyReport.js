@@ -222,7 +222,10 @@ export async function buildDailyReport(db, gymId, date) {
         name: c.member_name,
         service: serviceName,
         amount: share,
-        employer: c.employer_name || null
+        employer: c.employer_name || null,
+        // Raw timestamp: the browser formats it in the viewer's timezone, which
+        // the server (UTC on Vercel) would otherwise get wrong.
+        time: c.timestamp
       };
 
       if (isVip) {
@@ -287,7 +290,8 @@ export async function buildDailyReport(db, gymId, date) {
         service: serviceName,
         amount: share,
         months,
-        coupon: couponApplied
+        coupon: couponApplied,
+        time: p.timestamp
       };
       if (p.type === 'subscription_signup') section.new_subscriptions.push(entry);
       else section.renewals.push(entry);
