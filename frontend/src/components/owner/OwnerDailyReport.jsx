@@ -145,7 +145,9 @@ export default function OwnerDailyReport() {
               <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '10px' }}>
                 Filter by service
               </div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {/* A gym with a dozen services would wrap into a wall of chips,
+                  so the row scrolls sideways instead. */}
+              <div className="filter-chips">
                 <button
                   type="button"
                   className={service === ALL ? 'btn-primary btn-small' : 'btn-secondary btn-small'}

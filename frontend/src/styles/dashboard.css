@@ -228,3 +228,31 @@ input[type="checkbox"] {
     padding: 8px;
   }
 }
+
+/* Horizontal chip row: a gym may have a dozen services, and wrapping them
+   turns the filter into a wall of buttons on a phone. */
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  /* Let a sideways swipe here scroll the chips without dragging the page. */
+  overscroll-behavior-x: contain;
+}
+
+.filter-chips > button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.filter-chips::-webkit-scrollbar {
+  height: 4px;
+}
+
+.filter-chips::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
