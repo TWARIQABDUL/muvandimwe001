@@ -306,7 +306,9 @@ export default function ManagerDashboard() {
       setError('Name is required');
       return;
     }
-    if (selectedServices.length === 0) {
+    // Partner members inherit their services from the employer and take no
+    // subscription, so there is nothing for the manager to pick here.
+    if (!newMember.employer_id && selectedServices.length === 0) {
       setError('Please select at least one service');
       return;
     }

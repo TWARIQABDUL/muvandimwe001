@@ -308,9 +308,9 @@ async function getManagerTodayDashboard(req, res) {
     const subscriberCheckins = checkins.filter(c => c.type === 'subscription').length;
     const partnerCheckins = checkins.filter(c => c.type === 'b2b').length;
 
-    // Get recent check-ins for display
+    // The manager sees their own check-ins for today, so the day already bounds
+    // this. Capping it at 10 hid everything past the second page.
     const recentCheckins = checkins
-      .slice(0, 10)
       .map(c => ({
         member_name: c.member_name,
         service: c.service,

@@ -255,6 +255,36 @@ export default function RegisterNewMember({
             </div>
           </div>
 
+          {newMember.employer_id && (() => {
+            const partner = employers.find(e => e.id === newMember.employer_id);
+            const allowed = (partner?.allowed_services || '').split(',').map(x => x.trim()).filter(Boolean);
+            return (
+              <div className="form-group" style={{ marginTop: '20px' }}>
+                <label style={{ fontSize: '16px', color: 'var(--primary-color)' }}>
+                  Services allowed by {partner?.name || 'this partner'}
+                </label>
+                {allowed.length > 0 ? (
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
+                    {allowed.map(name => (
+                      <span key={name} className="badge badge-success" style={{ textTransform: 'capitalize' }}>
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="alert alert-warning" style={{ marginTop: '10px', marginBottom: 0 }}>
+                    No services are set for this partner yet. The owner sets them under
+                    Manage Partners, and every member of the partner inherits them.
+                  </div>
+                )}
+                <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '10px' }}>
+                  Partner members inherit these, so there is nothing to pick here. The partner is
+                  billed rather than the member, so no subscription or payment is taken.
+                </small>
+              </div>
+            );
+          })()}
+
           {!newMember.employer_id && (
             <>
               <div className="form-group" style={{ marginTop: '20px' }}>
