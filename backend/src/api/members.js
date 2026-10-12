@@ -3,6 +3,18 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../db/init.js';
 import { authMiddleware, roleMiddleware, gymIsolationMiddleware } from '../middleware/auth.js';
 
+// A partner member's own subset wins; with none recorded they inherit the
+// employer's whole pool, which is how partner members behaved before subsets
+// existed. Non-partner members use their subscription's included services.
+function resolveAllowedServices(row) {
+  const split = (v) => String(v || '').split(',').map(x => x.trim()).filter(Boolean);
+  if (row.type === 'b2b') {
+    const own = split(row.allowed_services);
+    return own.length > 0 ? own : split(row.employer_services);
+  }
+  return split(row.included_services);
+}
+
 const router = express.Router();
 const db = getDatabase();
 
@@ -68,10 +80,33 @@ router.post(
       if (employer_id) {
         const memberId = uuidv4();
 
+        // The employer grants a pool of services; this member may be entitled to
+        // only some of them. Anything outside the pool is rejected rather than
+        // silently granted.
+        const employerServices = await db.all(
+          `SELECT s.name FROM employer_services es
+           JOIN services s ON s.id = es.service_id
+           WHERE es.employer_id = ?`,
+          [employer_id]
+        );
+        const pool = employerServices.map(r => String(r.name).trim().toLowerCase());
+
+        let memberServices = null;
+        if (Array.isArray(services) && services.length > 0) {
+          const chosen = services.map(x => String(x).trim().toLowerCase()).filter(Boolean);
+          const outside = chosen.filter(x => !pool.includes(x));
+          if (outside.length > 0) {
+            return res.status(400).json({
+              error: `This partner does not allow: ${outside.join(', ')}`
+            });
+          }
+          memberServices = chosen.join(',');
+        }
+
         await db.run(
-          `INSERT INTO members (id, gym_id, name, email, phone, qr_code_id, type, employer_id, current_subscription_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [memberId, gym_id, name, email || null, phone || null, qr_code_id, 'b2b', employer_id, null]
+          `INSERT INTO members (id, gym_id, name, email, phone, qr_code_id, type, employer_id, current_subscription_id, allowed_services)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [memberId, gym_id, name, email || null, phone || null, qr_code_id, 'b2b', employer_id, null, memberServices]
         );
 
         if (qr_code_id) {
@@ -87,7 +122,9 @@ router.post(
           email,
           phone,
           type: 'b2b',
-          employer_id
+          employer_id,
+          qr_code_id,
+          allowed_services: memberServices ? memberServices.split(',') : pool
         });
       }
 
@@ -270,7 +307,16 @@ router.get(
       }
 
       const members = await db.all(
-        `SELECT m.id, m.name, m.type, m.employer_id, e.name as employer_name, ms.status as subscription_status, ms.next_renewal_date, ms.is_card, ms.remaining_taps, s.included_services, s.monthly_fee
+        `SELECT m.id, m.name, m.type, m.employer_id, m.allowed_services, e.name as employer_name,
+                ms.status as subscription_status, ms.next_renewal_date, ms.is_card, ms.remaining_taps,
+                s.included_services, s.monthly_fee,
+                COALESCE(
+                  (SELECT string_agg(es_s.name, ',' ORDER BY es_s.name)
+                   FROM employer_services es
+                   JOIN services es_s ON es_s.id = es.service_id
+                   WHERE es.employer_id = m.employer_id),
+                  ''
+                ) AS employer_services
          FROM members m
          LEFT JOIN employers e ON m.employer_id = e.id
          LEFT JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
@@ -302,7 +348,7 @@ router.get(
         return {
           ...m,
           subscription_status: realStatus,
-          allowed_services: m.included_services ? m.included_services.split(',') : []
+          allowed_services: resolveAllowedServices(m)
         };
       });
 
@@ -331,7 +377,14 @@ router.post(
       }
 
       const member = await db.get(
-        `SELECT m.*, e.name as employer_name, ms.status, ms.is_card, ms.remaining_taps, ms.next_renewal_date, s.included_services, s.monthly_fee
+        `SELECT m.*, e.name as employer_name, ms.status, ms.is_card, ms.remaining_taps, ms.next_renewal_date, s.included_services, s.monthly_fee,
+                COALESCE(
+                  (SELECT string_agg(es_s.name, ',' ORDER BY es_s.name)
+                   FROM employer_services es
+                   JOIN services es_s ON es_s.id = es.service_id
+                   WHERE es.employer_id = m.employer_id),
+                  ''
+                ) AS employer_services
          FROM members m
          LEFT JOIN employers e ON m.employer_id = e.id
          LEFT JOIN member_subscriptions ms ON m.current_subscription_id = ms.id
@@ -344,10 +397,7 @@ router.post(
         return res.status(404).json({ error: 'Member not found' });
       }
 
-      // Parse included services
-      const allowedServices = member.included_services
-        ? member.included_services.split(',')
-        : [];
+      const allowedServices = resolveAllowedServices(member);
 
       // Derive real subscription status from dates
       let realStatus = member.status;

@@ -241,7 +241,9 @@ export default function ManagerCheckinFlow({
                     <div>
                       <h4 style={{ fontSize: '18px', color: '#0f172a', margin: '0 0 5px 0' }}>{memberLookup.name}</h4>
                       <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>
-                        {memberLookup.type === 'b2b' ? `Partner: ${memberLookup.employer_name || 'B2B'}` : `Allowed: ${memberLookup.allowed_services?.join(', ') || 'none on file'}`}
+                        {memberLookup.type === 'b2b'
+                          ? `Partner: ${memberLookup.employer_name || 'B2B'} - may sign for ${memberLookup.allowed_services?.join(', ') || 'nothing on file'}`
+                          : `Allowed: ${memberLookup.allowed_services?.join(', ') || 'none on file'}`}
                       </p>
                     </div>
                     <span className={`badge ${memberLookup.type === 'b2b' ? 'badge-success' : memberLookup.subscription_status === 'active' ? 'badge-success' : 'badge-danger'}`} style={{ padding: '6px 12px', fontSize: '14px' }}>
@@ -305,8 +307,17 @@ export default function ManagerCheckinFlow({
                     >
                       <option value="">-- Select a service --</option>
                       {services.map((s) => {
-                        const isIncluded = memberLookup.type === 'b2b' ? true : (memberLookup.allowed_services?.length ? memberLookup.allowed_services.includes(s.name) : false);
-                        const labelSuffix = memberLookup.type === 'b2b' ? '(Partner Billing)' : isIncluded ? '(Included)' : `(Extra: ${Number(s.price_daily).toLocaleString()} RWF)`;
+                        const covered = memberLookup.allowed_services?.length
+                          ? memberLookup.allowed_services.includes(s.name)
+                          : false;
+                        let labelSuffix;
+                        if (memberLookup.type === 'b2b') {
+                          // Signing for something outside the allowance is handled by
+                          // recording extra check-ins of a covered service instead.
+                          labelSuffix = covered ? '(Covered)' : '(Not covered)';
+                        } else {
+                          labelSuffix = covered ? '(Included)' : `(Extra: ${Number(s.price_daily).toLocaleString()} RWF)`;
+                        }
                         return (
                           <option key={s.id} value={s.name}>
                             {s.name.charAt(0).toUpperCase() + s.name.slice(1)} {labelSuffix}

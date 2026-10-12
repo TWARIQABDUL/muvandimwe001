@@ -222,6 +222,7 @@ export default function RegisterNewMember({
                     style={{ padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }}
                     onClick={() => {
                       setNewMember({ ...newMember, employer_id: '' });
+                      setSelectedServices([]);
                       setShowDropdown(false);
                       setPartnerSearch('');
                     }}
@@ -236,6 +237,7 @@ export default function RegisterNewMember({
                       style={{ padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }}
                       onClick={() => {
                         setNewMember({ ...newMember, employer_id: emp.id });
+                        setSelectedServices([]);
                         setShowDropdown(false);
                         setPartnerSearch('');
                       }}
@@ -257,30 +259,46 @@ export default function RegisterNewMember({
 
           {newMember.employer_id && (() => {
             const partner = employers.find(e => e.id === newMember.employer_id);
-            const allowed = (partner?.allowed_services || '').split(',').map(x => x.trim()).filter(Boolean);
+            const pool = (partner?.allowed_services || '').split(',').map(x => x.trim()).filter(Boolean);
             return (
               <div className="form-group" style={{ marginTop: '20px' }}>
                 <label style={{ fontSize: '16px', color: 'var(--primary-color)' }}>
-                  Services allowed by {partner?.name || 'this partner'}
+                  Services this member may use
                 </label>
-                {allowed.length > 0 ? (
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
-                    {allowed.map(name => (
-                      <span key={name} className="badge badge-success" style={{ textTransform: 'capitalize' }}>
-                        {name}
-                      </span>
-                    ))}
+                {pool.length === 0 ? (
+                  <div className="alert alert-warning" style={{ marginTop: '10px', marginBottom: 0 }}>
+                    {partner?.name || 'This partner'} has no services set yet. The owner sets them
+                    under Manage Partners before members can be registered against it.
                   </div>
                 ) : (
-                  <div className="alert alert-warning" style={{ marginTop: '10px', marginBottom: 0 }}>
-                    No services are set for this partner yet. The owner sets them under
-                    Manage Partners, and every member of the partner inherits them.
-                  </div>
+                  <>
+                    <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '4px' }}>
+                      {partner?.name} allows {pool.length} service{pool.length === 1 ? '' : 's'}.
+                      Tick only the ones this person is entitled to.
+                    </small>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginTop: '10px' }}>
+                      {pool.map((name) => (
+                        <label key={name} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '10px', background: 'var(--bg-light)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedServices.includes(name)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedServices([...selectedServices, name]);
+                              } else {
+                                setSelectedServices(selectedServices.filter(n => n !== name));
+                              }
+                            }}
+                          />
+                          <span style={{ textTransform: 'capitalize', fontWeight: '500' }}>{name}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '10px' }}>
+                      The partner is billed, so no subscription or payment is taken here.
+                    </small>
+                  </>
                 )}
-                <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '10px' }}>
-                  Partner members inherit these, so there is nothing to pick here. The partner is
-                  billed rather than the member, so no subscription or payment is taken.
-                </small>
               </div>
             );
           })()}
