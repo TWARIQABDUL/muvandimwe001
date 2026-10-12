@@ -287,6 +287,13 @@ router.post(
       });
     } catch (err) {
       console.error('Register member error:', err.message);
+      // 42703 = undefined_column. Almost always a migration that has not been run
+      // against this database, which is worth saying rather than "failed".
+      if (err.code === '42703') {
+        return res.status(500).json({
+          error: 'This database is missing a recent update. Run the pending migrations (npm run db:migrate), then try again.'
+        });
+      }
       res.status(500).json({ error: 'Failed to register member' });
     }
   }
