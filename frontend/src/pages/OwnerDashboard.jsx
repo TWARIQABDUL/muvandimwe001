@@ -32,7 +32,7 @@ export default function OwnerDashboard() {
   const { data, loading, error, setError } = useOwnerAnalytics(timeframe);
   const [gyms, setGyms] = useState([]);
   const [services, setServices] = useState([]);
-  const [newService, setNewService] = useState({ name: '', price_daily: '', price_monthly: '', allow_monthly: true, category: '', sort_order: '' });
+  const [newService, setNewService] = useState({ name: '', price_daily: '', price_monthly: '', allow_monthly: true, category: '', sort_order: '', is_subsection: false });
   const [products, setProducts] = useState([]);
   const [newProduct, setNewProduct] = useState({ name: '', unit_price: '', sort_order: '' });
   const [message, setMessage] = useState(null);
@@ -173,10 +173,11 @@ export default function OwnerDashboard() {
         price_monthly: Number(newService.price_monthly) || 0,
         allow_monthly: newService.allow_monthly,
         category: newService.category.trim(),
-        sort_order: Number(newService.sort_order) || 100
+        sort_order: Number(newService.sort_order) || 100,
+        is_subsection: newService.is_subsection
       });
       setMessage(`Service "${newService.name.trim()}" created successfully!`);
-      setNewService({ name: '', price_daily: '', price_monthly: '', allow_monthly: true, category: '', sort_order: '' });
+      setNewService({ name: '', price_daily: '', price_monthly: '', allow_monthly: true, category: '', sort_order: '', is_subsection: false });
       fetchServices();
       // clear message after 3s
       setTimeout(() => setMessage(null), 3000);

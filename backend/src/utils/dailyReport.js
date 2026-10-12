@@ -85,6 +85,7 @@ function emptySection(category) {
   return {
     category,
     services: [],
+    subsection_services: [],
     daily: [],
     old: [],
     vip: [],
@@ -101,7 +102,7 @@ function emptySection(category) {
  */
 export async function buildDailyReport(db, gymId, date) {
   const services = await db.all(
-    `SELECT name, category, sort_order, price_daily FROM services WHERE (gym_id = ? OR ? = 'all')`,
+    `SELECT name, category, sort_order, price_daily, is_subsection FROM services WHERE (gym_id = ? OR ? = 'all')`,
     [gymId, gymId]
   );
 
@@ -109,6 +110,8 @@ export async function buildDailyReport(db, gymId, date) {
   const categoryOfService = new Map();
   const orderOfCategory = new Map();
   const servicesInCategory = new Map();
+  // Services that report inside another section instead of heading their own.
+  const subsectionServices = new Set();
 
   // Build a price lookup map for accurate multi-service revenue attribution
   const servicePrices = new Map();
@@ -120,6 +123,7 @@ export async function buildDailyReport(db, gymId, date) {
     const order = Number(s.sort_order);
     categoryOfService.set(name, category);
     servicePrices.set(name, Number(s.price_daily) || 0);
+    if (Number(s.is_subsection) === 1) subsectionServices.add(name);
     if (!servicesInCategory.has(category)) servicesInCategory.set(category, new Set());
     servicesInCategory.get(category).add(name);
     const current = orderOfCategory.get(category);
@@ -183,7 +187,9 @@ export async function buildDailyReport(db, gymId, date) {
 
   // Every known category shows up even on a quiet day, so the owner can see it was checked.
   servicesInCategory.forEach((names, category) => {
-    sectionFor(category).services = [...names].sort();
+    const section = sectionFor(category);
+    section.services = [...names].sort();
+    section.subsection_services = section.services.filter(n => subsectionServices.has(n));
   });
 
   const vipByMember = new Map();
@@ -313,8 +319,9 @@ export async function buildDailyReport(db, gymId, date) {
       return {
         ...section,
         // A section holding several services (relax / swedish / deep tissue) is
-        // listed item by item; a single-service section is just counted.
-        itemized: section.services.length > 1,
+        // listed item by item; a single-service section is just counted. A
+        // subsection sits under its section and does not make it itemised.
+        itemized: section.services.filter(n => !(section.subsection_services || []).includes(n)).length > 1,
         active: count > 0 || revenue > 0,
         total_number:
           section.daily.length +
@@ -432,38 +439,61 @@ function groupByService(entries) {
 function renderSection(section) {
   const lines = [`${titleCase(section.category)}'s Report`];
 
-  if (section.itemized && section.daily.length > 0) {
-    lines.push(...renderItemLines('Daily', groupByService(section.daily), g => {
+  // A subsection (Abana under Gym) gets its own line at the foot of the section
+  // rather than being folded into the section's own counts.
+  const subs = new Set(section.subsection_services || []);
+  const isMain = (e) => !subs.has(e.service);
+  const main = {
+    daily: section.daily.filter(isMain),
+    old: section.old.filter(isMain),
+    vip: section.vip.filter(isMain),
+    new_subscriptions: section.new_subscriptions.filter(isMain),
+    renewals: section.renewals.filter(isMain)
+  };
+
+  if (section.itemized && main.daily.length > 0) {
+    lines.push(...renderItemLines('Daily', groupByService(main.daily), g => {
       const prefix = g.count > 1 ? g.count : '';
       return `_${prefix}${titleCase(g.service)} ${formatK(g.amount)}`;
     }));
   } else {
-    const amount = section.daily.reduce((sum, e) => sum + e.amount, 0);
-    lines.push(`Daily:${section.daily.length}${section.daily.length > 0 ? `=${formatK(amount)}` : ''}`);
+    const amount = main.daily.reduce((sum, e) => sum + e.amount, 0);
+    lines.push(`Daily:${main.daily.length}${main.daily.length > 0 ? `=${formatK(amount)}` : ''}`);
   }
 
   // Lines that would read zero are left out, the way they are written by hand.
-  if (section.old.length > 0) {
-    lines.push(`Old:${section.old.length}`);
+  if (main.old.length > 0) {
+    lines.push(`Old:${main.old.length}`);
   }
 
-  if (section.itemized && section.vip.length > 0) {
-    lines.push(...renderItemLines('Vip', groupByService(section.vip), g => {
+  if (section.itemized && main.vip.length > 0) {
+    lines.push(...renderItemLines('Vip', groupByService(main.vip), g => {
       const prefix = g.count > 1 ? g.count : '';
       const employer = g.employer ? ` (${g.employer.toUpperCase()})` : '';
       const charged = g.amount > 0 ? ` ${formatK(g.amount)}` : '';
       return `_${prefix}${titleCase(g.service)} Vip${employer}${charged}`;
     }));
   } else {
-    lines.push(`Vip:${section.vip.length}`);
+    lines.push(`Vip:${main.vip.length}`);
   }
 
-  if (section.new_subscriptions.length > 0) {
-    lines.push(renderSubscriptionLine('New', section.new_subscriptions));
+  if (main.new_subscriptions.length > 0) {
+    lines.push(renderSubscriptionLine('New', main.new_subscriptions));
   }
-  if (section.renewals.length > 0) {
-    lines.push(renderSubscriptionLine('Renewal', section.renewals));
+  if (main.renewals.length > 0) {
+    lines.push(renderSubscriptionLine('Renewal', main.renewals));
   }
+
+  // Then each subsection that saw someone, counted the same way as Daily.
+  [...subs].sort().forEach(name => {
+    const entries = [
+      ...section.daily, ...section.old, ...section.vip,
+      ...section.new_subscriptions, ...section.renewals
+    ].filter(e => e.service === name);
+    if (entries.length === 0) return;
+    const amount = entries.reduce((sum, e) => sum + e.amount, 0);
+    lines.push(`${titleCase(name)}:${entries.length}${amount > 0 ? `=${formatK(amount)}` : ''}`);
+  });
 
   // Itemised sections list each massage individually, so the headcount is already
   // on the page; only counted sections carry a "Total number" line.

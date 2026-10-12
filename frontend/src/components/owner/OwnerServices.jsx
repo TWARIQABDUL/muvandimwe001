@@ -15,7 +15,7 @@ export default function OwnerServices({
   const [selectedIds, setSelectedIds] = useState([]);
   const [groupName, setGroupName] = useState('');
   const [groupOrder, setGroupOrder] = useState('');
-  const [editForm, setEditForm] = useState({ name: '', price_daily: '', price_monthly: '', allow_monthly: true, category: '', sort_order: 100 });
+  const [editForm, setEditForm] = useState({ name: '', price_daily: '', price_monthly: '', allow_monthly: true, category: '', sort_order: 100, is_subsection: false });
 
   const startEdit = (service) => {
     setEditingId(service.id);
@@ -25,7 +25,8 @@ export default function OwnerServices({
       price_monthly: service.price_monthly,
       allow_monthly: service.allow_monthly === undefined ? true : !!service.allow_monthly,
       category: service.category || service.name,
-      sort_order: service.sort_order ?? 100
+      sort_order: service.sort_order ?? 100,
+      is_subsection: !!service.is_subsection
     });
   };
 
@@ -40,7 +41,8 @@ export default function OwnerServices({
       price_monthly: Number(editForm.price_monthly),
       allow_monthly: editForm.allow_monthly,
       category: editForm.category,
-      sort_order: Number(editForm.sort_order)
+      sort_order: Number(editForm.sort_order),
+      is_subsection: editForm.is_subsection
     });
     if (success) {
       setEditingId(null);
@@ -171,6 +173,15 @@ export default function OwnerServices({
                 ) : (text ?? 100)
               },
               {
+                title: 'Subsection?',
+                dataIndex: 'is_subsection',
+                key: 'is_subsection',
+                width: 120,
+                render: (text, record) => editingId === record.id ? (
+                  <input type="checkbox" checked={editForm.is_subsection} onChange={(e) => setEditForm({ ...editForm, is_subsection: e.target.checked })} />
+                ) : (text ? 'Yes' : 'No')
+              },
+              {
                 title: 'Actions',
                 key: 'actions',
                 width: 150,
@@ -245,7 +256,19 @@ export default function OwnerServices({
               />
               <small style={{ color: 'var(--text-secondary)' }}>
                 Services sharing a section are listed item by item under one heading, the way Relax, Swedish and Deep tissue sit under Massage.
+                Tick the box below instead to have a service reported as one line inside its section, the way Abana sits under Gym.
               </small>
+            </div>
+            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <input
+                type="checkbox"
+                id="isSubsection"
+                checked={!!newService.is_subsection}
+                onChange={(e) => setNewService({ ...newService, is_subsection: e.target.checked })}
+              />
+              <label htmlFor="isSubsection" style={{ margin: 0 }}>
+                List under its section instead of heading one
+              </label>
             </div>
             <div className="form-group">
               <label>Report Order</label>
