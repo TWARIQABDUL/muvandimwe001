@@ -18,8 +18,10 @@
 //
 //   Amazi:5=7500rwf                   <- point-of-sale items, written plainly
 //   Total's income=133,500rwf
+//   Cash received=10,000rwf           <- how today's income arrived, which is
+//   Momo received=120,000rwf             not the same as the balances below
 //   Last balance=412,675rwf           <- yesterday's closing momo
-//   Today's Momo=510,685rwf
+//   Today's Momo=510,685rwf           <- what the account reads at closing
 //   NB: ...                           <- the manager's closing note
 //
 // Lines that would read zero are left out, the way they are written by hand.
@@ -540,10 +542,22 @@ export function renderWhatsAppMessages(report) {
   }
 
   const footer = [`Total's income=${formatRwf(report.totals.grand_total)}`];
-  if (report.balances.last_balance !== null) {
+
+  // How the day's income actually arrived. This is money taken today and is a
+  // different number from the Momo balance below, which is what the account
+  // reads at closing and includes everything carried over from before.
+  if (report.totals.grand_total > 0) {
+    footer.push(`Cash received=${formatRwf(report.totals.cash)}`);
+    footer.push(`Momo received=${formatRwf(report.totals.momo)}`);
+  }
+
+  // Saving a closing note without the balances stores them as 0, so a zero here
+  // means "nobody wrote it down" rather than "the account is empty". Printing it
+  // would be a claim the gym has not actually made.
+  if (report.balances.last_balance) {
     footer.push(`Last balance=${formatRwf(report.balances.last_balance)}`);
   }
-  if (report.balances.today_momo !== null) {
+  if (report.balances.today_momo) {
     footer.push(`Today's Momo=${formatRwf(report.balances.today_momo)}`);
   }
   blocks.push(footer.join('\n'));
