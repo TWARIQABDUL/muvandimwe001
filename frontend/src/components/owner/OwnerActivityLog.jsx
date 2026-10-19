@@ -50,7 +50,7 @@ export default function OwnerActivityLog({ setError }) {
   }, [refreshKey, from, to]);
 
   const columns = [
-    { title: 'Time', dataIndex: 'created_at', key: 'time', width: 170, render: t => new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }) },
+    { title: 'Time', dataIndex: 'created_at', key: 'time', fixed: 'left', width: 170, render: t => new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }) },
     { title: 'Who', key: 'who', width: 150, render: (_, l) => <><strong>{l.username || 'unknown'}</strong>{l.role && <span style={{ color: 'var(--text-secondary)' }}> ({l.role})</span>}</> },
     { title: 'Action', dataIndex: 'action', key: 'action', width: 220, render: a => <span style={{ color: isDelete(a) ? '#ef4444' : undefined, fontWeight: isDelete(a) ? 600 : 400 }}>{LABELS[a] || a}</span> },
     { title: 'Details', dataIndex: 'details', key: 'details', render: d => <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{summarize(d)}</span> }

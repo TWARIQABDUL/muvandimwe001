@@ -28,6 +28,9 @@ const KINDS = [
   { key: 'renewal', field: 'renewals', label: 'Renewal', badge: 'primary' }
 ];
 
+// Keeps the first column in view while the rest scrolls sideways.
+const stickyFirst = { position: 'sticky', left: 0, background: 'var(--bg-white)' };
+
 export default function OwnerDailyReport() {
   const { refreshKey } = useRefresh();
   const today = new Date().toISOString().split('T')[0];
@@ -221,10 +224,10 @@ export default function OwnerDailyReport() {
             {shown.length === 0 ? (
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Nobody used this service on this date.</p>
             ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+              <table style={{ width: '100%', minWidth: '520px', borderCollapse: 'collapse', fontSize: '14px' }}>
                 <thead>
                   <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border-color)' }}>
-                    <th style={{ padding: '10px 6px' }}>Name</th>
+                    <th style={{ padding: '10px 6px', ...stickyFirst }}>Name</th>
                     <th style={{ padding: '10px 6px' }}>Service</th>
                     <th style={{ padding: '10px 6px' }}>Type</th>
                     <th style={{ padding: '10px 6px' }}>Paid</th>
@@ -234,7 +237,7 @@ export default function OwnerDailyReport() {
                 <tbody>
                   {shown.map((row, i) => (
                     <tr key={i} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '10px 6px', fontWeight: 600 }}>
+                      <td style={{ padding: '10px 6px', fontWeight: 600, ...stickyFirst }}>
                         {row.name}
                         {row.employer && (
                           <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}> ({row.employer.toUpperCase()})</span>

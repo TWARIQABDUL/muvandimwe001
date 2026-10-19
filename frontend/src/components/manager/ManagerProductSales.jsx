@@ -4,6 +4,9 @@ import { useRefresh } from '../../hooks/useRefresh.jsx';
 
 const rwf = (value) => `${Math.round(Number(value) || 0).toLocaleString()} RWF`;
 
+// Keeps the first column in view while the rest scrolls sideways.
+const stickyFirst = { position: 'sticky', left: 0, background: 'var(--bg-white)' };
+
 export default function ManagerProductSales() {
   const { refreshKey } = useRefresh();
   const today = new Date().toISOString().split('T')[0];
@@ -183,10 +186,11 @@ export default function ManagerProductSales() {
         ) : sales.length === 0 ? (
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Nothing sold on this date yet.</p>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+          <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', minWidth: '480px', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
               <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border-color)' }}>
-                <th style={{ padding: '8px 4px' }}>Item</th>
+                <th style={{ padding: '8px 4px', ...stickyFirst }}>Item</th>
                 <th style={{ padding: '8px 4px' }}>Qty</th>
                 <th style={{ padding: '8px 4px' }}>Amount</th>
                 <th style={{ padding: '8px 4px' }}>Paid</th>
@@ -196,7 +200,7 @@ export default function ManagerProductSales() {
             <tbody>
               {sales.map(sale => (
                 <tr key={sale.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '8px 4px', textTransform: 'capitalize' }}>{sale.product_name}</td>
+                  <td style={{ padding: '8px 4px', textTransform: 'capitalize', ...stickyFirst }}>{sale.product_name}</td>
                   <td style={{ padding: '8px 4px' }}>{sale.quantity}</td>
                   <td style={{ padding: '8px 4px' }}>{rwf(sale.amount)}</td>
                   <td style={{ padding: '8px 4px' }}>{sale.payment_method}</td>
@@ -214,6 +218,7 @@ export default function ManagerProductSales() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

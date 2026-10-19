@@ -64,7 +64,7 @@ export default function OwnerTransactions({ setError, setMessage }) {
   const rowClass = (r) => (r.possible_duplicate ? 'row-possible-duplicate' : '');
 
   const checkinColumns = [
-    { title: 'Name', dataIndex: 'member_name', key: 'name', render: (t, r) => <><strong>{t}</strong>{r.possible_duplicate && dupBadge}</> },
+    { title: 'Name', dataIndex: 'member_name', key: 'name', fixed: 'left', width: 200, render: (t, r) => <><strong>{t}</strong>{r.possible_duplicate && dupBadge}</> },
     { title: 'Service', dataIndex: 'service', key: 'service', render: t => <span style={{ textTransform: 'capitalize' }}>{t}</span> },
     { title: 'Type', dataIndex: 'type', key: 'type' },
     { title: 'Amount', dataIndex: 'amount', key: 'amount', render: t => (t ? `${Number(t).toLocaleString()} RWF` : '-') },
@@ -81,7 +81,7 @@ export default function OwnerTransactions({ setError, setMessage }) {
   ];
 
   const paymentColumns = [
-    { title: 'Member', dataIndex: 'member_name', key: 'name', render: (t, r) => <><strong>{t || 'Walk-in'}</strong>{r.possible_duplicate && dupBadge}</> },
+    { title: 'Member', dataIndex: 'member_name', key: 'name', fixed: 'left', width: 200, render: (t, r) => <><strong>{t || 'Walk-in'}</strong>{r.possible_duplicate && dupBadge}</> },
     { title: 'Type', dataIndex: 'type', key: 'type', render: t => t.replace(/_/g, ' ') },
     { title: 'Service', dataIndex: 'service', key: 'service', render: t => <span style={{ textTransform: 'capitalize' }}>{t}</span> },
     { title: 'Amount', dataIndex: 'amount', key: 'amount', render: t => `${Number(t).toLocaleString()} RWF` },

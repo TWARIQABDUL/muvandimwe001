@@ -66,6 +66,8 @@ export default function OwnerBranches() {
       title: 'Branch Name',
       dataIndex: 'name',
       key: 'name',
+      fixed: 'left',
+      width: 150,
     },
     {
       title: 'Location',
