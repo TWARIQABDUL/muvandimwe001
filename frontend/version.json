@@ -1,5 +1,5 @@
 {
-  "version": "0.1.23",
-  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.23.apk",
-  "releaseNotes": "Owners can now review check-ins and payments and delete ones staff entered twice; deleting a card check-in gives the tap back and deleting a renewal moves the renewal date back. A new Activity Log shows every action, who did it, and when."
+  "version": "0.1.24",
+  "url": "https://nhhrxpywsmfvoyblvibw.supabase.co/storage/v1/object/public/updates/app-release-v0.1.24.apk",
+  "releaseNotes": "Owners can review check-ins and payments and delete ones staff entered twice; deleting a card check-in gives the tap back and deleting a renewal moves the renewal date back. A new Activity Log shows every action, who did it, and when. On every table the first column now stays in place while the rest scrolls sideways."
 }
