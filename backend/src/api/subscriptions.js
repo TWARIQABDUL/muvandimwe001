@@ -1,6 +1,7 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../db/init.js';
+import { logAction } from '../utils/auditLog.js';
 import { authMiddleware, roleMiddleware, gymIsolationMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -122,6 +123,13 @@ router.post(
           paymentTimestamp
         ]
       );
+
+      await logAction(req, {
+        action: 'payment.renewal',
+        entityType: 'payment',
+        entityId: paymentId,
+        details: { member_name: member.name, amount: totalAmount, months, payment_method: payment_method || 'Cash', new_renewal_date: newRenewalDateStr }
+      });
 
       res.json({
         message: 'Subscription renewed successfully',

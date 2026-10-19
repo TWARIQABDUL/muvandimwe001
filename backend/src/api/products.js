@@ -1,6 +1,7 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../db/init.js';
+import { logAction } from '../utils/auditLog.js';
 import { authMiddleware, roleMiddleware, gymIsolationMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -223,6 +224,13 @@ router.post(
         [saleId, gym_id, product_id, req.user.id, qty, price, amount, payment_method || 'Cash', soldAt]
       );
 
+      await logAction(req, {
+        action: 'sale.create',
+        entityType: 'sale',
+        entityId: saleId,
+        details: { product: product.name, quantity: qty, amount, payment_method: payment_method || 'Cash' }
+      });
+
       res.status(201).json({
         sale: { id: saleId, product_name: product.name, quantity: qty, unit_price: price, amount, sold_at: soldAt }
       });
@@ -243,6 +251,12 @@ router.delete(
     try {
       const gym_id = req.user.query_all_gyms ? 'all' : (req.user.gym_id_override || req.user.gym_id);
 
+      const sale = await db.get(
+        `SELECT ps.amount, ps.quantity, ps.sold_at, p.name AS product
+         FROM product_sales ps LEFT JOIN products p ON p.id = ps.product_id
+         WHERE ps.id = ? AND (ps.gym_id = ? OR ? = 'all')`,
+        [req.params.id, gym_id, gym_id]
+      );
       const result = await db.run(
         `DELETE FROM product_sales WHERE id = ? AND (gym_id = ? OR ? = 'all')`,
         [req.params.id, gym_id, gym_id]
@@ -251,6 +265,8 @@ router.delete(
       if (result.changes === 0) {
         return res.status(404).json({ error: 'Sale not found' });
       }
+
+      await logAction(req, { action: 'sale.delete', entityType: 'sale', entityId: req.params.id, details: sale || null });
 
       res.json({ success: true, message: 'Sale removed' });
     } catch (err) {

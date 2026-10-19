@@ -256,3 +256,7 @@ input[type="checkbox"] {
   background: var(--border-color);
   border-radius: 2px;
 }
+
+.row-possible-duplicate > td {
+  background: rgba(245, 158, 11, 0.08) !important;
+}

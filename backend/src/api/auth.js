@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../db/init.js';
 import { hashPassword, comparePassword } from '../utils/password.js';
 import { generateToken } from '../utils/jwt.js';
+import { logAction } from '../utils/auditLog.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -41,6 +42,8 @@ router.post('/login', async (req, res) => {
     const token = generateToken(user);
 
     const gymInfo = await db.get(`SELECT scan_enabled FROM gyms WHERE id = ?`, [user.gym_id]);
+
+    await logAction(req, { action: 'auth.login', entityType: 'user', entityId: user.id, user, gymId: user.gym_id });
 
     res.json({
       token,

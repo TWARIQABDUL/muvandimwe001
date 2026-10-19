@@ -2,6 +2,7 @@ import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../db/init.js';
 import { hashPassword } from '../utils/password.js';
+import { logAction } from '../utils/auditLog.js';
 import { authMiddleware, gymIsolationMiddleware, roleMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -53,6 +54,8 @@ router.post('/', authMiddleware, roleMiddleware(['owner']), gymIsolationMiddlewa
       [userId, gymId, username, passwordHash, 'manager']
     );
 
+    await logAction(req, { action: 'staff.create', entityType: 'user', entityId: userId, details: { username } });
+
     res.status(201).json({ 
       message: 'Employee registered successfully', 
       user: { id: userId, username, role: 'manager' },
@@ -82,6 +85,8 @@ router.delete('/:id', authMiddleware, roleMiddleware(['owner']), gymIsolationMid
     if (result.changes === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
+
+    await logAction(req, { action: 'staff.delete', entityType: 'user', entityId: userId });
 
     res.json({ message: 'Employee deleted successfully' });
   } catch (err) {

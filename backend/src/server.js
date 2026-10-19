@@ -29,6 +29,8 @@ import usersRoutes from './api/users.js';
 import employersRoutes from './api/employers.js';
 import cardsRoutes from './api/cards.js';
 import gymsRoutes from './api/gyms.js';
+import transactionsRoutes from './api/transactions.js';
+import { auditFallback } from './utils/auditLog.js';
 import { startExpirationCron } from './cron/expireSubscriptions.js';
 
 const app = express();
@@ -45,6 +47,8 @@ app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} [${req.method}] ${req.path}`);
   next();
 });
+
+app.use(auditFallback);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -68,6 +72,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/employers', employersRoutes);
 app.use('/api/cards', cardsRoutes);
 app.use('/api/gyms', gymsRoutes);
+app.use('/api/transactions', transactionsRoutes);
 
 // 404 handler
 app.use((req, res) => {

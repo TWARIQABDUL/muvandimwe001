@@ -1,6 +1,7 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../db/init.js';
+import { logAction } from '../utils/auditLog.js';
 import { authMiddleware, roleMiddleware, gymIsolationMiddleware } from '../middleware/auth.js';
 
 // A partner member's own subset wins; with none recorded they inherit the
@@ -272,6 +273,13 @@ router.post(
           [paymentId, gym_id, req.user.id, memberId, totalPaymentAmount, 'subscription_signup', servicesStr, payment_method || 'Cash', is_card ? null : months, new Date().toISOString()]
         );
       }
+
+      await logAction(req, {
+        action: 'member.register',
+        entityType: 'member',
+        entityId: memberId,
+        details: { name, plan: dynamicSubName, payment_logged: isNew }
+      });
 
       res.status(201).json({
         id: memberId,

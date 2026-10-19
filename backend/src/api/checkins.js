@@ -1,6 +1,7 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../db/init.js';
+import { logAction } from '../utils/auditLog.js';
 import { authMiddleware, roleMiddleware, gymIsolationMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -119,11 +120,18 @@ router.post(
 
         const paymentId = uuidv4();
         await db.run(
-          `INSERT INTO payments (id, gym_id, user_id, member_id, amount, type, service, payment_method, timestamp)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [paymentId, gym_id, req.user.id, member_id || null, amount || 0, type, service, payment_method || 'Cash', now]
+          `INSERT INTO payments (id, gym_id, user_id, member_id, amount, type, service, payment_method, timestamp, checkin_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [paymentId, gym_id, req.user.id, member_id || null, amount || 0, type, service, payment_method || 'Cash', now, checkInId]
         );
       }
+
+      await logAction(req, {
+        action: 'checkin.create',
+        entityType: 'checkin',
+        entityId: checkInId,
+        details: { member_name: finalMemberName, service, type, amount: amount || null, payment_method: payment_method || null }
+      });
 
       // Format timestamp for response
       const checkInTime = new Date(now);
