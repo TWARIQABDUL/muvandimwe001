@@ -19,6 +19,7 @@ export default function OwnerTransactions({ setError, setMessage }) {
   const [to, setTo] = useState(today());
   const [checkins, setCheckins] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -29,12 +30,14 @@ export default function OwnerTransactions({ setError, setMessage }) {
   const load = async () => {
     try {
       setLoading(true);
-      const [c, p] = await Promise.all([
+      const [c, p, s] = await Promise.all([
         api.get('/transactions/checkins', { params: { from, to } }),
-        api.get('/transactions/payments', { params: { from, to } })
+        api.get('/transactions/payments', { params: { from, to } }),
+        api.get('/transactions/sales', { params: { from, to } })
       ]);
       setCheckins(c.data.checkins || []);
       setPayments(p.data.payments || []);
+      setSales(s.data.sales || []);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to load transactions');
     } finally {
@@ -48,7 +51,7 @@ export default function OwnerTransactions({ setError, setMessage }) {
     setMessage(null);
     try {
       setBusy(true);
-      const res = await api.delete(`/transactions/${kind}/${row.id}`);
+      const res = await api.delete(kind === 'sales' ? `/products/sales/${row.id}` : `/transactions/${kind}/${row.id}`);
       setMessage(res.data.message || 'Removed.');
       load();
       setTimeout(() => setMessage(null), 5000);
@@ -98,12 +101,29 @@ export default function OwnerTransactions({ setError, setMessage }) {
     }
   ];
 
+  const saleColumns = [
+    { title: 'Item', dataIndex: 'product_name', key: 'name', fixed: 'left', width: 200, render: (t, r) => <><strong style={{ textTransform: 'capitalize' }}>{t}</strong>{r.possible_duplicate && dupBadge}</> },
+    { title: 'Qty', dataIndex: 'quantity', key: 'qty' },
+    { title: 'Amount', dataIndex: 'amount', key: 'amount', render: t => `${Number(t).toLocaleString()} RWF` },
+    { title: 'Method', dataIndex: 'payment_method', key: 'method' },
+    { title: 'Time', dataIndex: 'timestamp', key: 'time', render: time },
+    { title: 'Recorded by', dataIndex: 'recorded_by', key: 'by', render: t => t || '-' },
+    {
+      title: '', key: 'actions', align: 'right',
+      render: (_, r) => (
+        <button style={deleteBtnStyle} disabled={busy} onClick={() => remove('sales', r, `the ${r.quantity} x ${r.product_name} sale (${Number(r.amount).toLocaleString()} RWF)`)}>
+          Delete
+        </button>
+      )
+    }
+  ];
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
       <div className="card">
         <h2 className="card-title">Review Transactions</h2>
         <p style={{ color: 'var(--text-secondary)', marginTop: 0 }}>
-          Find a check-in or payment staff entered twice and delete it. Deleting a card check-in gives the tap back;
+          Find a check-in, payment or shop sale staff entered twice and delete it. Deleting a card check-in gives the tap back;
           deleting a renewal payment moves the renewal date back; deleting a walk-in check-in removes its payment too.
           Every deletion is written to the Activity Log.
         </p>
@@ -128,6 +148,12 @@ export default function OwnerTransactions({ setError, setMessage }) {
       <div className="card">
         <h2 className="card-title">Payments ({payments.length})</h2>
         <Table columns={paymentColumns} dataSource={payments.map(p => ({ ...p, key: p.id }))} loading={loading}
+          rowClassName={rowClass} pagination={{ pageSize: 10 }} scroll={{ x: 'max-content' }} size="small" />
+      </div>
+
+      <div className="card">
+        <h2 className="card-title">Shop Sales ({sales.length})</h2>
+        <Table columns={saleColumns} dataSource={sales.map(x => ({ ...x, key: x.id }))} loading={loading}
           rowClassName={rowClass} pagination={{ pageSize: 10 }} scroll={{ x: 'max-content' }} size="small" />
       </div>
     </div>

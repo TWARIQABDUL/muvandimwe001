@@ -82,6 +82,30 @@ router.get('/payments', ...ownerOnly, async (req, res) => {
   }
 });
 
+// GET /api/transactions/sales?from=&to= - Shop sales (deleted through DELETE /api/products/sales/:id)
+router.get('/sales', ...ownerOnly, async (req, res) => {
+  try {
+    const gym_id = gymOf(req);
+    const { from, to } = rangeOf(req);
+    const rows = await db.all(
+      `SELECT ps.id, ps.gym_id, ps.product_id, ps.quantity, ps.unit_price, ps.amount, ps.payment_method, ps.sold_at AS timestamp,
+              p.name AS product_name, u.username AS recorded_by
+       FROM product_sales ps
+       LEFT JOIN products p ON p.id = ps.product_id
+       LEFT JOIN users u ON u.id = ps.user_id
+       WHERE (ps.gym_id = ? OR ? = 'all') AND DATE(ps.sold_at) BETWEEN ? AND ?
+       ORDER BY ps.sold_at DESC`,
+      [gym_id, gym_id, from, to]
+    );
+    const sales = markDuplicates(rows, s =>
+      [s.gym_id, s.product_id, s.quantity, Number(s.amount), s.payment_method, String(s.timestamp).slice(0, 16)].join('|'));
+    res.json({ from, to, sales });
+  } catch (err) {
+    console.error('List sales error:', err.message);
+    res.status(500).json({ error: 'Failed to load shop sales' });
+  }
+});
+
 // DELETE /api/transactions/checkins/:id - Remove a check-in entered by mistake.
 // Undoes its effects: a card gets its tap back, and the payment written with a
 // walk-in/daily check-in goes with it.

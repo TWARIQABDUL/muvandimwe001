@@ -370,6 +370,12 @@ export default function OwnerAnalytics({ data, timeframe, setTimeframe, trendDat
           </div>
           <div style={{ color: 'var(--text-secondary)' }}>Total MOMO</div>
         </div>
+        <div className="card" style={{ borderLeft: '4px solid #8b5cf6' }}>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#8b5cf6' }}>
+            {(dashboardData.snapshot.shop_revenue || 0).toLocaleString()} RWF
+          </div>
+          <div style={{ color: 'var(--text-secondary)' }}>Shop Sales</div>
+        </div>
         <div className="card" style={{ borderLeft: '4px solid var(--primary-color)' }}>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary-color)' }}>
             {(dashboardData.snapshot.subscription_revenue || 0).toLocaleString()} RWF

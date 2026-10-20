@@ -28,6 +28,26 @@ async function getPaymentsForPeriod(gymId, startDate, endDate, userId = null) {
   return await db.all(query, params);
 }
 
+// Shop sales (water, drinks...) are income too, and are paid in cash or MOMO like anything else.
+async function getShopSalesForPeriod(gymId, startDate, endDate, userId = null) {
+  const params = [gymId, gymId, startDate, endDate];
+  let query = `SELECT payment_method, SUM(amount) AS amount
+               FROM product_sales
+               WHERE (gym_id = ? OR ? = 'all') AND DATE(sold_at) BETWEEN ? AND ?`;
+  if (userId) {
+    query += ` AND user_id = ?`;
+    params.push(userId);
+  }
+  query += ` GROUP BY payment_method`;
+  const rows = await db.all(query, params);
+  const sum = (isMomo) => rows
+    .filter(r => (r.payment_method === 'MOMO') === isMomo)
+    .reduce((t, r) => t + Number(r.amount || 0), 0);
+  const cash = sum(false);
+  const momo = sum(true);
+  return { cash, momo, total: cash + momo };
+}
+
 // Helper function to get date ranges
 function getDateRange(timeframe) {
   const end = new Date();
@@ -205,8 +225,9 @@ router.get(
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
-      const cashRevenue = payments.filter(p => !p.payment_method || p.payment_method === 'Cash').reduce((sum, p) => sum + Number(p.amount), 0);
-      const momoRevenue = payments.filter(p => p.payment_method === 'MOMO').reduce((sum, p) => sum + Number(p.amount), 0);
+      const shop = await getShopSalesForPeriod(gym_id, today, today);
+      const cashRevenue = payments.filter(p => !p.payment_method || p.payment_method === 'Cash').reduce((sum, p) => sum + Number(p.amount), 0) + shop.cash;
+      const momoRevenue = payments.filter(p => p.payment_method === 'MOMO').reduce((sum, p) => sum + Number(p.amount), 0) + shop.momo;
       const totalCheckins = checkins.length;
       const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
       const subscriberCheckins = checkins.filter(c => c.type === 'subscription').length;
@@ -259,7 +280,8 @@ router.get(
           walk_in_checkins: walkInCheckins,
           subscriber_checkins: subscriberCheckins,
           partner_checkins: partnerCheckins,
-          total_revenue: totalRevenue,
+          total_revenue: totalRevenue + shop.total,
+          shop_revenue: shop.total,
           cash_revenue: cashRevenue,
           momo_revenue: momoRevenue,
           walk_in_revenue: walkInRevenue,
@@ -293,8 +315,9 @@ async function getManagerTodayDashboard(req, res) {
     const pendingRenewals = await getPendingRenewals(gym_id);
 
     const totalRevenue = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-      const cashRevenue = payments.filter(p => !p.payment_method || p.payment_method === 'Cash').reduce((sum, p) => sum + Number(p.amount), 0);
-      const momoRevenue = payments.filter(p => p.payment_method === 'MOMO').reduce((sum, p) => sum + Number(p.amount), 0);
+      const shop = await getShopSalesForPeriod(gym_id, today, today, req.user.id);
+      const cashRevenue = payments.filter(p => !p.payment_method || p.payment_method === 'Cash').reduce((sum, p) => sum + Number(p.amount), 0) + shop.cash;
+      const momoRevenue = payments.filter(p => p.payment_method === 'MOMO').reduce((sum, p) => sum + Number(p.amount), 0) + shop.momo;
     const walkInRevenue = payments
       .filter(p => p.type === 'walk_in' || p.type === 'daily')
       .reduce((sum, p) => sum + Number(p.amount), 0);
@@ -332,7 +355,7 @@ async function getManagerTodayDashboard(req, res) {
         walkin_checkins: walkInCheckins,
         subscriber_checkins: subscriberCheckins,
         partner_checkins: partnerCheckins,
-        revenue_today: totalRevenue,
+        revenue_today: totalRevenue + shop.total,
         cash_revenue_today: cashRevenue,
         momo_revenue_today: momoRevenue,
         walk_in_revenue_today: walkInRevenue,
@@ -376,8 +399,9 @@ router.get(
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
-      const cashRevenue = payments.filter(p => !p.payment_method || p.payment_method === 'Cash').reduce((sum, p) => sum + Number(p.amount), 0);
-      const momoRevenue = payments.filter(p => p.payment_method === 'MOMO').reduce((sum, p) => sum + Number(p.amount), 0);
+      const shop = await getShopSalesForPeriod(gym_id, dateRange.start, dateRange.end);
+      const cashRevenue = payments.filter(p => !p.payment_method || p.payment_method === 'Cash').reduce((sum, p) => sum + Number(p.amount), 0) + shop.cash;
+      const momoRevenue = payments.filter(p => p.payment_method === 'MOMO').reduce((sum, p) => sum + Number(p.amount), 0) + shop.momo;
       const totalCheckins = checkins.length;
       const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
       const subscriberCheckins = checkins.filter(c => c.type === 'subscription').length;
@@ -426,7 +450,8 @@ router.get(
           walk_in_checkins: walkInCheckins,
           subscriber_checkins: subscriberCheckins,
           partner_checkins: partnerCheckins,
-          total_revenue: totalRevenue,
+          total_revenue: totalRevenue + shop.total,
+          shop_revenue: shop.total,
           cash_revenue: cashRevenue,
           momo_revenue: momoRevenue,
           walk_in_revenue: walkInRevenue,
@@ -471,8 +496,9 @@ router.get(
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
-      const cashRevenue = payments.filter(p => !p.payment_method || p.payment_method === 'Cash').reduce((sum, p) => sum + Number(p.amount), 0);
-      const momoRevenue = payments.filter(p => p.payment_method === 'MOMO').reduce((sum, p) => sum + Number(p.amount), 0);
+      const shop = await getShopSalesForPeriod(gym_id, dateRange.start, dateRange.end);
+      const cashRevenue = payments.filter(p => !p.payment_method || p.payment_method === 'Cash').reduce((sum, p) => sum + Number(p.amount), 0) + shop.cash;
+      const momoRevenue = payments.filter(p => p.payment_method === 'MOMO').reduce((sum, p) => sum + Number(p.amount), 0) + shop.momo;
       const totalCheckins = checkins.length;
       const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
       const subscriberCheckins = checkins.filter(c => c.type === 'subscription').length;
@@ -521,7 +547,8 @@ router.get(
           walk_in_checkins: walkInCheckins,
           subscriber_checkins: subscriberCheckins,
           partner_checkins: partnerCheckins,
-          total_revenue: totalRevenue,
+          total_revenue: totalRevenue + shop.total,
+          shop_revenue: shop.total,
           cash_revenue: cashRevenue,
           momo_revenue: momoRevenue,
           walk_in_revenue: walkInRevenue,
@@ -566,8 +593,9 @@ router.get(
       const pieChart = calculatePieChart(breakdown);
 
       const totalRevenue = Object.values(breakdown).reduce((sum, service) => sum + service.total, 0);
-      const cashRevenue = payments.filter(p => !p.payment_method || p.payment_method === 'Cash').reduce((sum, p) => sum + Number(p.amount), 0);
-      const momoRevenue = payments.filter(p => p.payment_method === 'MOMO').reduce((sum, p) => sum + Number(p.amount), 0);
+      const shop = await getShopSalesForPeriod(gym_id, dateRange.start, dateRange.end);
+      const cashRevenue = payments.filter(p => !p.payment_method || p.payment_method === 'Cash').reduce((sum, p) => sum + Number(p.amount), 0) + shop.cash;
+      const momoRevenue = payments.filter(p => p.payment_method === 'MOMO').reduce((sum, p) => sum + Number(p.amount), 0) + shop.momo;
       const totalCheckins = checkins.length;
       const walkInCheckins = checkins.filter(c => c.type === 'walk_in' || c.type === 'daily').length;
       const subscriberCheckins = checkins.filter(c => c.type === 'subscription').length;
@@ -616,7 +644,8 @@ router.get(
           walk_in_checkins: walkInCheckins,
           subscriber_checkins: subscriberCheckins,
           partner_checkins: partnerCheckins,
-          total_revenue: totalRevenue,
+          total_revenue: totalRevenue + shop.total,
+          shop_revenue: shop.total,
           cash_revenue: cashRevenue,
           momo_revenue: momoRevenue,
           walk_in_revenue: walkInRevenue,
