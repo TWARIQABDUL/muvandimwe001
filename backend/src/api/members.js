@@ -258,11 +258,13 @@ router.post(
         );
       }
 
-      // Log payment transaction only if it's a new signup starting today.
-      // If it's a past start_date, they are an "old" member migrating in, 
-      // so we either log it on their actual start date, or we don't log a payment to avoid messing up revenue.
+      // The payment is recorded when it is taken (now), whatever the start date.
+      // A subscription starting today or in the future is a new signup, and a future
+      // start does not move the money: it still counts on the day it was received.
+      // A past start_date means an "old" member migrating in, so no payment is logged
+      // to avoid messing up revenue.
       const todayStr = new Date().toISOString().split('T')[0];
-      const isNew = startStr === todayStr;
+      const isNew = startStr >= todayStr;
 
       if (isNew) {
         const paymentId = uuidv4();
