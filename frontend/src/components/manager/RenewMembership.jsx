@@ -295,10 +295,10 @@ export default function RenewMembership({
                   style={{ width: '100%', padding: '15px', fontSize: '16px', marginTop: '10px', display: 'flex', justifyContent: 'space-between' }}
                 >
                   <span>Renew Subscription</span>
-                  {memberLookup.monthly_fee ? (
+                  {(memberLookup.renewal_fee ?? memberLookup.monthly_fee) ? (
                     <span style={{ fontWeight: 'bold' }}>
                       {(() => {
-                        const baseAmt = memberLookup.monthly_fee * renewalMonths;
+                        const baseAmt = (memberLookup.renewal_fee ?? memberLookup.monthly_fee) * renewalMonths;
                         const discountPct = appliedCoupon ? appliedCoupon.discount_percent : 0;
                         const discountAmt = Math.round(baseAmt * (discountPct / 100));
                         return (baseAmt - discountAmt).toLocaleString();

@@ -1,6 +1,7 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../db/init.js';
+import { renewalMonthlyFee } from '../utils/pricing.js';
 import { logAction } from '../utils/auditLog.js';
 import { authMiddleware, roleMiddleware, gymIsolationMiddleware } from '../middleware/auth.js';
 
@@ -326,7 +327,7 @@ router.get(
       const members = await db.all(
         `SELECT m.id, m.name, m.type, m.employer_id, m.allowed_services, e.name as employer_name,
                 ms.status as subscription_status, ms.next_renewal_date, ms.is_card, ms.remaining_taps,
-                s.included_services, s.monthly_fee,
+                s.name AS subscription_name, s.included_services, s.monthly_fee,
                 COALESCE(
                   (SELECT string_agg(es_s.name, ',' ORDER BY es_s.name)
                    FROM employer_services es
@@ -345,7 +346,7 @@ router.get(
 
       // format the results similarly to scan-qr
       const todayStr = new Date().toISOString().split('T')[0];
-      const formattedMembers = members.map(m => {
+      const formattedMembers = await Promise.all(members.map(async m => {
         // Derive real subscription status from dates, not just the DB field
         let realStatus = m.subscription_status;
         if (m.type !== 'b2b' && m.subscription_status) {
@@ -365,9 +366,10 @@ router.get(
         return {
           ...m,
           subscription_status: realStatus,
-          allowed_services: resolveAllowedServices(m)
+          allowed_services: resolveAllowedServices(m),
+          renewal_fee: await renewalMonthlyFee(db, gym_id, { name: m.subscription_name, included_services: m.included_services, monthly_fee: m.monthly_fee })
         };
-      });
+      }));
 
       res.json({ members: formattedMembers });
     } catch (err) {
@@ -394,7 +396,7 @@ router.post(
       }
 
       const member = await db.get(
-        `SELECT m.*, e.name as employer_name, ms.status, ms.is_card, ms.remaining_taps, ms.next_renewal_date, s.included_services, s.monthly_fee,
+        `SELECT m.*, e.name as employer_name, ms.status, ms.is_card, ms.remaining_taps, ms.next_renewal_date, s.name AS subscription_name, s.included_services, s.monthly_fee,
                 COALESCE(
                   (SELECT string_agg(es_s.name, ',' ORDER BY es_s.name)
                    FROM employer_services es
@@ -444,7 +446,8 @@ router.post(
           is_card: member.is_card || 0,
           remaining_taps: member.remaining_taps,
           next_renewal_date: member.next_renewal_date,
-          monthly_fee: member.monthly_fee
+          monthly_fee: member.monthly_fee,
+          renewal_fee: await renewalMonthlyFee(db, gym_id, { name: member.subscription_name, included_services: member.included_services, monthly_fee: member.monthly_fee })
         }
       });
     } catch (err) {

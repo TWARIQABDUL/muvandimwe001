@@ -1,6 +1,7 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../db/init.js';
+import { renewalMonthlyFee } from '../utils/pricing.js';
 import { logAction } from '../utils/auditLog.js';
 import { authMiddleware, roleMiddleware, gymIsolationMiddleware } from '../middleware/auth.js';
 
@@ -87,7 +88,8 @@ router.post(
         }
       }
 
-      const baseAmount = (member.monthly_fee || 0) * months;
+      const monthlyFee = await renewalMonthlyFee(db, gym_id, { name: member.sub_name, included_services: member.included_services, monthly_fee: member.monthly_fee });
+      const baseAmount = monthlyFee * months;
       const discountAmount = Math.round(baseAmount * (discountPercent / 100));
       const totalAmount = baseAmount - discountAmount;
 
