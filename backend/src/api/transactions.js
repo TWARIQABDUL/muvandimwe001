@@ -225,6 +225,87 @@ router.delete('/payments/:id', ...ownerOnly, async (req, res) => {
   }
 });
 
+// GET /api/transactions/members/search?q= - Find a member by name or phone
+router.get('/members/search', ...ownerOnly, async (req, res) => {
+  try {
+    const gym_id = gymOf(req);
+    const q = (req.query.q || '').trim();
+    if (q.length < 2) {
+      return res.status(400).json({ error: 'Type at least 2 characters' });
+    }
+    const members = await db.all(
+      `SELECT m.id, m.name, m.phone, m.type, g.name AS gym_name
+       FROM members m
+       LEFT JOIN gyms g ON g.id = m.gym_id
+       WHERE (m.gym_id = ? OR ? = 'all') AND (LOWER(m.name) LIKE LOWER(?) OR m.phone LIKE ?)
+       ORDER BY m.name ASC
+       LIMIT 20`,
+      [gym_id, gym_id, `%${q}%`, `%${q}%`]
+    );
+    res.json({ members });
+  } catch (err) {
+    console.error('Search members error:', err.message);
+    res.status(500).json({ error: 'Failed to search members' });
+  }
+});
+
+// GET /api/transactions/members/:id/history - Everything recorded for one member
+router.get('/members/:id/history', ...ownerOnly, async (req, res) => {
+  try {
+    const gym_id = gymOf(req);
+    const member = await db.get(
+      `SELECT m.id, m.name, m.phone, m.email, m.type, m.created_at, g.name AS gym_name,
+              s.name AS plan, s.included_services, s.monthly_fee,
+              ms.start_date, ms.next_renewal_date, ms.status, ms.is_card, ms.remaining_taps
+       FROM members m
+       LEFT JOIN gyms g ON g.id = m.gym_id
+       LEFT JOIN member_subscriptions ms ON ms.id = m.current_subscription_id
+       LEFT JOIN subscriptions s ON s.id = ms.subscription_id
+       WHERE m.id = ? AND (m.gym_id = ? OR ? = 'all')`,
+      [req.params.id, gym_id, gym_id]
+    );
+    if (!member) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+
+    const checkins = await db.all(
+      `SELECT c.id, c.type, c.service, c.amount, c.timestamp, u.username AS recorded_by
+       FROM checkins c LEFT JOIN users u ON u.id = c.user_id
+       WHERE c.member_id = ?
+       ORDER BY c.timestamp DESC`,
+      [member.id]
+    );
+    const payments = await db.all(
+      `SELECT p.id, p.type, p.service, p.amount, p.payment_method, p.months, p.timestamp, u.username AS recorded_by
+       FROM payments p LEFT JOIN users u ON u.id = p.user_id
+       WHERE p.member_id = ?
+       ORDER BY p.timestamp DESC`,
+      [member.id]
+    );
+    const activity = await db.all(
+      `SELECT id, username, role, action, details, created_at
+       FROM audit_logs
+       WHERE (entity_id = ? OR details LIKE ?)
+       ORDER BY created_at DESC LIMIT 100`,
+      [member.id, `%"member_name":${JSON.stringify(member.name)}%`]
+    );
+
+    res.json({
+      member,
+      checkins,
+      payments,
+      activity: activity.map(a => ({ ...a, details: a.details ? JSON.parse(a.details) : null })),
+      totals: {
+        checkins: checkins.length,
+        paid: payments.reduce((sum, p) => sum + Number(p.amount), 0)
+      }
+    });
+  } catch (err) {
+    console.error('Member history error:', err.message);
+    res.status(500).json({ error: 'Failed to load member history' });
+  }
+});
+
 // GET /api/transactions/audit-logs?from=&to=&user=&q=
 router.get('/audit-logs', ...ownerOnly, async (req, res) => {
   try {

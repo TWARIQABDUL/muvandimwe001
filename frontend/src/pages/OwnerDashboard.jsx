@@ -19,6 +19,7 @@ import OwnerPartners from '../components/owner/OwnerPartners.jsx';
 import OwnerCards from '../components/owner/OwnerCards.jsx';
 import OwnerBranches from '../components/owner/OwnerBranches.jsx';
 import OwnerTransactions from '../components/owner/OwnerTransactions.jsx';
+import OwnerMemberHistory from '../components/owner/OwnerMemberHistory.jsx';
 import OwnerActivityLog from '../components/owner/OwnerActivityLog.jsx';
 import { useRefresh } from '../hooks/useRefresh.jsx';
 
@@ -280,6 +281,7 @@ export default function OwnerDashboard() {
     { id: 'checkins', label: 'Recent Check-ins' },
     { id: 'daily-report', label: 'Daily Report' },
     { id: 'transactions', label: 'Review Transactions' },
+    { id: 'member-history', label: 'Member History' },
     { id: 'activity-log', label: 'Activity Log' },
     { id: 'members', label: 'Members Directory' },
     { id: 'packages', label: 'Manage Packages' },
@@ -422,6 +424,10 @@ export default function OwnerDashboard() {
 
             <Route path="transactions" element={
               <OwnerTransactions setError={setError} setMessage={setMessage} />
+            } />
+
+            <Route path="member-history" element={
+              <OwnerMemberHistory setError={setError} />
             } />
 
             <Route path="activity-log" element={
